@@ -92,23 +92,23 @@ export default function Register() {
         </h2>
 
         {/* Service Type Selector */}
-        <div className="mb-6 text-center">
+        <div className="mb-6 text-center flex justify-center">
           <button
             onClick={() => setServiceType("finding")}
-            className={`px-4 py-2 rounded-l-lg border border-green-700 font-semibold ${
+            className={`px-4 py-2 rounded-l-lg font-semibold transition-all ${
               serviceType === "finding"
-                ? "bg-green-700 text-white"
-                : "bg-white text-green-700 hover:bg-green-100"
+                ? "bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-md"
+                : "bg-white text-green-700 border border-green-700 hover:bg-green-50"
             }`}
           >
             Finding a Service
           </button>
           <button
             onClick={() => setServiceType("posting")}
-            className={`px-4 py-2 rounded-r-lg border border-green-700 font-semibold ${
+            className={`px-4 py-2 rounded-r-lg font-semibold transition-all ${
               serviceType === "posting"
-                ? "bg-green-700 text-white"
-                : "bg-white text-green-700 hover:bg-green-100"
+                ? "bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-md"
+                : "bg-white text-green-700 border border-green-700 hover:bg-green-50"
             }`}
           >
             Posting a Service
@@ -206,7 +206,7 @@ export default function Register() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 transition"
+            className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition"
           >
             Register
           </button>

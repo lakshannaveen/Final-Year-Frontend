@@ -114,7 +114,7 @@ export default function SignIn() {
         {/* Submit */}
         <button
           type="submit"
-          className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 transition"
+          className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition"
         >
           Sign In
         </button>
@@ -124,7 +124,7 @@ export default function SignIn() {
           Do not have an account?{" "}
           <Link
             href="/register"
-            className="font-semibold underline hover:text-green-900"
+            className="font-semibold underline hover:text-green-900 transition"
           >
             Register here
           </Link>
