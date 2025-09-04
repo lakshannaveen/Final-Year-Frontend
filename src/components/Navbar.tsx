@@ -61,8 +61,8 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           <button
             onClick={() => handleNavClick("register")}
             className={`px-4 py-2 rounded-lg border-2 border-white font-semibold hover:bg-white hover:text-green-700 transition-all ${
-              currentView === "register" 
-                ? "bg-white text-green-700" 
+              currentView === "register"
+                ? "bg-white text-green-700"
                 : "text-white"
             }`}
           >
@@ -81,11 +81,12 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
 
       {/* Mobile Dropdown */}
       {menuOpen && (
-        <div className="md:hidden bg-green-700 text-white flex flex-col gap-4 px-6 py-4 border-t border-green-600">
+        <div className="md:hidden bg-gradient-to-b from-green-800 to-emerald-700 text-white flex flex-col gap-4 px-6 py-6 border-t border-green-600">
+          {/* Text links */}
           <button
             onClick={() => handleNavClick("home")}
-            className={`hover:text-green-200 transition-colors font-medium text-lg text-left ${
-              currentView === "home" ? "text-green-200" : ""
+            className={`font-medium text-lg text-center ${
+              currentView === "home" ? "text-green-200" : "hover:text-green-200"
             }`}
           >
             Home
@@ -93,27 +94,35 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
 
           <button
             onClick={() => handleNavClick("profile")}
-            className={`hover:text-green-200 transition-colors font-medium text-lg flex items-center gap-1 ${
-              currentView === "profile" ? "text-green-200" : ""
+            className={`font-medium text-lg flex items-center justify-center gap-1 ${
+              currentView === "profile"
+                ? "text-green-200"
+                : "hover:text-green-200"
             }`}
           >
             <User size={18} />
             Profile
           </button>
 
+          {/* Sign In Button */}
           <button
             onClick={() => handleNavClick("signin")}
-            className="px-4 py-2 rounded-lg bg-green-100 text-green-800 font-semibold hover:bg-white hover:text-green-900 hover:shadow-lg transition-all duration-300 text-center border-2 border-green-200"
+            className={`px-4 py-2 rounded-lg font-semibold text-center transition-all border ${
+              currentView === "signin"
+                ? "bg-white text-green-700"
+                : "bg-white text-green-800 hover:bg-green-50 hover:text-green-900"
+            }`}
           >
             Sign In
           </button>
 
+          {/* Register Button */}
           <button
             onClick={() => handleNavClick("register")}
-            className={`px-4 py-2 rounded-lg border-2 border-white font-semibold hover:bg-white hover:text-green-800 hover:shadow-lg transition-all duration-300 text-center ${
+            className={`px-4 py-2 rounded-lg border-2 font-semibold text-center transition-all ${
               currentView === "register"
-                ? "bg-white text-green-800"
-                : "text-white"
+                ? "bg-white text-green-700 border-white"
+                : "text-white border-white hover:bg-white hover:text-green-700"
             }`}
           >
             Register
