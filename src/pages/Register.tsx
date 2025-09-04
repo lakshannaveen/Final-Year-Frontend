@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 
-export default function Register() {
+interface RegisterProps {
+  setCurrentView: (view: string) => void;
+}
+
+export default function Register({ setCurrentView }: RegisterProps) {
   const [serviceType, setServiceType] = useState<"finding" | "posting">("finding");
 
   const [formData, setFormData] = useState({
@@ -211,6 +215,18 @@ export default function Register() {
             Register
           </button>
         </form>
+
+        {/* Link to Sign In */}
+        <p className="mt-4 text-center text-green-700">
+          Already have an account?{" "}
+          <button
+            type="button"
+            onClick={() => setCurrentView("signin")}
+            className="font-semibold underline hover:text-green-900 transition"
+          >
+            Sign in here
+          </button>
+        </p>
       </div>
     </div>
   );
