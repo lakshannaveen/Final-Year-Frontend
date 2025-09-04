@@ -4,7 +4,7 @@ import { useState } from "react";
 import Navbar from "../components/Navbar";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
-import SignIn from "../pages/signin";
+import SignIn from "../pages/Signin";
 
 export default function Index() {
   const [currentView, setCurrentView] = useState("home");
