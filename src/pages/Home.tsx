@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
-      <Navbar />
+
 
       {/* Main Content */}
       <section className="flex items-center justify-center h-screen">
