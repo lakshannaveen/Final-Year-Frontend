@@ -4,6 +4,7 @@ import { useState } from "react";
 import Navbar from "../components/Navbar";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
+import SignIn from "../pages/signin";
 
 export default function Index() {
   const [currentView, setCurrentView] = useState("home");
@@ -14,6 +15,8 @@ export default function Index() {
         return <Home />;
       case "register":
         return <Register />;
+      case "signin":
+        return <SignIn />;
       default:
         return <Home />;
     }
@@ -21,8 +24,8 @@ export default function Index() {
 
   return (
     <div>
-      {/* Only show Navbar if not on Register */}
-      {currentView !== "register" && (
+      {/* Only show Navbar if not on Register or SignIn */}
+      {currentView !== "register" && currentView !== "signin" && (
         <Navbar currentView={currentView} setCurrentView={setCurrentView} />
       )}
       {renderContent()}

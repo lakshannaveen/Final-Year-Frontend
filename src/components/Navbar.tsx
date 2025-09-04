@@ -52,7 +52,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           </button>
 
           <button
-            onClick={() => handleNavClick("login")}
+            onClick={() => handleNavClick("signin")}
             className="px-4 py-2 rounded-lg bg-white text-green-800 font-semibold hover:bg-green-50 hover:text-green-900 hover:shadow-md transition-all border border-green-100"
           >
             Sign In
@@ -102,7 +102,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           </button>
 
           <button
-            onClick={() => handleNavClick("login")}
+            onClick={() => handleNavClick("signin")}
             className="px-4 py-2 rounded-lg bg-green-100 text-green-800 font-semibold hover:bg-white hover:text-green-900 hover:shadow-lg transition-all duration-300 text-center border-2 border-green-200"
           >
             Sign In
