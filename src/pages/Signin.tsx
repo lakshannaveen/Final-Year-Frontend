@@ -24,13 +24,26 @@ export default function SignIn() {
     let valid = true;
     const newErrors = { username: "", password: "" };
 
+    // Username validation
     if (!formData.username.trim()) {
       newErrors.username = "Username is required";
       valid = false;
+    } else if (formData.username.length > 10) {
+      newErrors.username = "Username must not exceed 10 characters";
+      valid = false;
     }
 
+    // Password validation
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
+      valid = false;
+    } else if (
+      !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+        formData.password
+      )
+    ) {
+      newErrors.password =
+        "Password must be 8+ chars, include uppercase, lowercase, number & special char";
       valid = false;
     }
 
@@ -109,7 +122,10 @@ export default function SignIn() {
         {/* Link to Register */}
         <p className="mt-4 text-center text-green-700">
           Do not have an account?{" "}
-          <Link href="/register" className="font-semibold underline hover:text-green-900">
+          <Link
+            href="/register"
+            className="font-semibold underline hover:text-green-900"
+          >
             Register here
           </Link>
         </p>

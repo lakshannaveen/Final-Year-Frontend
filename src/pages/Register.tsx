@@ -29,33 +29,45 @@ export default function Register() {
     let valid = true;
     const newErrors = { username: "", email: "", password: "", phone: "" };
 
+    // Username validation
     if (!formData.username.trim()) {
       newErrors.username = "Username is required";
       valid = false;
+    } else if (formData.username.length > 10) {
+      newErrors.username = "Username must not exceed 10 characters";
+      valid = false;
     }
 
+    // Email validation
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
       valid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
       newErrors.email = "Email is invalid";
       valid = false;
     }
 
+    // Password validation
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
       valid = false;
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (
+      !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+        formData.password
+      )
+    ) {
+      newErrors.password =
+        "Password must be 8+ chars, include uppercase, lowercase, number & special char";
       valid = false;
     }
 
+    // Phone validation (only for posting service)
     if (serviceType === "posting") {
       if (!formData.phone.trim()) {
         newErrors.phone = "Phone number is required";
         valid = false;
-      } else if (!/^\d{10,15}$/.test(formData.phone.trim())) {
-        newErrors.phone = "Phone number is invalid";
+      } else if (!/^07\d{8}$/.test(formData.phone.trim())) {
+        newErrors.phone = "Phone must be a valid Sri Lankan number (e.g. 0712345678)";
         valid = false;
       }
     }
