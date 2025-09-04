@@ -21,7 +21,10 @@ export default function Index() {
 
   return (
     <div>
-      <Navbar currentView={currentView} setCurrentView={setCurrentView} />
+      {/* Only show Navbar if not on Register */}
+      {currentView !== "register" && (
+        <Navbar currentView={currentView} setCurrentView={setCurrentView} />
+      )}
       {renderContent()}
     </div>
   );
