@@ -16,7 +16,7 @@ export default function Index() {
       case "register":
         return <Register />;
       case "signin":
-        return <SignIn />;
+        return <SignIn setCurrentView={setCurrentView} />;
       default:
         return <Home />;
     }

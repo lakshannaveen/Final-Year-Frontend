@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 
-export default function SignIn() {
+interface SignInProps {
+  setCurrentView: (view: string) => void;
+}
+
+export default function SignIn({ setCurrentView }: SignInProps) {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -119,15 +122,16 @@ export default function SignIn() {
           Sign In
         </button>
 
-        {/* Link to Register */}
+        {/* Link to Register (changes view instead of redirecting) */}
         <p className="mt-4 text-center text-green-700">
           Do not have an account?{" "}
-          <Link
-            href="/register"
+          <button
+            type="button"
+            onClick={() => setCurrentView("register")}
             className="font-semibold underline hover:text-green-900 transition"
           >
             Register here
-          </Link>
+          </button>
         </p>
       </form>
     </div>
