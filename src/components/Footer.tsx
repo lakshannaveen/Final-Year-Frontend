@@ -8,17 +8,17 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 py-8">
 
         {/* Top Row */}
-        <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-start gap-6">
           
           {/* Left: Larger Logo */}
-          <div className="flex items-center p-2 md:p-4">
+          <div className="flex items-start p-2 md:p-4">
             <div className="bg-white text-green-700 rounded-lg p-4">
               <Briefcase size={36} />
             </div>
           </div>
 
-          {/* Center: Pages in Grid Layout */}
-          <div className="flex-1 flex justify-center">
+          {/* Center: Pages in Grid Layout (shifted down) */}
+          <div className="flex-1 flex justify-center mt-4 md:mt-6">
             <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-center">
               <a href="#" className="hover:text-green-200 transition-colors text-sm">
                 Privacy Policy
