@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { Briefcase, Facebook, Youtube, Instagram, Phone } from "lucide-react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -20,18 +21,18 @@ export default function Footer() {
           {/* Center: Pages in Grid Layout */}
           <div className="flex justify-center mt-4 md:mt-8">
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-center text-sm md:text-sm">
-              <a href="#" className="hover:text-green-200 transition-colors">
+              <Link href="/Privacy" className="hover:text-green-200 transition-colors">
                 Privacy Policy
-              </a>
-              <a href="#" className="hover:text-green-200 transition-colors">
+              </Link>
+              <Link href="/Terms" className="hover:text-green-200 transition-colors">
                 Terms & Conditions
-              </a>
-              <a href="#" className="hover:text-green-200 transition-colors">
+              </Link>
+              <Link href="/Contact" className="hover:text-green-200 transition-colors">
                 Contact Us
-              </a>
-              <a href="#" className="hover:text-green-200 transition-colors">
+              </Link>
+              <Link href="/Feedback" className="hover:text-green-200 transition-colors">
                 Feedback
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -52,7 +53,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Row: Single centered sentence */}
+        {/* Bottom Row */}
         <div className="mt-6 text-center text-sm md:text-sm text-green-100">
           &copy; 2025 Doop. All rights reserved.
         </div>
