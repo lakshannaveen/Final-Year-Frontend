@@ -21,17 +21,32 @@ export default function Terms({ setCurrentView }: TermsProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 max-w-4xl mx-auto">
-        <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4">Overview</h2>
-        <p className="text-gray-700 mb-4">
-          These terms and conditions outline the rules and regulations for using our platform. By accessing this website, you agree to comply with these terms.
-        </p>
-        <p className="text-gray-700 mb-4">
-          We may update these terms from time to time. It is your responsibility to review them regularly. Continued use of our services constitutes acceptance of any changes.
-        </p>
-        <p className="text-gray-700 mb-4">
-          For any questions regarding these terms, please contact our support team.
-        </p>
+      <div className="flex-1 flex justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-4xl w-full">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
+            Overview
+          </h2>
+
+          <p className="text-gray-700 mb-4">
+            These terms and conditions outline the rules and regulations for using our platform. By accessing this website, you agree to comply with these terms.
+          </p>
+
+          <p className="text-gray-700 mb-4">
+            We may update these terms from time to time. It is your responsibility to review them regularly. Continued use of our services constitutes acceptance of any changes.
+          </p>
+
+          <p className="text-gray-700 mb-4">
+            You are responsible for using our platform in a lawful and ethical manner. Any misuse or violation of these terms may result in suspension or termination of your account.
+          </p>
+
+          <p className="text-gray-700 mb-4">
+            For any questions regarding these terms, please contact our support team via email or phone.
+          </p>
+
+          <p className="text-gray-700">
+            Thank you for choosing our platform. By using our services, you acknowledge that you have read and agreed to these terms and conditions.
+          </p>
+        </div>
       </div>
     </div>
   );

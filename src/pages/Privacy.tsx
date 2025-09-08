@@ -21,17 +21,32 @@ export default function Privacy({ setCurrentView }: PrivacyProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 max-w-4xl mx-auto">
-        <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4">Your Privacy Matters</h2>
-        <p className="text-gray-700 mb-4">
-          We respect your privacy and are committed to protecting your personal information. Your data is used solely for providing and improving our services.
-        </p>
-        <p className="text-gray-700 mb-4">
-          This privacy policy outlines how we collect, use, and safeguard your data when you interact with our platform.
-        </p>
-        <p className="text-gray-700 mb-4">
-          For more details, you can reach out to our support team anytime.
-        </p>
+      <div className="flex-1 flex justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-4xl w-full">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
+            Your Privacy Matters
+          </h2>
+
+          <p className="text-gray-700 mb-4">
+            We respect your privacy and are committed to protecting your personal information. Your data is used solely for providing and improving our services.
+          </p>
+
+          <p className="text-gray-700 mb-4">
+            This privacy policy outlines how we collect, use, and safeguard your data when you interact with our platform.
+          </p>
+
+          <p className="text-gray-700 mb-4">
+            We collect minimal personal information necessary for our services, including your name, email, and usage data. All information is stored securely and never shared with unauthorized parties.
+          </p>
+
+          <p className="text-gray-700 mb-4">
+            You have the right to access, update, or delete your personal information at any time. Please contact our support team for assistance.
+          </p>
+
+          <p className="text-gray-700">
+            For more details, you can reach out to our support team anytime via email or phone.
+          </p>
+        </div>
       </div>
     </div>
   );
