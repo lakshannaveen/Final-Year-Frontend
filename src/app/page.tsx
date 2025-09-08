@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Navbar from "../components/Navbar";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
 import SignIn from "../pages/Signin";
@@ -16,13 +15,13 @@ export default function Index() {
   const renderContent = () => {
     switch (currentView) {
       case "home":
-        return <Home />;
+        return <Home setCurrentView={setCurrentView} />;
       case "register":
         return <Register setCurrentView={setCurrentView} />;
       case "signin":
         return <SignIn setCurrentView={setCurrentView} />;
       case "privacy":
-        return <Privacy />;
+        return <Privacy setCurrentView={setCurrentView} />;
       case "terms":
         return <Terms />;
       case "contact":
@@ -30,16 +29,12 @@ export default function Index() {
       case "feedback":
         return <Feedback />;
       default:
-        return <Home />;
+        return <Home setCurrentView={setCurrentView} />;
     }
   };
 
   return (
     <div>
-      {/* Hide Navbar on Register & SignIn */}
-      {currentView !== "register" && currentView !== "signin" && (
-        <Navbar currentView={currentView} setCurrentView={setCurrentView} />
-      )}
       {renderContent()}
     </div>
   );

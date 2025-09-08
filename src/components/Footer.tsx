@@ -1,13 +1,16 @@
 "use client";
 import React from "react";
 import { Briefcase, Facebook, Youtube, Instagram, Phone } from "lucide-react";
-import Link from "next/link";
 
-export default function Footer() {
+interface FooterProps {
+  setCurrentView: (view: string) => void;
+}
+
+export default function Footer({ setCurrentView }: FooterProps) {
   return (
     <footer className="bg-gradient-to-r from-green-700 to-emerald-700 text-white mt-12">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-
+      <div className="max-w-full mx-auto px-6 py-8 overflow-hidden">
+        
         {/* Top Row */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           
@@ -21,18 +24,30 @@ export default function Footer() {
           {/* Center: Pages in Grid Layout */}
           <div className="flex justify-center mt-4 md:mt-8">
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-center text-sm md:text-sm">
-              <Link href="/Privacy" className="hover:text-green-200 transition-colors">
+              <button 
+                onClick={() => setCurrentView("privacy")} 
+                className="hover:text-green-200 transition-colors cursor-pointer"
+              >
                 Privacy Policy
-              </Link>
-              <Link href="/Terms" className="hover:text-green-200 transition-colors">
+              </button>
+              <button 
+                onClick={() => setCurrentView("terms")} 
+                className="hover:text-green-200 transition-colors cursor-pointer"
+              >
                 Terms & Conditions
-              </Link>
-              <Link href="/Contact" className="hover:text-green-200 transition-colors">
+              </button>
+              <button 
+                onClick={() => setCurrentView("contact")} 
+                className="hover:text-green-200 transition-colors cursor-pointer"
+              >
                 Contact Us
-              </Link>
-              <Link href="/Feedback" className="hover:text-green-200 transition-colors">
+              </button>
+              <button 
+                onClick={() => setCurrentView("feedback")} 
+                className="hover:text-green-200 transition-colors cursor-pointer"
+              >
                 Feedback
-              </Link>
+              </button>
             </div>
           </div>
 

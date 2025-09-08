@@ -1,19 +1,25 @@
 "use client";
 
+import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-export default function Home() {
+interface HomeProps {
+  setCurrentView: (view: string) => void;
+}
+
+export default function Home({ setCurrentView }: HomeProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-  
-
+      {/* Navbar */}
+      <Navbar currentView="home" setCurrentView={setCurrentView} />
+      
       {/* Main Content */}
-      <section className="flex items-center justify-center flex-grow h-screen">
+      <section className="flex items-center justify-center flex-grow">
         <h1 className="text-4xl font-bold text-gray-800">Welcome</h1>
       </section>
-
+      
       {/* Footer */}
-      <Footer />
+      <Footer setCurrentView={setCurrentView} />
     </div>
   );
 }
