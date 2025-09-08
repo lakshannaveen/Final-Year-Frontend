@@ -23,11 +23,11 @@ export default function Index() {
       case "privacy":
         return <Privacy setCurrentView={setCurrentView} />;
       case "terms":
-        return <Terms />;
+        return <Terms setCurrentView={setCurrentView} />;
       case "contact":
-        return <Contact />;
+        return <Contact setCurrentView={setCurrentView} />;
       case "feedback":
-        return <Feedback />;
+        return <Feedback setCurrentView={setCurrentView} />;
       default:
         return <Home setCurrentView={setCurrentView} />;
     }
