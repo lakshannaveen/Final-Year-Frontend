@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Briefcase, Menu, X, User } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
+import Image from "next/image";
 
 interface NavbarProps {
   currentView: string;
@@ -22,12 +23,16 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
         {/* Left: Logo */}
         <button
           onClick={() => handleNavClick("home")}
-          className="text-2xl font-bold tracking-wide flex items-center gap-2 hover:opacity-90 transition"
+          className="flex items-center gap-2 hover:opacity-90 transition"
         >
-          <div className="bg-white text-green-700 rounded-lg p-1">
-            <Briefcase size={22} />
-          </div>
-          <span>Doop</span>
+          <Image
+            src="/logo.png" // ✅ place logo.png inside /public folder
+            alt="Logo"
+            width={40}  // adjust size
+            height={40} // adjust size
+            className="rounded-lg"
+          />
+          <span className="text-2xl font-bold tracking-wide">Doop</span>
         </button>
 
         {/* Desktop Menu */}
@@ -82,7 +87,6 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
       {/* Mobile Dropdown */}
       {menuOpen && (
         <div className="md:hidden bg-gradient-to-b from-green-800 to-emerald-700 text-white flex flex-col gap-4 px-6 py-6 border-t border-green-600">
-          {/* Text links */}
           <button
             onClick={() => handleNavClick("home")}
             className={`font-medium text-lg text-center ${
@@ -104,7 +108,6 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
             Profile
           </button>
 
-          {/* Sign In Button */}
           <button
             onClick={() => handleNavClick("signin")}
             className={`px-4 py-2 rounded-lg font-semibold text-center transition-all border ${
@@ -116,7 +119,6 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
             Sign In
           </button>
 
-          {/* Register Button */}
           <button
             onClick={() => handleNavClick("register")}
             className={`px-4 py-2 rounded-lg border-2 font-semibold text-center transition-all ${
