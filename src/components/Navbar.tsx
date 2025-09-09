@@ -26,10 +26,10 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           className="flex items-center gap-2 hover:opacity-90 transition"
         >
           <Image
-            src="/logo.png" // ✅ place logo.png inside /public folder
+            src="/logo.png" // ✅ from public/logo.png
             alt="Logo"
-            width={40}  // adjust size
-            height={40} // adjust size
+            width={40}
+            height={40}
             className="rounded-lg"
           />
           <span className="text-2xl font-bold tracking-wide">Doop</span>

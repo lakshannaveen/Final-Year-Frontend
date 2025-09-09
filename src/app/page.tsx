@@ -8,6 +8,7 @@ import Privacy from "../pages/Privacy";
 import Terms from "../pages/Terms";
 import Contact from "../pages/Contact";
 import Feedback from "../pages/Feedback";
+import Profile from "../pages/Profile"; 
 
 export default function Index() {
   const [currentView, setCurrentView] = useState("home");
@@ -28,14 +29,12 @@ export default function Index() {
         return <Contact setCurrentView={setCurrentView} />;
       case "feedback":
         return <Feedback setCurrentView={setCurrentView} />;
+      case "profile":
+        return <Profile setCurrentView={setCurrentView} />; // ✅ added
       default:
         return <Home setCurrentView={setCurrentView} />;
     }
   };
 
-  return (
-    <div>
-      {renderContent()}
-    </div>
-  );
+  return <div>{renderContent()}</div>;
 }
