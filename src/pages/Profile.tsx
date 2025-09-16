@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useEffect as useEffectReact } from "react";
 import { ArrowLeft, Share, Edit3, Camera, Image as ImageIcon, X, Globe, Phone, Link as LinkIcon } from "lucide-react";
 
 interface UserProfile {
@@ -41,6 +41,17 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const fileInputPic = useRef<HTMLInputElement>(null);
   const fileInputCover = useRef<HTMLInputElement>(null);
 
+  // Keep track of object URLs to revoke and avoid memory leaks
+  const objectUrlRef = useRef<string | null>(null);
+  const coverObjectUrlRef = useRef<string | null>(null);
+
+  const revokeObjectUrl = (ref: React.MutableRefObject<string | null>) => {
+    if (ref.current) {
+      URL.revokeObjectURL(ref.current);
+      ref.current = null;
+    }
+  };
+
   // Helper to get first letter
   const getInitial = (name = "") => name.charAt(0).toUpperCase();
 
@@ -69,6 +80,12 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       setLoading(false);
     };
     fetchProfile();
+
+    return () => {
+      // cleanup object URLs on unmount
+      revokeObjectUrl(objectUrlRef);
+      revokeObjectUrl(coverObjectUrlRef);
+    };
   }, []);
 
   // Preview image uploads
@@ -76,7 +93,11 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     const file = e.target.files?.[0];
     if (file) {
       setProfilePic(file);
-      setPreviewPic(URL.createObjectURL(file));
+      // Revoke previous preview URL
+      revokeObjectUrl(objectUrlRef);
+      const url = URL.createObjectURL(file);
+      objectUrlRef.current = url;
+      setPreviewPic(url);
     }
   };
 
@@ -84,7 +105,11 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     const file = e.target.files?.[0];
     if (file) {
       setCoverImage(file);
-      setPreviewCover(URL.createObjectURL(file));
+      // Revoke previous preview URL
+      revokeObjectUrl(coverObjectUrlRef);
+      const url = URL.createObjectURL(file);
+      coverObjectUrlRef.current = url;
+      setPreviewCover(url);
     }
   };
 
@@ -92,25 +117,29 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const uploadImageToB2 = async (file: File): Promise<string> => {
     setUploading(true);
     const formData = new FormData();
-    formData.append('image', file);
-    
+    formData.append("image", file);
+
     try {
       const response = await fetch(`${API_URL}/api/profile/upload`, {
-        method: 'POST',
-        credentials: 'include',
+        method: "POST",
+        credentials: "include",
         body: formData,
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setUploading(false);
         return data.imageUrl;
       }
-      throw new Error('Upload failed');
-    } catch (error) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.errors?.server || "Upload failed");
+    } catch (error: unknown) {
       setUploading(false);
-      console.error('Upload error:', error);
-      throw new Error('Failed to upload image');
+      console.error("Upload error:", error);
+      if (error instanceof Error) {
+        throw new Error(error.message || "Failed to upload image");
+      }
+      throw new Error("Failed to upload image");
     }
   };
 
@@ -122,12 +151,12 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     try {
       let profilePicUrl = profile?.profilePic || "";
       let coverImageUrl = profile?.coverImage || "";
-      
+
       // Upload new images if they exist
       if (profilePic) {
         profilePicUrl = await uploadImageToB2(profilePic);
       }
-      
+
       if (coverImage && profile?.serviceType === "posting") {
         coverImageUrl = await uploadImageToB2(coverImage);
       }
@@ -144,13 +173,22 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           coverImage: profile?.serviceType === "posting" ? coverImageUrl : undefined,
         }),
       });
-      
+
       const data = await res.json();
       if (res.ok) {
+        // Update state from server
         setProfile(data.user);
         setEditMode(false);
         setProfilePic(null);
         setCoverImage(null);
+
+        // IMPORTANT: ensure previews reflect the saved URLs
+        // Revoke any temporary object URLs and set previews to the permanent URLs
+        revokeObjectUrl(objectUrlRef);
+        revokeObjectUrl(coverObjectUrlRef);
+        setPreviewPic(data.user.profilePic || "");
+        setPreviewCover(data.user.coverImage || "");
+
         setSuccess("Profile updated successfully!");
         setTimeout(() => setSuccess(""), 3000);
       } else {
@@ -176,10 +214,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           url: window.location.href,
         });
       } catch (err) {
-        console.log('Error sharing:', err);
+        console.log("Error sharing:", err);
       }
     } else {
-      // Fallback for browsers that don't support Web Share API
       navigator.clipboard.writeText(window.location.href);
       setSuccess("Profile link copied to clipboard!");
       setTimeout(() => setSuccess(""), 3000);
@@ -191,7 +228,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const validateWebsite = (url: string) => {
     if (!url) return true;
     try {
-      new URL(url.startsWith('http') ? url : `https://${url}`);
+      new URL(url.startsWith("http") ? url : `https://${url}`);
       return true;
     } catch {
       return false;
@@ -235,7 +272,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           <ArrowLeft size={20} className="mr-2" />
           Back
         </button>
-        
+
         <div className="relative">
           <button
             onClick={() => setShowShareOptions(!showShareOptions)}
@@ -244,7 +281,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             <Share size={18} className="mr-2" />
             Share
           </button>
-          
+
           {showShareOptions && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-green-200 z-10">
               <button
@@ -286,7 +323,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 <ImageIcon size={48} />
               </div>
             )}
-            
+
             {editMode && (
               <button
                 className="absolute right-4 bottom-4 px-4 py-2 bg-white bg-opacity-90 text-green-700 rounded-lg shadow text-sm font-semibold hover:bg-green-100 transition flex items-center"
@@ -296,7 +333,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 Change Cover
               </button>
             )}
-            
+
             <input
               type="file"
               accept="image/*"
@@ -306,9 +343,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             />
           </div>
         )}
-        
+
         {/* Card Content */}
-        <div className={`flex flex-col items-center ${isPostingAccount ? '-mt-20 sm:-mt-24' : 'pt-8'} pb-8 px-6 sm:px-8`}>
+        <div className={`flex flex-col items-center ${isPostingAccount ? "-mt-20 sm:-mt-24" : "pt-8"} pb-8 px-6 sm:px-8`}>
           {/* Avatar */}
           <div className="relative mb-4">
             <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
@@ -324,7 +361,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 </div>
               )}
             </div>
-            
+
             {editMode && (
               <button
                 className="absolute right-0 bottom-0 px-3 py-2 bg-white bg-opacity-90 text-green-700 rounded-full shadow text-sm font-semibold hover:bg-green-100 transition flex items-center"
@@ -333,7 +370,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 <Camera size={16} />
               </button>
             )}
-            
+
             <input
               type="file"
               accept="image/*"
@@ -345,13 +382,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
           {/* Info */}
           <div className="w-full text-center mb-6">
-            <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">
-              {profile.username}
-            </h1>
-            <p className="text-gray-600 text-lg break-all mb-4">
-              {profile.email}
-            </p>
-            
+            <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">{profile.username}</h1>
+            <p className="text-gray-600 text-lg break-all mb-4">{profile.email}</p>
+
             <div className="flex justify-center flex-wrap gap-3 mb-4">
               <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">
                 {isPostingAccount ? "💼 Service Provider" : "🔍 Looking for Services"}
@@ -369,13 +402,15 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 </span>
               )}
             </div>
-            
+
             <p className="text-gray-500 text-sm">
-              Joined: {profile.createdAt && new Date(profile.createdAt).toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
+              Joined:{" "}
+              {profile.createdAt &&
+                new Date(profile.createdAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
             </p>
           </div>
 
@@ -395,7 +430,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                   placeholder="Enter phone number"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-green-800 font-semibold mb-2 flex items-center">
                   <LinkIcon size={16} className="mr-2" />
@@ -429,8 +464,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 {profile.website && (
                   <div className="flex items-center">
                     <Globe size={16} className="text-green-700 mr-2" />
-                    <a 
-                      href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
+                    <a
+                      href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline break-all"
@@ -446,9 +481,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           {/* Bio */}
           <div className="w-full max-w-lg mb-8">
             <div className="flex items-center justify-between mb-3">
-              <label className="block text-green-800 font-semibold text-lg">
-                About Me
-              </label>
+              <label className="block text-green-800 font-semibold text-lg">About Me</label>
               {!editMode && (
                 <button
                   onClick={() => setEditMode(true)}
@@ -459,11 +492,11 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 </button>
               )}
             </div>
-            
+
             {editMode ? (
               <textarea
                 value={bio}
-                onChange={e => setBio(e.target.value)}
+                onChange={(e) => setBio(e.target.value)}
                 rows={4}
                 className="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-400 resize-none text-gray-800"
                 placeholder="Tell others about yourself, your skills, or what you're looking for..."
@@ -497,11 +530,14 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                     "Save Changes"
                   )}
                 </button>
-                
+
                 <button
                   className="px-6 py-3 bg-gray-100 text-green-700 rounded-lg font-semibold hover:bg-gray-200 shadow transition flex items-center"
                   onClick={() => {
                     setEditMode(false);
+                    // Reset previews to the last saved values
+                    revokeObjectUrl(objectUrlRef);
+                    revokeObjectUrl(coverObjectUrlRef);
                     setPreviewPic(profile.profilePic || "");
                     setPreviewCover(profile.coverImage || "");
                     setBio(profile.bio || "");
@@ -526,14 +562,14 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               </button>
             )}
           </div>
-          
+
           {/* Success/Error Messages */}
           {success && (
             <div className="mt-6 p-4 bg-green-100 text-green-800 rounded-lg text-center w-full max-w-md border border-green-200">
               {success}
             </div>
           )}
-          
+
           {error && (
             <div className="mt-6 p-4 bg-red-100 text-red-800 rounded-lg text-center w-full max-w-md border border-red-200">
               {error}
