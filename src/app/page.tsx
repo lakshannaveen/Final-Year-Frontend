@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { AuthProvider } from "../components/AuthContext";
-import Navbar from "../components/Navbar";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
 import SignIn from "../pages/Signin";
@@ -10,7 +9,7 @@ import Privacy from "../pages/Privacy";
 import Terms from "../pages/Terms";
 import Contact from "../pages/Contact";
 import Feedback from "../pages/Feedback";
-import Profile from "../pages/Profile"; 
+import Profile from "../pages/Profile";
 
 export default function Index() {
   const [currentView, setCurrentView] = useState("home");
@@ -40,12 +39,7 @@ export default function Index() {
 
   return (
     <AuthProvider>
-      <div className="min-h-screen flex flex-col">
-        <Navbar currentView={currentView} setCurrentView={setCurrentView} />
-        <main className="flex-grow">
-          {renderContent()}
-        </main>
-      </div>
+      {renderContent()}
     </AuthProvider>
   );
 }
