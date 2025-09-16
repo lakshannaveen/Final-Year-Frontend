@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
+import { ArrowLeft, Share, Edit3, Camera, Image as ImageIcon, X } from "lucide-react";
 
 interface UserProfile {
   username: string;
@@ -29,6 +30,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const [previewCover, setPreviewCover] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showShareOptions, setShowShareOptions] = useState(false);
 
   const fileInputPic = useRef<HTMLInputElement>(null);
   const fileInputCover = useRef<HTMLInputElement>(null);
@@ -78,12 +80,14 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     }
   };
 
-  // Upload image to server or cloud storage (replace this with actual upload logic!)
+  // Upload image to server or cloud storage
   const uploadImage = async (file: File): Promise<string> => {
-    // Here, integrate with your server/cloud (e.g. Cloudinary, S3)
-    // For demo, return a placeholder
+    // Simulate upload - replace with actual API call
     return new Promise((resolve) => {
-      setTimeout(() => resolve(previewPic || previewCover), 1000);
+      setTimeout(() => {
+        // In a real app, you would return the URL from your server
+        resolve(URL.createObjectURL(file));
+      }, 1000);
     });
   };
 
@@ -95,6 +99,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     try {
       let profilePicUrl = previewPic;
       let coverImageUrl = previewCover;
+      
       if (profilePic) profilePicUrl = await uploadImage(profilePic);
       if (coverImage) coverImageUrl = await uploadImage(coverImage);
 
@@ -108,11 +113,13 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           coverImage: coverImageUrl,
         }),
       });
+      
       const data = await res.json();
       if (res.ok) {
         setProfile(data.user);
         setEditMode(false);
-        setSuccess("Profile updated!");
+        setSuccess("Profile updated successfully!");
+        setTimeout(() => setSuccess(""), 3000);
       } else {
         setError(data.errors?.server || "Failed to update profile.");
       }
@@ -122,10 +129,31 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     setLoading(false);
   };
 
+  // Share profile function
+  const shareProfile = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${profile?.username}'s Profile`,
+          text: `Check out ${profile?.username}'s profile on Doop!`,
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      navigator.clipboard.writeText(window.location.href);
+      setSuccess("Profile link copied to clipboard!");
+      setTimeout(() => setSuccess(""), 3000);
+    }
+    setShowShareOptions(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100">
-        <p className="text-lg text-green-700 font-semibold">Loading profile...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-700"></div>
       </div>
     );
   }
@@ -133,17 +161,70 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   if (error || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100">
-        <p className="text-lg text-red-700 font-semibold">{error || "No profile data found."}</p>
+        <div className="text-center">
+          <p className="text-lg text-red-700 font-semibold mb-4">{error || "No profile data found."}</p>
+          <button
+            onClick={() => setCurrentView("home")}
+            className="px-4 py-2 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-800 transition"
+          >
+            Back to Home
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 to-emerald-100 px-3">
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-green-100 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
+      {/* Header with Back Button and Share */}
+      <div className="max-w-2xl mx-auto mb-6 flex justify-between items-center">
+        <button
+          onClick={() => setCurrentView("home")}
+          className="flex items-center text-green-700 font-semibold hover:text-green-800 transition-colors px-4 py-2 rounded-lg hover:bg-green-100"
+        >
+          <ArrowLeft size={20} className="mr-2" />
+          Back
+        </button>
+        
+        <div className="relative">
+          <button
+            onClick={() => setShowShareOptions(!showShareOptions)}
+            className="flex items-center bg-green-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-800 transition"
+          >
+            <Share size={18} className="mr-2" />
+            Share
+          </button>
+          
+          {showShareOptions && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-green-200 z-10">
+              <button
+                onClick={shareProfile}
+                className="w-full text-left px-4 py-3 text-green-700 hover:bg-green-50 rounded-t-lg flex items-center"
+              >
+                <Share size={16} className="mr-2" />
+                Share via...
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setSuccess("Profile link copied to clipboard!");
+                  setShowShareOptions(false);
+                  setTimeout(() => setSuccess(""), 3000);
+                }}
+                className="w-full text-left px-4 py-3 text-green-700 hover:bg-green-50 rounded-b-lg flex items-center"
+              >
+                <ImageIcon size={16} className="mr-2" />
+                Copy Link
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden">
         {/* Cover Image */}
-        <div className="relative h-44 sm:h-56 bg-gradient-to-r from-green-200 to-emerald-200">
-          {profile.coverImage || previewCover ? (
+        <div className="relative h-48 sm:h-56 bg-gradient-to-r from-green-200 to-emerald-200">
+          {previewCover || profile.coverImage ? (
             <img
               src={previewCover || profile.coverImage}
               alt="Cover"
@@ -151,17 +232,20 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-6xl text-green-700 font-bold opacity-20">
-              +
+              <ImageIcon size={48} />
             </div>
           )}
+          
           {editMode && (
             <button
-              className="absolute right-4 bottom-4 px-3 py-1 bg-white bg-opacity-90 text-green-700 rounded shadow text-xs font-semibold hover:bg-green-100 transition"
+              className="absolute right-4 bottom-4 px-4 py-2 bg-white bg-opacity-90 text-green-700 rounded-lg shadow text-sm font-semibold hover:bg-green-100 transition flex items-center"
               onClick={() => fileInputCover.current?.click()}
             >
+              <Camera size={16} className="mr-2" />
               Change Cover
             </button>
           )}
+          
           <input
             type="file"
             accept="image/*"
@@ -170,29 +254,34 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             onChange={handleCoverChange}
           />
         </div>
+        
         {/* Card Content */}
-        <div className="flex flex-col items-center -mt-16 sm:-mt-20 pb-8 px-4 sm:px-8">
+        <div className="flex flex-col items-center -mt-20 sm:-mt-24 pb-8 px-6 sm:px-8">
           {/* Avatar */}
-          <div className="relative mb-2">
-            {profile.profilePic || previewPic ? (
-              <img
-                src={previewPic || profile.profilePic}
-                alt="Profile"
-                className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg object-cover bg-white"
-              />
-            ) : (
-              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-green-400 to-emerald-400 border-4 border-white flex items-center justify-center text-6xl font-bold text-white shadow-lg">
-                {getInitial(profile.username)}
-              </div>
-            )}
+          <div className="relative mb-4">
+            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
+              {previewPic || profile.profilePic ? (
+                <img
+                  src={previewPic || profile.profilePic}
+                  alt="Profile"
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-green-400 to-emerald-400 flex items-center justify-center text-6xl font-bold text-white">
+                  {getInitial(profile.username)}
+                </div>
+              )}
+            </div>
+            
             {editMode && (
               <button
-                className="absolute right-2 bottom-2 px-3 py-1 bg-white bg-opacity-90 text-green-700 rounded shadow text-xs font-semibold hover:bg-green-100 transition"
+                className="absolute right-0 bottom-0 px-3 py-2 bg-white bg-opacity-90 text-green-700 rounded-full shadow text-sm font-semibold hover:bg-green-100 transition flex items-center"
                 onClick={() => fileInputPic.current?.click()}
               >
-                Change Photo
+                <Camera size={16} />
               </button>
             )}
+            
             <input
               type="file"
               accept="image/*"
@@ -203,78 +292,116 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           </div>
 
           {/* Info */}
-          <div className="w-full text-center">
-            <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-green-700 break-words">{profile.username}</h1>
-            <p className="text-gray-600 text-sm sm:text-base break-all">{profile.email}</p>
-            <div className="mt-2 flex justify-center flex-wrap gap-2">
-              <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-semibold text-xs sm:text-sm">
-                {profile.serviceType === "finding" ? "Finding a Service" : "Posting a Service"}
+          <div className="w-full text-center mb-6">
+            <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">
+              {profile.username}
+            </h1>
+            <p className="text-gray-600 text-lg break-all mb-4">
+              {profile.email}
+            </p>
+            
+            <div className="flex justify-center flex-wrap gap-3 mb-4">
+              <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">
+                {profile.serviceType === "finding" ? "🔍 Finding Services" : "💼 Offering Services"}
               </span>
               {profile.phone && (
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full font-semibold text-xs sm:text-sm">
-                  {profile.phone}
+                <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold text-sm">
+                  📞 {profile.phone}
                 </span>
               )}
             </div>
-            <p className="mt-1 text-gray-400 text-xs sm:text-sm">
-              Joined: {profile.createdAt && new Date(profile.createdAt).toLocaleDateString()}
+            
+            <p className="text-gray-500 text-sm">
+              Joined: {profile.createdAt && new Date(profile.createdAt).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
             </p>
           </div>
 
           {/* Bio */}
-          <div className="mt-6 w-full max-w-lg">
-            <label className="block text-green-700 font-semibold mb-1 text-left">Bio</label>
+          <div className="w-full max-w-lg mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-green-800 font-semibold text-lg">
+                About Me
+              </label>
+              {!editMode && (
+                <button
+                  onClick={() => setEditMode(true)}
+                  className="text-green-700 hover:text-green-900 flex items-center text-sm"
+                >
+                  <Edit3 size={16} className="mr-1" />
+                  Edit
+                </button>
+              )}
+            </div>
+            
             {editMode ? (
               <textarea
                 value={bio}
                 onChange={e => setBio(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 resize-none text-black"
-                placeholder="Write something about yourself..."
+                rows={4}
+                className="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-400 resize-none text-gray-800"
+                placeholder="Tell others about yourself, your skills, or what you're looking for..."
               />
             ) : (
-              <div className="bg-green-50 text-gray-700 px-4 py-2 rounded-lg min-h-[40px] break-words border border-green-100">
-                {profile.bio || <span className="text-gray-400">No bio added yet.</span>}
+              <div className="bg-green-50 text-gray-800 px-5 py-4 rounded-lg border border-green-100 min-h-[120px]">
+                {profile.bio ? (
+                  <p className="leading-relaxed">{profile.bio}</p>
+                ) : (
+                  <p className="text-gray-500 italic">No bio added yet. Click edit to add one!</p>
+                )}
               </div>
             )}
           </div>
 
-          {/* Buttons */}
-          <div className="mt-7 flex gap-3 flex-wrap justify-center">
-            {editMode ? (
-              <>
-                <button
-                  className="px-6 py-2 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition"
-                  onClick={handleSave}
-                  disabled={loading}
-                >
-                  {loading ? "Saving..." : "Save"}
-                </button>
-                <button
-                  className="px-6 py-2 bg-gray-100 text-green-700 rounded font-semibold hover:bg-gray-200 shadow transition"
-                  onClick={() => setEditMode(false)}
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
+          {/* Action Buttons */}
+          {editMode && (
+            <div className="flex gap-4 flex-wrap justify-center w-full max-w-md">
               <button
-                className="px-6 py-2 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition"
-                onClick={() => setEditMode(true)}
+                className="px-6 py-3 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition disabled:opacity-70 flex items-center"
+                onClick={handleSave}
+                disabled={loading}
               >
-                Edit Profile
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </button>
-            )}
-            <button
-              className="px-6 py-2 bg-white text-green-700 rounded font-semibold hover:bg-green-50 shadow border border-green-700 transition"
-              onClick={() => setCurrentView("home")}
-            >
-              Back to Home
-            </button>
-          </div>
-          {success && <p className="mt-5 text-green-700 font-semibold text-center">{success}</p>}
-          {error && <p className="mt-5 text-red-700 font-semibold text-center">{error}</p>}
+              
+              <button
+                className="px-6 py-3 bg-gray-100 text-green-700 rounded-lg font-semibold hover:bg-gray-200 shadow transition flex items-center"
+                onClick={() => {
+                  setEditMode(false);
+                  setPreviewPic(profile.profilePic || "");
+                  setPreviewCover(profile.coverImage || "");
+                  setBio(profile.bio || "");
+                }}
+                disabled={loading}
+              >
+                <X size={18} className="mr-2" />
+                Cancel
+              </button>
+            </div>
+          )}
+          
+          {/* Success/Error Messages */}
+          {success && (
+            <div className="mt-6 p-4 bg-green-100 text-green-800 rounded-lg text-center w-full max-w-md border border-green-200">
+              {success}
+            </div>
+          )}
+          
+          {error && (
+            <div className="mt-6 p-4 bg-red-100 text-red-800 rounded-lg text-center w-full max-w-md border border-red-200">
+              {error}
+            </div>
+          )}
         </div>
       </div>
     </div>
