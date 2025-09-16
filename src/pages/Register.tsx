@@ -113,7 +113,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
         }
       }
     } catch (err) {
-      setModal({ type: "error", message: "Error connecting to server." });
+      setModal({ type: "error", message: `Error connecting to server: ${err instanceof Error ? err.message : 'Unknown error'}` });
     }
     
     setLoading(false);

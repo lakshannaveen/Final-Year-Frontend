@@ -77,8 +77,9 @@ export default function SignIn({ setCurrentView }: SignInProps) {
           setErrors({ ...errors, ...data.errors });
         }
       }
-    } catch (err) {
-      setModal({ type: "error", message: "Error connecting to server." });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setModal({ type: "error", message: `Error connecting to server: ${errorMessage}` });
     }
     
     setLoading(false);
