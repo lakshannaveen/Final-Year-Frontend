@@ -204,6 +204,21 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     setLoading(false);
   };
 
+  const handleCancel = () => {
+    setEditMode(false);
+    // Reset previews to the last saved values
+    revokeObjectUrl(objectUrlRef);
+    revokeObjectUrl(coverObjectUrlRef);
+    setPreviewPic(profile?.profilePic || "");
+    setPreviewCover(profile?.coverImage || "");
+    setBio(profile?.bio || "");
+    setPhone(profile?.phone || "");
+    setWebsite(profile?.website || "");
+    setProfilePic(null);
+    setCoverImage(null);
+    setShowShareOptions(false);
+  };
+
   // Share profile function
   const shareProfile = async () => {
     if (navigator.share) {
@@ -263,7 +278,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
-      {/* Header with Back Button and Share */}
+      {/* Header with Back Button and Actions (Share or Save/Cancel in edit mode) */}
       <div className="max-w-2xl mx-auto mb-6 flex justify-between items-center">
         <button
           onClick={() => setCurrentView("home")}
@@ -274,36 +289,65 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         </button>
 
         <div className="relative">
-          <button
-            onClick={() => setShowShareOptions(!showShareOptions)}
-            className="flex items-center bg-green-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-800 transition"
-          >
-            <Share size={18} className="mr-2" />
-            Share
-          </button>
-
-          {showShareOptions && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-green-200 z-10">
+          {editMode ? (
+            <div className="flex items-center gap-3">
               <button
-                onClick={shareProfile}
-                className="w-full text-left px-4 py-3 text-green-700 hover:bg-green-50 rounded-t-lg flex items-center"
+                className="px-4 py-2 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition disabled:opacity-70 flex items-center"
+                onClick={handleSave}
+                disabled={loading || uploading || (!!website && !validateWebsite(website))}
               >
-                <Share size={16} className="mr-2" />
-                Share via...
+                {loading || uploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    {uploading ? "Uploading..." : "Saving..."}
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </button>
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  setSuccess("Profile link copied to clipboard!");
-                  setShowShareOptions(false);
-                  setTimeout(() => setSuccess(""), 3000);
-                }}
-                className="w-full text-left px-4 py-3 text-green-700 hover:bg-green-50 rounded-b-lg flex items-center"
+                className="px-4 py-2 bg-gray-100 text-green-700 rounded-lg font-semibold hover:bg-gray-200 shadow transition flex items-center"
+                onClick={handleCancel}
+                disabled={loading || uploading}
               >
-                <ImageIcon size={16} className="mr-2" />
-                Copy Link
+                <X size={16} className="mr-2" />
+                Cancel
               </button>
             </div>
+          ) : (
+            <>
+              <button
+                onClick={() => setShowShareOptions(!showShareOptions)}
+                className="flex items-center bg-green-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-800 transition"
+              >
+                <Share size={18} className="mr-2" />
+                Share
+              </button>
+
+              {showShareOptions && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-green-200 z-10">
+                  <button
+                    onClick={shareProfile}
+                    className="w-full text-left px-4 py-3 text-green-700 hover:bg-green-50 rounded-t-lg flex items-center"
+                  >
+                    <Share size={16} className="mr-2" />
+                    Share via...
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      setSuccess("Profile link copied to clipboard!");
+                      setShowShareOptions(false);
+                      setTimeout(() => setSuccess(""), 3000);
+                    }}
+                    className="w-full text-left px-4 py-3 text-green-700 hover:bg-green-50 rounded-b-lg flex items-center"
+                  >
+                    <ImageIcon size={16} className="mr-2" />
+                    Copy Link
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -484,7 +528,10 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               <label className="block text-green-800 font-semibold text-lg">About Me</label>
               {!editMode && (
                 <button
-                  onClick={() => setEditMode(true)}
+                  onClick={() => {
+                    setEditMode(true);
+                    setShowShareOptions(false);
+                  }}
                   className="text-green-700 hover:text-green-900 flex items-center text-sm"
                 >
                   <Edit3 size={16} className="mr-1" />
@@ -512,7 +559,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             )}
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons (bottom) */}
           <div className="flex gap-4 flex-wrap justify-center w-full max-w-md">
             {editMode ? (
               <>
@@ -533,19 +580,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
                 <button
                   className="px-6 py-3 bg-gray-100 text-green-700 rounded-lg font-semibold hover:bg-gray-200 shadow transition flex items-center"
-                  onClick={() => {
-                    setEditMode(false);
-                    // Reset previews to the last saved values
-                    revokeObjectUrl(objectUrlRef);
-                    revokeObjectUrl(coverObjectUrlRef);
-                    setPreviewPic(profile.profilePic || "");
-                    setPreviewCover(profile.coverImage || "");
-                    setBio(profile.bio || "");
-                    setPhone(profile.phone || "");
-                    setWebsite(profile.website || "");
-                    setProfilePic(null);
-                    setCoverImage(null);
-                  }}
+                  onClick={handleCancel}
                   disabled={loading || uploading}
                 >
                   <X size={18} className="mr-2" />
@@ -555,7 +590,10 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             ) : (
               <button
                 className="px-6 py-3 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition flex items-center"
-                onClick={() => setEditMode(true)}
+                onClick={() => {
+                  setEditMode(true);
+                  setShowShareOptions(false);
+                }}
               >
                 <Edit3 size={18} className="mr-2" />
                 Edit Profile
