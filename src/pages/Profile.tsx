@@ -1,8 +1,10 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState, useRef } from "react";
 import { ArrowLeft, Share, Edit3, Camera, Image as ImageIcon, X, Globe, Phone, Link as LinkIcon } from "lucide-react";
 
 interface UserProfile {
+  _id: string;
   username: string;
   email: string;
   phone?: string;
@@ -34,6 +36,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const fileInputPic = useRef<HTMLInputElement>(null);
   const fileInputCover = useRef<HTMLInputElement>(null);
@@ -60,7 +63,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         } else {
           setError(data.errors?.server || "Failed to fetch profile.");
         }
-      } catch (err) {
+      } catch {
         setError("Error connecting to server.");
       }
       setLoading(false);
@@ -85,14 +88,14 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     }
   };
 
-  // Upload image to server or cloud storage
-  const uploadImage = async (file: File): Promise<string> => {
-    // Simulate upload - replace with actual API call
+  // Upload image to Backblaze B2 via server
+  const uploadImageToB2 = async (file: File): Promise<string> => {
+    setUploading(true);
     const formData = new FormData();
     formData.append('image', file);
     
     try {
-      const response = await fetch(`${API_URL}/api/upload`, {
+      const response = await fetch(`${API_URL}/api/profile/upload`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -100,12 +103,14 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       
       if (response.ok) {
         const data = await response.json();
+        setUploading(false);
         return data.imageUrl;
       }
       throw new Error('Upload failed');
     } catch (error) {
-      // Fallback to object URL for demo purposes
-      return URL.createObjectURL(file);
+      setUploading(false);
+      console.error('Upload error:', error);
+      throw new Error('Failed to upload image');
     }
   };
 
@@ -115,12 +120,16 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     setError("");
     setSuccess("");
     try {
-      let profilePicUrl = previewPic;
-      let coverImageUrl = previewCover;
+      let profilePicUrl = profile?.profilePic || "";
+      let coverImageUrl = profile?.coverImage || "";
       
-      if (profilePic) profilePicUrl = await uploadImage(profilePic);
+      // Upload new images if they exist
+      if (profilePic) {
+        profilePicUrl = await uploadImageToB2(profilePic);
+      }
+      
       if (coverImage && profile?.serviceType === "posting") {
-        coverImageUrl = await uploadImage(coverImage);
+        coverImageUrl = await uploadImageToB2(coverImage);
       }
 
       const res = await fetch(`${API_URL}/api/profile`, {
@@ -140,13 +149,19 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       if (res.ok) {
         setProfile(data.user);
         setEditMode(false);
+        setProfilePic(null);
+        setCoverImage(null);
         setSuccess("Profile updated successfully!");
         setTimeout(() => setSuccess(""), 3000);
       } else {
         setError(data.errors?.server || "Failed to update profile.");
       }
-    } catch (err) {
-      setError("Error connecting to server.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Error connecting to server.");
+      } else {
+        setError("Error connecting to server.");
+      }
     }
     setLoading(false);
   };
@@ -471,12 +486,12 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 <button
                   className="px-6 py-3 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition disabled:opacity-70 flex items-center"
                   onClick={handleSave}
-                  disabled={loading || (website && !validateWebsite(website))}
+                  disabled={loading || uploading || (!!website && !validateWebsite(website))}
                 >
-                  {loading ? (
+                  {loading || uploading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                      Saving...
+                      {uploading ? "Uploading..." : "Saving..."}
                     </>
                   ) : (
                     "Save Changes"
@@ -492,8 +507,10 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                     setBio(profile.bio || "");
                     setPhone(profile.phone || "");
                     setWebsite(profile.website || "");
+                    setProfilePic(null);
+                    setCoverImage(null);
                   }}
-                  disabled={loading}
+                  disabled={loading || uploading}
                 >
                   <X size={18} className="mr-2" />
                   Cancel
