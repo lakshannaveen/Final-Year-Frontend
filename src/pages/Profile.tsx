@@ -1,11 +1,12 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { ArrowLeft, Share, Edit3, Camera, Image as ImageIcon, X } from "lucide-react";
+import { ArrowLeft, Share, Edit3, Camera, Image as ImageIcon, X, Globe, Phone, Link as LinkIcon } from "lucide-react";
 
 interface UserProfile {
   username: string;
   email: string;
   phone?: string;
+  website?: string;
   serviceType: "finding" | "posting";
   createdAt?: string;
   bio?: string;
@@ -24,6 +25,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [bio, setBio] = useState("");
+  const [phone, setPhone] = useState("");
+  const [website, setWebsite] = useState("");
   const [profilePic, setProfilePic] = useState<File | null>(null);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [previewPic, setPreviewPic] = useState("");
@@ -50,6 +53,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         if (res.ok) {
           setProfile(data.user);
           setBio(data.user.bio || "");
+          setPhone(data.user.phone || "");
+          setWebsite(data.user.website || "");
           setPreviewPic(data.user.profilePic || "");
           setPreviewCover(data.user.coverImage || "");
         } else {
@@ -83,12 +88,25 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   // Upload image to server or cloud storage
   const uploadImage = async (file: File): Promise<string> => {
     // Simulate upload - replace with actual API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // In a real app, you would return the URL from your server
-        resolve(URL.createObjectURL(file));
-      }, 1000);
-    });
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    try {
+      const response = await fetch(`${API_URL}/api/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data.imageUrl;
+      }
+      throw new Error('Upload failed');
+    } catch (error) {
+      // Fallback to object URL for demo purposes
+      return URL.createObjectURL(file);
+    }
   };
 
   // Save profile changes
@@ -101,7 +119,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       let coverImageUrl = previewCover;
       
       if (profilePic) profilePicUrl = await uploadImage(profilePic);
-      if (coverImage) coverImageUrl = await uploadImage(coverImage);
+      if (coverImage && profile?.serviceType === "posting") {
+        coverImageUrl = await uploadImage(coverImage);
+      }
 
       const res = await fetch(`${API_URL}/api/profile`, {
         method: "PUT",
@@ -109,8 +129,10 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           bio,
+          phone: profile?.serviceType === "posting" ? phone : undefined,
+          website: profile?.serviceType === "posting" ? website : undefined,
           profilePic: profilePicUrl,
-          coverImage: coverImageUrl,
+          coverImage: profile?.serviceType === "posting" ? coverImageUrl : undefined,
         }),
       });
       
@@ -150,6 +172,17 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     setShowShareOptions(false);
   };
 
+  // Validate website URL format
+  const validateWebsite = (url: string) => {
+    if (!url) return true;
+    try {
+      new URL(url.startsWith('http') ? url : `https://${url}`);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100">
@@ -173,6 +206,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       </div>
     );
   }
+
+  const isPostingAccount = profile.serviceType === "posting";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
@@ -222,41 +257,43 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       </div>
 
       <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden">
-        {/* Cover Image */}
-        <div className="relative h-48 sm:h-56 bg-gradient-to-r from-green-200 to-emerald-200">
-          {previewCover || profile.coverImage ? (
-            <img
-              src={previewCover || profile.coverImage}
-              alt="Cover"
-              className="object-cover w-full h-full"
+        {/* Cover Image - Only for posting accounts */}
+        {isPostingAccount && (
+          <div className="relative h-48 sm:h-56 bg-gradient-to-r from-green-200 to-emerald-200">
+            {previewCover || profile.coverImage ? (
+              <img
+                src={previewCover || profile.coverImage}
+                alt="Cover"
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-6xl text-green-700 font-bold opacity-20">
+                <ImageIcon size={48} />
+              </div>
+            )}
+            
+            {editMode && (
+              <button
+                className="absolute right-4 bottom-4 px-4 py-2 bg-white bg-opacity-90 text-green-700 rounded-lg shadow text-sm font-semibold hover:bg-green-100 transition flex items-center"
+                onClick={() => fileInputCover.current?.click()}
+              >
+                <Camera size={16} className="mr-2" />
+                Change Cover
+              </button>
+            )}
+            
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputCover}
+              style={{ display: "none" }}
+              onChange={handleCoverChange}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-6xl text-green-700 font-bold opacity-20">
-              <ImageIcon size={48} />
-            </div>
-          )}
-          
-          {editMode && (
-            <button
-              className="absolute right-4 bottom-4 px-4 py-2 bg-white bg-opacity-90 text-green-700 rounded-lg shadow text-sm font-semibold hover:bg-green-100 transition flex items-center"
-              onClick={() => fileInputCover.current?.click()}
-            >
-              <Camera size={16} className="mr-2" />
-              Change Cover
-            </button>
-          )}
-          
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputCover}
-            style={{ display: "none" }}
-            onChange={handleCoverChange}
-          />
-        </div>
+          </div>
+        )}
         
         {/* Card Content */}
-        <div className="flex flex-col items-center -mt-20 sm:-mt-24 pb-8 px-6 sm:px-8">
+        <div className={`flex flex-col items-center ${isPostingAccount ? '-mt-20 sm:-mt-24' : 'pt-8'} pb-8 px-6 sm:px-8`}>
           {/* Avatar */}
           <div className="relative mb-4">
             <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
@@ -302,11 +339,18 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             
             <div className="flex justify-center flex-wrap gap-3 mb-4">
               <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">
-                {profile.serviceType === "finding" ? "🔍 Finding Services" : "💼 Offering Services"}
+                {isPostingAccount ? "💼 Service Provider" : "🔍 Looking for Services"}
               </span>
-              {profile.phone && (
-                <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold text-sm">
-                  📞 {profile.phone}
+              {profile.phone && isPostingAccount && (
+                <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold text-sm flex items-center">
+                  <Phone size={14} className="mr-1" />
+                  {profile.phone}
+                </span>
+              )}
+              {profile.website && isPostingAccount && (
+                <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold text-sm flex items-center">
+                  <Globe size={14} className="mr-1" />
+                  Website
                 </span>
               )}
             </div>
@@ -319,6 +363,70 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               })}
             </p>
           </div>
+
+          {/* Contact Information - Only for posting accounts in edit mode */}
+          {isPostingAccount && editMode && (
+            <div className="w-full max-w-lg mb-6 space-y-4">
+              <div>
+                <label className="block text-green-800 font-semibold mb-2 flex items-center">
+                  <Phone size={16} className="mr-2" />
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-400 text-gray-800"
+                  placeholder="Enter phone number"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-green-800 font-semibold mb-2 flex items-center">
+                  <LinkIcon size={16} className="mr-2" />
+                  Website URL
+                </label>
+                <input
+                  type="url"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  className="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-400 text-gray-800"
+                  placeholder="https://example.com"
+                />
+                {website && !validateWebsite(website) && (
+                  <p className="text-red-500 text-sm mt-1">Please enter a valid URL</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Display contact info for posting accounts in view mode */}
+          {isPostingAccount && !editMode && (profile.phone || profile.website) && (
+            <div className="w-full max-w-lg mb-6 bg-green-50 p-4 rounded-lg border border-green-100">
+              <h3 className="text-green-800 font-semibold mb-3">Contact Information</h3>
+              <div className="space-y-2">
+                {profile.phone && (
+                  <div className="flex items-center">
+                    <Phone size={16} className="text-green-700 mr-2" />
+                    <span className="text-gray-700">{profile.phone}</span>
+                  </div>
+                )}
+                {profile.website && (
+                  <div className="flex items-center">
+                    <Globe size={16} className="text-green-700 mr-2" />
+                    <a 
+                      href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline break-all"
+                    >
+                      {profile.website}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Bio */}
           <div className="w-full max-w-lg mb-8">
@@ -357,38 +465,50 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           </div>
 
           {/* Action Buttons */}
-          {editMode && (
-            <div className="flex gap-4 flex-wrap justify-center w-full max-w-md">
+          <div className="flex gap-4 flex-wrap justify-center w-full max-w-md">
+            {editMode ? (
+              <>
+                <button
+                  className="px-6 py-3 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition disabled:opacity-70 flex items-center"
+                  onClick={handleSave}
+                  disabled={loading || (website && !validateWebsite(website))}
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+                
+                <button
+                  className="px-6 py-3 bg-gray-100 text-green-700 rounded-lg font-semibold hover:bg-gray-200 shadow transition flex items-center"
+                  onClick={() => {
+                    setEditMode(false);
+                    setPreviewPic(profile.profilePic || "");
+                    setPreviewCover(profile.coverImage || "");
+                    setBio(profile.bio || "");
+                    setPhone(profile.phone || "");
+                    setWebsite(profile.website || "");
+                  }}
+                  disabled={loading}
+                >
+                  <X size={18} className="mr-2" />
+                  Cancel
+                </button>
+              </>
+            ) : (
               <button
-                className="px-6 py-3 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition disabled:opacity-70 flex items-center"
-                onClick={handleSave}
-                disabled={loading}
+                className="px-6 py-3 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition flex items-center"
+                onClick={() => setEditMode(true)}
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
+                <Edit3 size={18} className="mr-2" />
+                Edit Profile
               </button>
-              
-              <button
-                className="px-6 py-3 bg-gray-100 text-green-700 rounded-lg font-semibold hover:bg-gray-200 shadow transition flex items-center"
-                onClick={() => {
-                  setEditMode(false);
-                  setPreviewPic(profile.profilePic || "");
-                  setPreviewCover(profile.coverImage || "");
-                  setBio(profile.bio || "");
-                }}
-                disabled={loading}
-              >
-                <X size={18} className="mr-2" />
-                Cancel
-              </button>
-            </div>
-          )}
+            )}
+          </div>
           
           {/* Success/Error Messages */}
           {success && (
