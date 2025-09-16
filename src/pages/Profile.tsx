@@ -1,7 +1,19 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState, useRef, useEffect as useEffectReact } from "react";
-import { ArrowLeft, Share, Edit3, Camera, Image as ImageIcon, X, Globe, Phone, Link as LinkIcon } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  ArrowLeft,
+  Share,
+  Edit3,
+  Camera,
+  Image as ImageIcon,
+  X,
+  Globe,
+  Phone,
+  Link as LinkIcon,
+  LogOut,
+} from "lucide-react";
+import { useAuth } from "../components/AuthContext";
 
 interface UserProfile {
   _id: string;
@@ -37,6 +49,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const [success, setSuccess] = useState("");
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const { logout } = useAuth();
 
   const fileInputPic = useRef<HTMLInputElement>(null);
   const fileInputCover = useRef<HTMLInputElement>(null);
@@ -183,7 +197,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         setCoverImage(null);
 
         // IMPORTANT: ensure previews reflect the saved URLs
-        // Revoke any temporary object URLs and set previews to the permanent URLs
         revokeObjectUrl(objectUrlRef);
         revokeObjectUrl(coverObjectUrlRef);
         setPreviewPic(data.user.profilePic || "");
@@ -288,9 +301,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           Back
         </button>
 
-        <div className="relative">
+        <div className="relative flex items-center gap-3">
           {editMode ? (
-            <div className="flex items-center gap-3">
+            <>
               <button
                 className="px-4 py-2 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition disabled:opacity-70 flex items-center"
                 onClick={handleSave}
@@ -313,7 +326,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 <X size={16} className="mr-2" />
                 Cancel
               </button>
-            </div>
+            </>
           ) : (
             <>
               <button
@@ -349,6 +362,19 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               )}
             </>
           )}
+
+          {/* Logout is provided here (moved from Navbar) */}
+          <button
+            onClick={async () => {
+              await logout();
+              setCurrentView("home");
+            }}
+            className="px-4 py-2 bg-white text-green-700 rounded-lg font-semibold hover:bg-green-100 border border-green-200 shadow transition flex items-center"
+            disabled={loading || uploading}
+          >
+            <LogOut size={16} className="mr-2" />
+            Logout
+          </button>
         </div>
       </div>
 

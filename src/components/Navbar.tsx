@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { Menu, X, User } from "lucide-react";
 import Image from "next/image";
@@ -9,16 +9,66 @@ interface NavbarProps {
   setCurrentView: (view: string) => void;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+// Safely extract profilePic from an unknown user shape without using `any`
+function getProfilePicFromUser(u: unknown): string {
+  if (typeof u === "object" && u !== null) {
+    const obj = u as Record<string, unknown>;
+    const pic = obj["profilePic"];
+    if (typeof pic === "string") return pic;
+  }
+  return "";
+}
+
 export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user, logout, loading } = useAuth();
+  const { user, loading } = useAuth();
+
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const avatarLetter = user?.username ? user.username.charAt(0).toUpperCase() : null;
 
   const handleNavClick = (view: string) => {
     setCurrentView(view);
     setMenuOpen(false);
   };
 
-  const avatarLetter = user?.username ? user.username.charAt(0).toUpperCase() : null;
+  // Try to use profilePic from auth user; if absent, fetch from API
+  useEffect(() => {
+    let ignore = false;
+
+    const loadAvatar = async () => {
+      if (!user) {
+        setAvatarUrl("");
+        return;
+      }
+
+      const picFromAuth = getProfilePicFromUser(user);
+      if (picFromAuth) {
+        setAvatarUrl(picFromAuth);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/profile`, {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!ignore) {
+          setAvatarUrl(data?.user?.profilePic || "");
+        }
+      } catch {
+        // silent fail, fallback to letter
+      }
+    };
+
+    loadAvatar();
+    return () => {
+      ignore = true;
+    };
+  }, [user]);
 
   if (loading) {
     return (
@@ -57,7 +107,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           />
           <span className="text-2xl font-bold tracking-wide">Doop</span>
         </button>
-        
+
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-6">
           <button
@@ -68,33 +118,36 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           >
             Home
           </button>
-          
+
           {user ? (
             <>
+              {/* Profile button: Only avatar (image or first letter). No "Profile" text. */}
               <button
                 onClick={() => handleNavClick("profile")}
-                className={`hover:text-green-200 transition-colors font-medium text-lg flex items-center gap-1 ${
-                  currentView === "profile" ? "text-green-200" : ""
-                }`}
+                aria-label="Profile"
+                className={`relative flex items-center justify-center rounded-full p-[2px] transition-all
+                  ${currentView === "profile" ? "ring-2 ring-white" : "ring-2 ring-white/20 hover:ring-white"}`}
               >
-                {avatarLetter ? (
-                  <span className="bg-white text-green-700 rounded-full w-7 h-7 flex items-center justify-center font-bold mr-2">
+                {avatarUrl ? (
+                  // Use plain img to avoid Next/Image domain restriction
+                  <span className="block w-8 h-8 rounded-full overflow-hidden bg-white">
+                    <img
+                      src={avatarUrl}
+                      alt="Profile avatar"
+                      width={32}
+                      height={32}
+                      loading="lazy"
+                      className="w-8 h-8 object-cover rounded-full"
+                      referrerPolicy="no-referrer"
+                    />
+                  </span>
+                ) : avatarLetter ? (
+                  <span className="w-8 h-8 rounded-full bg-white text-green-700 flex items-center justify-center font-bold">
                     {avatarLetter}
                   </span>
                 ) : (
-                  <User size={18} />
+                  <User size={24} />
                 )}
-                Profile
-              </button>
-              
-              <button
-                onClick={async () => {
-                  await logout();
-                  setCurrentView("home");
-                }}
-                className="px-4 py-2 rounded-lg bg-white text-green-800 font-semibold hover:bg-green-50 hover:text-green-900 hover:shadow-md transition-all border border-green-100"
-              >
-                Logout
               </button>
             </>
           ) : (
@@ -118,16 +171,17 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
             </>
           )}
         </div>
-        
+
         {/* Mobile Menu Button */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="md:hidden p-2 rounded-lg bg-green-800 hover:bg-green-600 transition"
+          aria-label="Toggle menu"
         >
           {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
-      
+
       {/* Mobile Dropdown */}
       {menuOpen && (
         <div className="md:hidden bg-gradient-to-b from-green-800 to-emerald-700 text-white flex flex-col gap-4 px-6 py-6 border-t border-green-600">
@@ -139,36 +193,37 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           >
             Home
           </button>
-          
+
           {user ? (
             <>
+              {/* Profile button in mobile: avatar only, no text */}
               <button
-                onClick={() => handleNavClick("profile")}
-                className={`font-medium text-lg flex items-center justify-center gap-1 ${
-                  currentView === "profile"
-                    ? "text-green-200"
-                    : "hover:text-green-200"
-                }`}
+                onClick={() => {
+                  handleNavClick("profile");
+                  setMenuOpen(false);
+                }}
+                aria-label="Profile"
+                className="flex items-center justify-center"
               >
-                {avatarLetter ? (
-                  <span className="bg-white text-green-700 rounded-full w-7 h-7 flex items-center justify-center font-bold mr-2">
+                {avatarUrl ? (
+                  <span className="block w-10 h-10 rounded-full overflow-hidden bg-white ring-2 ring-white/30">
+                    <img
+                      src={avatarUrl}
+                      alt="Profile avatar"
+                      width={40}
+                      height={40}
+                      loading="lazy"
+                      className="w-10 h-10 object-cover rounded-full"
+                      referrerPolicy="no-referrer"
+                    />
+                  </span>
+                ) : avatarLetter ? (
+                  <span className="w-10 h-10 rounded-full bg-white text-green-700 flex items-center justify-center font-bold ring-2 ring-white/30">
                     {avatarLetter}
                   </span>
                 ) : (
-                  <User size={18} />
+                  <User size={28} />
                 )}
-                Profile
-              </button>
-              
-              <button
-                onClick={async () => {
-                  await logout();
-                  setCurrentView("home");
-                  setMenuOpen(false);
-                }}
-                className="px-4 py-2 rounded-lg font-semibold text-center transition-all border bg-white text-green-800 hover:bg-green-50 hover:text-green-900"
-              >
-                Logout
               </button>
             </>
           ) : (
@@ -186,7 +241,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
               >
                 Sign In
               </button>
-              
+
               <button
                 onClick={() => {
                   handleNavClick("register");
