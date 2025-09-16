@@ -2,29 +2,29 @@
 
 import { useState } from "react";
 
+// Load API URL from env (NEXT_PUBLIC_API_URL for Next.js)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 interface RegisterProps {
   setCurrentView: (view: string) => void;
 }
 
 export default function Register({ setCurrentView }: RegisterProps) {
   const [serviceType, setServiceType] = useState<"finding" | "posting">("finding");
-
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
     phone: "",
   });
-
   const [errors, setErrors] = useState({
     username: "",
     email: "",
     password: "",
     phone: "",
   });
-
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
+  const [modal, setModal] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -35,7 +35,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
   const validate = () => {
     let valid = true;
     const newErrors = { username: "", email: "", password: "", phone: "" };
-
     if (!formData.username.trim()) {
       newErrors.username = "Username is required";
       valid = false;
@@ -43,7 +42,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
       newErrors.username = "Username must not exceed 10 characters";
       valid = false;
     }
-
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
       valid = false;
@@ -51,7 +49,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
       newErrors.email = "Email is invalid";
       valid = false;
     }
-
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
       valid = false;
@@ -64,7 +61,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
         "Password must be 8+ chars, include uppercase, lowercase, number & special char";
       valid = false;
     }
-
     if (serviceType === "posting") {
       if (!formData.phone.trim()) {
         newErrors.phone = "Phone number is required";
@@ -74,7 +70,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
         valid = false;
       }
     }
-
     setErrors(newErrors);
     return valid;
   };
@@ -83,10 +78,10 @@ export default function Register({ setCurrentView }: RegisterProps) {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setSuccess("");
+    setModal(null);
 
     try {
-      const res = await fetch("http://localhost:5000/api/register", {
+      const res = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, serviceType }),
@@ -94,29 +89,54 @@ export default function Register({ setCurrentView }: RegisterProps) {
 
       const data = await res.json();
       if (res.ok) {
-        setSuccess("Registration successful!");
+        setModal({ type: "success", message: "Registration successful!" });
         setFormData({ username: "", email: "", password: "", phone: "" });
       } else {
+        // Aggregate all error messages to display
+        const errorMsg =
+          typeof data.errors === "object"
+            ? Object.values(data.errors).join("\n")
+            : "Registration failed";
+        setModal({ type: "error", message: errorMsg });
         setErrors({ ...errors, ...data.errors });
-        setSuccess("");
       }
     } catch {
-      setSuccess("");
-      alert("Error connecting to server.");
+      setModal({ type: "error", message: "Error connecting to server." });
     }
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
-      <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+      {/* Modal */}
+      {modal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-lg text-center relative">
+            <h3
+              className={`font-bold text-lg mb-2 ${
+                modal.type === "success" ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {modal.type === "success" ? "Success" : "Error"}
+            </h3>
+            <p className="text-black mb-4 whitespace-pre-line">{modal.message}</p>
+            <button
+              className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 font-semibold"
+              onClick={() => setModal(null)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md z-10">
         <h2 className="text-2xl font-bold text-green-700 mb-6 text-center">
           Register
         </h2>
-
         {/* Service Type Selector */}
         <div className="mb-6 text-center flex justify-center">
           <button
+            type="button"
             onClick={() => setServiceType("finding")}
             className={`px-4 py-2 rounded-l-lg font-semibold transition-all ${
               serviceType === "finding"
@@ -127,6 +147,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
             Finding a Service
           </button>
           <button
+            type="button"
             onClick={() => setServiceType("posting")}
             className={`px-4 py-2 rounded-r-lg font-semibold transition-all ${
               serviceType === "posting"
@@ -137,8 +158,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
             Posting a Service
           </button>
         </div>
-
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           {/* Username */}
           <div className="mb-4">
             <label className="block text-green-700 font-semibold mb-1">
@@ -148,6 +168,8 @@ export default function Register({ setCurrentView }: RegisterProps) {
               type="text"
               name="username"
               value={formData.username}
+              placeholder="Enter username"
+              style={{ color: "black" }}
               onChange={handleChange}
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                 errors.username
@@ -159,7 +181,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
               <p className="text-red-500 text-sm mt-1">{errors.username}</p>
             )}
           </div>
-
           {/* Email */}
           <div className="mb-4">
             <label className="block text-green-700 font-semibold mb-1">
@@ -169,6 +190,8 @@ export default function Register({ setCurrentView }: RegisterProps) {
               type="email"
               name="email"
               value={formData.email}
+              placeholder="Enter email"
+              style={{ color: "black" }}
               onChange={handleChange}
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                 errors.email
@@ -180,7 +203,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
               <p className="text-red-500 text-sm mt-1">{errors.email}</p>
             )}
           </div>
-
           {/* Password */}
           <div className="mb-4">
             <label className="block text-green-700 font-semibold mb-1">
@@ -190,6 +212,8 @@ export default function Register({ setCurrentView }: RegisterProps) {
               type="password"
               name="password"
               value={formData.password}
+              placeholder="Enter password"
+              style={{ color: "black" }}
               onChange={handleChange}
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                 errors.password
@@ -201,7 +225,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
               <p className="text-red-500 text-sm mt-1">{errors.password}</p>
             )}
           </div>
-
           {/* Phone (only for posting a service) */}
           {serviceType === "posting" && (
             <div className="mb-6">
@@ -212,6 +235,8 @@ export default function Register({ setCurrentView }: RegisterProps) {
                 type="text"
                 name="phone"
                 value={formData.phone}
+                placeholder="0712345678"
+                style={{ color: "black" }}
                 onChange={handleChange}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                   errors.phone
@@ -224,12 +249,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
               )}
             </div>
           )}
-
-          {/* Success */}
-          {success && (
-            <p className="text-green-600 font-semibold text-center mb-4">{success}</p>
-          )}
-
           {/* Submit */}
           <button
             type="submit"
@@ -239,7 +258,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
-
         {/* Link to Sign In */}
         <p className="mt-4 text-center text-green-700">
           Already have an account?{" "}
