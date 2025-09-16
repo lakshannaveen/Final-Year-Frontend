@@ -157,6 +157,12 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     }
   };
 
+  // Normalize website with protocol
+  const normalizeWebsite = (url: string) => {
+    if (!url) return "";
+    return url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`;
+  };
+
   // Save profile changes
   const handleSave = async () => {
     setLoading(true);
@@ -171,21 +177,27 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         profilePicUrl = await uploadImageToB2(profilePic);
       }
 
-      if (coverImage && profile?.serviceType === "posting") {
+      // Only allow cover image for posting accounts
+      const isPostingAccount = profile?.serviceType === "posting";
+      if (coverImage && isPostingAccount) {
         coverImageUrl = await uploadImageToB2(coverImage);
+      }
+
+      const body: Record<string, unknown> = {
+        bio,
+        phone,
+        website: normalizeWebsite(website),
+        profilePic: profilePicUrl,
+      };
+      if (isPostingAccount) {
+        body.coverImage = coverImageUrl;
       }
 
       const res = await fetch(`${API_URL}/api/profile`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bio,
-          phone: profile?.serviceType === "posting" ? phone : undefined,
-          website: profile?.serviceType === "posting" ? website : undefined,
-          profilePic: profilePicUrl,
-          coverImage: profile?.serviceType === "posting" ? coverImageUrl : undefined,
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
@@ -363,7 +375,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             </>
           )}
 
-          {/* Logout is provided here (moved from Navbar) */}
+          {/* Logout */}
           <button
             onClick={async () => {
               await logout();
@@ -459,17 +471,22 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">
                 {isPostingAccount ? "💼 Service Provider" : "🔍 Looking for Services"}
               </span>
-              {profile.phone && isPostingAccount && (
+              {profile.phone && (
                 <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold text-sm flex items-center">
                   <Phone size={14} className="mr-1" />
                   {profile.phone}
                 </span>
               )}
-              {profile.website && isPostingAccount && (
-                <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold text-sm flex items-center">
+              {profile.website && (
+                <a
+                  href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold text-sm flex items-center hover:bg-blue-200"
+                >
                   <Globe size={14} className="mr-1" />
                   Website
-                </span>
+                </a>
               )}
             </div>
 
@@ -484,8 +501,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             </p>
           </div>
 
-          {/* Contact Information - Only for posting accounts in edit mode */}
-          {isPostingAccount && editMode && (
+          {/* Contact Information - editable for ALL accounts */}
+          {editMode && (
             <div className="w-full max-w-lg mb-6 space-y-4">
               <div>
                 <label className="block text-green-800 font-semibold mb-2 flex items-center">
@@ -520,8 +537,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             </div>
           )}
 
-          {/* Display contact info for posting accounts in view mode */}
-          {isPostingAccount && !editMode && (profile.phone || profile.website) && (
+          {/* Display contact info for ALL accounts in view mode */}
+          {!editMode && (profile.phone || profile.website) && (
             <div className="w-full max-w-lg mb-6 bg-green-50 p-4 rounded-lg border border-green-100">
               <h3 className="text-green-800 font-semibold mb-3">Contact Information</h3>
               <div className="space-y-2">
