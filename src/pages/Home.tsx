@@ -1,6 +1,6 @@
 "use client";
 
-import Navbar from "../components/Navbar";
+
 import Footer from "../components/Footer";
 
 interface HomeProps {
@@ -10,8 +10,7 @@ interface HomeProps {
 export default function Home({ setCurrentView }: HomeProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Navbar */}
-      <Navbar currentView="home" setCurrentView={setCurrentView} />
+    
       
       {/* Main Content */}
       <section className="flex items-center justify-center flex-grow">

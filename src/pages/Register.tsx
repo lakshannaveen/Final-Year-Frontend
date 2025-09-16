@@ -1,8 +1,7 @@
 "use client";
-
 import { useState } from "react";
+import { useAuth } from "../components/AuthContext";
 
-// Load API URL from env (NEXT_PUBLIC_API_URL for Next.js)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 interface RegisterProps {
@@ -25,6 +24,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
   });
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -35,6 +35,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
   const validate = () => {
     let valid = true;
     const newErrors = { username: "", email: "", password: "", phone: "" };
+    
     if (!formData.username.trim()) {
       newErrors.username = "Username is required";
       valid = false;
@@ -42,6 +43,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
       newErrors.username = "Username must not exceed 10 characters";
       valid = false;
     }
+    
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
       valid = false;
@@ -49,6 +51,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
       newErrors.email = "Email is invalid";
       valid = false;
     }
+    
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
       valid = false;
@@ -61,6 +64,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
         "Password must be 8+ chars, include uppercase, lowercase, number & special char";
       valid = false;
     }
+    
     if (serviceType === "posting") {
       if (!formData.phone.trim()) {
         newErrors.phone = "Phone number is required";
@@ -70,6 +74,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
         valid = false;
       }
     }
+    
     setErrors(newErrors);
     return valid;
   };
@@ -77,32 +82,40 @@ export default function Register({ setCurrentView }: RegisterProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    
     setLoading(true);
     setModal(null);
 
     try {
-      const res = await fetch(`${API_URL}/api/register`, {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, serviceType }),
+        credentials: "include",
       });
 
       const data = await res.json();
+      
       if (res.ok) {
         setModal({ type: "success", message: "Registration successful!" });
         setFormData({ username: "", email: "", password: "", phone: "" });
+        login(data.user);
+        setTimeout(() => {
+          setCurrentView("home");
+        }, 1500);
       } else {
-        // Aggregate all error messages to display
-        const errorMsg =
-          typeof data.errors === "object"
-            ? Object.values(data.errors).join("\n")
-            : "Registration failed";
+        const errorMsg = data.errors 
+          ? Object.values(data.errors).join("\n")
+          : "Registration failed";
         setModal({ type: "error", message: errorMsg });
-        setErrors({ ...errors, ...data.errors });
+        if (data.errors) {
+          setErrors({ ...errors, ...data.errors });
+        }
       }
-    } catch {
+    } catch (err) {
       setModal({ type: "error", message: "Error connecting to server." });
     }
+    
     setLoading(false);
   };
 
@@ -129,10 +142,12 @@ export default function Register({ setCurrentView }: RegisterProps) {
           </div>
         </div>
       )}
+      
       <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md z-10">
         <h2 className="text-2xl font-bold text-green-700 mb-6 text-center">
           Register
         </h2>
+        
         {/* Service Type Selector */}
         <div className="mb-6 text-center flex justify-center">
           <button
@@ -158,6 +173,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
             Posting a Service
           </button>
         </div>
+        
         <form onSubmit={handleSubmit} autoComplete="off">
           {/* Username */}
           <div className="mb-4">
@@ -181,6 +197,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
               <p className="text-red-500 text-sm mt-1">{errors.username}</p>
             )}
           </div>
+          
           {/* Email */}
           <div className="mb-4">
             <label className="block text-green-700 font-semibold mb-1">
@@ -203,6 +220,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
               <p className="text-red-500 text-sm mt-1">{errors.email}</p>
             )}
           </div>
+          
           {/* Password */}
           <div className="mb-4">
             <label className="block text-green-700 font-semibold mb-1">
@@ -225,6 +243,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
               <p className="text-red-500 text-sm mt-1">{errors.password}</p>
             )}
           </div>
+          
           {/* Phone (only for posting a service) */}
           {serviceType === "posting" && (
             <div className="mb-6">
@@ -249,15 +268,17 @@ export default function Register({ setCurrentView }: RegisterProps) {
               )}
             </div>
           )}
+          
           {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition"
+            className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition disabled:opacity-70"
           >
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
+        
         {/* Link to Sign In */}
         <p className="mt-4 text-center text-green-700">
           Already have an account?{" "}

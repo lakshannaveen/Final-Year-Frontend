@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AuthProvider } from "../components/AuthContext";
+import Navbar from "../components/Navbar";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
 import SignIn from "../pages/Signin";
@@ -30,11 +32,20 @@ export default function Index() {
       case "feedback":
         return <Feedback setCurrentView={setCurrentView} />;
       case "profile":
-        return <Profile setCurrentView={setCurrentView} />; // ✅ added
+        return <Profile setCurrentView={setCurrentView} />;
       default:
         return <Home setCurrentView={setCurrentView} />;
     }
   };
 
-  return <div>{renderContent()}</div>;
+  return (
+    <AuthProvider>
+      <div className="min-h-screen flex flex-col">
+        <Navbar currentView={currentView} setCurrentView={setCurrentView} />
+        <main className="flex-grow">
+          {renderContent()}
+        </main>
+      </div>
+    </AuthProvider>
+  );
 }
