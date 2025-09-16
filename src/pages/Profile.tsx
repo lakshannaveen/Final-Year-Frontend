@@ -165,6 +165,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
   // Save profile changes
   const handleSave = async () => {
+    if (!profile) return;
+    const isPostingAccount = profile.serviceType === "posting";
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -178,18 +181,18 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       }
 
       // Only allow cover image for posting accounts
-      const isPostingAccount = profile?.serviceType === "posting";
       if (coverImage && isPostingAccount) {
         coverImageUrl = await uploadImageToB2(coverImage);
       }
 
       const body: Record<string, unknown> = {
         bio,
-        phone,
-        website: normalizeWebsite(website),
         profilePic: profilePicUrl,
       };
+
       if (isPostingAccount) {
+        body.phone = phone;
+        body.website = normalizeWebsite(website);
         body.coverImage = coverImageUrl;
       }
 
@@ -208,7 +211,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         setProfilePic(null);
         setCoverImage(null);
 
-        // IMPORTANT: ensure previews reflect the saved URLs
+        // Ensure previews reflect the saved URLs
         revokeObjectUrl(objectUrlRef);
         revokeObjectUrl(coverObjectUrlRef);
         setPreviewPic(data.user.profilePic || "");
@@ -319,7 +322,11 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               <button
                 className="px-4 py-2 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition disabled:opacity-70 flex items-center"
                 onClick={handleSave}
-                disabled={loading || uploading || (!!website && !validateWebsite(website))}
+                disabled={
+                  loading ||
+                  uploading ||
+                  (isPostingAccount && !!website && !validateWebsite(website))
+                }
               >
                 {loading || uploading ? (
                   <>
@@ -471,13 +478,13 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">
                 {isPostingAccount ? "💼 Service Provider" : "🔍 Looking for Services"}
               </span>
-              {profile.phone && (
+              {isPostingAccount && profile.phone && (
                 <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold text-sm flex items-center">
                   <Phone size={14} className="mr-1" />
                   {profile.phone}
                 </span>
               )}
-              {profile.website && (
+              {isPostingAccount && profile.website && (
                 <a
                   href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
                   target="_blank"
@@ -501,8 +508,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             </p>
           </div>
 
-          {/* Contact Information - editable for ALL accounts */}
-          {editMode && (
+          {/* Contact Information - editable ONLY for posting accounts */}
+          {isPostingAccount && editMode && (
             <div className="w-full max-w-lg mb-6 space-y-4">
               <div>
                 <label className="block text-green-800 font-semibold mb-2 flex items-center">
@@ -537,8 +544,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             </div>
           )}
 
-          {/* Display contact info for ALL accounts in view mode */}
-          {!editMode && (profile.phone || profile.website) && (
+          {/* Display contact info ONLY for posting accounts in view mode */}
+          {isPostingAccount && !editMode && (profile.phone || profile.website) && (
             <div className="w-full max-w-lg mb-6 bg-green-50 p-4 rounded-lg border border-green-100">
               <h3 className="text-green-800 font-semibold mb-3">Contact Information</h3>
               <div className="space-y-2">
@@ -609,7 +616,11 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 <button
                   className="px-6 py-3 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition disabled:opacity-70 flex items-center"
                   onClick={handleSave}
-                  disabled={loading || uploading || (!!website && !validateWebsite(website))}
+                  disabled={
+                    loading ||
+                    uploading ||
+                    (isPostingAccount && !!website && !validateWebsite(website))
+                  }
                 >
                   {loading || uploading ? (
                     <>
