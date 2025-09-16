@@ -23,17 +23,19 @@ export default function Register({ setCurrentView }: RegisterProps) {
     phone: "",
   });
 
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    setErrors({ ...errors, [name]: "" }); // clear error on change
+    setErrors({ ...errors, [name]: "" });
   };
 
   const validate = () => {
     let valid = true;
     const newErrors = { username: "", email: "", password: "", phone: "" };
 
-    // Username validation
     if (!formData.username.trim()) {
       newErrors.username = "Username is required";
       valid = false;
@@ -42,7 +44,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
       valid = false;
     }
 
-    // Email validation
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
       valid = false;
@@ -51,7 +52,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
       valid = false;
     }
 
-    // Password validation
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
       valid = false;
@@ -65,7 +65,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
       valid = false;
     }
 
-    // Phone validation (only for posting service)
     if (serviceType === "posting") {
       if (!formData.phone.trim()) {
         newErrors.phone = "Phone number is required";
@@ -80,12 +79,32 @@ export default function Register({ setCurrentView }: RegisterProps) {
     return valid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    setLoading(true);
+    setSuccess("");
 
-    console.log("Form submitted:", { serviceType, ...formData });
-    // Call your API here to save the user
+    try {
+      const res = await fetch("http://localhost:5000/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, serviceType }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess("Registration successful!");
+        setFormData({ username: "", email: "", password: "", phone: "" });
+      } else {
+        setErrors({ ...errors, ...data.errors });
+        setSuccess("");
+      }
+    } catch {
+      setSuccess("");
+      alert("Error connecting to server.");
+    }
+    setLoading(false);
   };
 
   return (
@@ -119,7 +138,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           {/* Username */}
           <div className="mb-4">
@@ -207,12 +225,18 @@ export default function Register({ setCurrentView }: RegisterProps) {
             </div>
           )}
 
+          {/* Success */}
+          {success && (
+            <p className="text-green-600 font-semibold text-center mb-4">{success}</p>
+          )}
+
           {/* Submit */}
           <button
             type="submit"
+            disabled={loading}
             className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition"
           >
-            Register
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
 
