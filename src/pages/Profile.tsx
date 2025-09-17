@@ -45,6 +45,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
+
+  // Add username state for editing
+  const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState("");
@@ -86,6 +89,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         const data = await res.json();
         if (res.ok) {
           setProfile(data.user);
+          setUsername(data.user.username || "");
           setBio(data.user.bio || "");
           setPhone(data.user.phone || "");
           setWebsite(data.user.website || "");
@@ -186,6 +190,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       }
 
       const body: Record<string, unknown> = {
+        username, // include username in PUT body
         bio,
         profilePic: profilePicUrl,
       };
@@ -210,6 +215,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         setProfilePic(null);
         setCoverImage(null);
 
+        setUsername(data.user.username || "");
         revokeObjectUrl(objectUrlRef);
         revokeObjectUrl(coverObjectUrlRef);
         setPreviewPic(data.user.profilePic || "");
@@ -218,7 +224,11 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         setSuccess("Profile updated successfully!");
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        setError(data.errors?.server || "Failed to update profile.");
+        setError(
+          data.errors?.username ||
+            data.errors?.server ||
+            "Failed to update profile."
+        );
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -234,6 +244,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     setEditMode(false);
     revokeObjectUrl(objectUrlRef);
     revokeObjectUrl(coverObjectUrlRef);
+    setUsername(profile?.username || "");
     setPreviewPic(profile?.profilePic || "");
     setPreviewCover(profile?.coverImage || "");
     setBio(profile?.bio || "");
@@ -271,6 +282,10 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     } catch {
       return false;
     }
+  };
+
+  const validateUsername = (name: string) => {
+    return name.trim().length >= 2 && name.trim().length <= 10;
   };
 
   if (loading) {
@@ -342,6 +357,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 disabled={
                   loading ||
                   uploading ||
+                  !validateUsername(username) ||
                   (isPostingAccount && !!website && !validateWebsite(website))
                 }
               >
@@ -463,7 +479,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-green-400 to-emerald-400 flex items-center justify-center text-6xl font-bold text-white">
-                  {getInitial(profile.username)}
+                  {getInitial(username || profile.username)}
                 </div>
               )}
             </div>
@@ -488,7 +504,27 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
           {/* Info */}
           <div className="w-full text-center mb-6">
-            <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">{profile.username}</h1>
+            {/* Username Editable */}
+            {editMode ? (
+              <div className="mb-2 flex flex-col items-center">
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  maxLength={10}
+                  minLength={2}
+                  className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2 px-3 py-2 border-2 border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                  placeholder="Username"
+                  required
+                />
+                {(!validateUsername(username)) && (
+                  <span className="text-red-500 text-sm">Username must be 2-10 characters.</span>
+                )}
+              </div>
+            ) : (
+              <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">{profile.username}</h1>
+            )}
+
             <p className="text-gray-600 text-lg break-all mb-4">{profile.email}</p>
 
             <div className="flex justify-center flex-wrap gap-3 mb-4">
@@ -636,6 +672,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                   disabled={
                     loading ||
                     uploading ||
+                    !validateUsername(username) ||
                     (isPostingAccount && !!website && !validateWebsite(website))
                   }
                 >
