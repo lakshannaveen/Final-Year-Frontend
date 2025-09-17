@@ -267,6 +267,10 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
     }
   };
 
+  // Consistent placeholder text color for all inputs, including file fields, and textarea
+  // Use Tailwind's placeholder:text-black (or you can use a custom CSS class for this)
+  const placeholderColorClass = "placeholder:text-black";
+
   return (
     <>
       <Navbar currentView={currentView} setCurrentView={handleNavChange} />
@@ -308,7 +312,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
                 placeholder="Enter service name"
                 value={serviceName}
                 onChange={e => setServiceName(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                 required
                 style={{ color: "black" }}
               />
@@ -324,7 +328,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
                   placeholder="Enter location or use current location"
                   value={location}
                   onChange={e => setLocation(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300"
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                   required
                   style={{ color: "black" }}
                 />
@@ -355,7 +359,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
                 placeholder="Enter contact number"
                 value={contactNumber}
                 onChange={e => setContactNumber(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                 required
                 style={{ color: "black" }}
                 maxLength={16}
@@ -374,7 +378,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
                 min={0}
                 step={0.01}
                 required
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                 style={{ color: "black" }}
               />
             </div>
@@ -431,7 +435,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
                 type="file"
                 accept="image/*"
                 onChange={handlePhotoChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                 style={{ color: "black" }}
                 title="Select photo (max 5MB)"
                 placeholder="Select photo"
@@ -451,7 +455,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
                 type="file"
                 accept="video/*"
                 onChange={handleVideoChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                 style={{ color: "black" }}
                 title="Select video (min 2s, max 20MB)"
                 placeholder="Select video"
@@ -472,7 +476,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
                 placeholder="https://yourwebsite.com"
                 value={websiteLink}
                 onChange={e => setWebsiteLink(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                 style={{ color: "black" }}
               />
             </div>
@@ -485,7 +489,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
                 placeholder="Describe your service in max 20 words"
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                 style={{ color: "black" }}
                 rows={2}
                 maxLength={200}
