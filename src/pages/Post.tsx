@@ -26,11 +26,17 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
   // For Navbar
   const [currentView, setCurrentViewLocal] = useState("post");
 
+  // Navbar links fix: update setCurrentView in Navbar and here to sync navigation
+  const handleNavChange = (view: string) => {
+    setCurrentViewLocal(view);
+    setCurrentView(view);
+  };
+
   // Only allow if user is provider/serviceType === 'posting'
   if (!authLoading && (!user || user.serviceType !== "posting")) {
     return (
       <>
-        <Navbar currentView={currentView} setCurrentView={setCurrentViewLocal} />
+        <Navbar currentView={currentView} setCurrentView={handleNavChange} />
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
           <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md z-10 text-center">
             <h2 className="text-2xl font-bold mb-4 text-green-700">Post a Service</h2>
@@ -39,7 +45,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
             </p>
             <button
               className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 transition font-semibold"
-              onClick={() => setCurrentView("profile")}
+              onClick={() => handleNavChange("profile")}
             >
               Go to Profile
             </button>
@@ -219,7 +225,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
 
   return (
     <>
-      <Navbar currentView={currentView} setCurrentView={setCurrentViewLocal} />
+      <Navbar currentView={currentView} setCurrentView={handleNavChange} />
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
         {/* Modal */}
         {modal && (
