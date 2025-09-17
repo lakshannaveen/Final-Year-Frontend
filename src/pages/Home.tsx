@@ -53,6 +53,39 @@ function timeAgo(dateString: string): string {
   return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
+// Skeleton loader for feed card
+function FeedSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col md:flex-row items-stretch p-6 min-h-[240px] animate-pulse">
+      {/* Profile skeleton */}
+      <div className="flex flex-col items-center md:items-start mr-0 md:mr-8 min-w-[100px] mb-4 md:mb-0">
+        <div className="w-16 h-16 rounded-full bg-gray-200 mb-2" />
+        <div className="w-20 h-4 rounded bg-gray-200 mb-2" />
+        <div className="w-12 h-3 rounded bg-gray-200" />
+      </div>
+      {/* Details skeleton */}
+      <div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-8">
+        <div className="flex-1 flex flex-col justify-between py-2">
+          <div>
+            <div className="w-36 h-6 bg-gray-200 rounded mb-2" />
+            <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
+            <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
+            <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
+            <div className="w-32 h-4 bg-gray-200 rounded mb-2" />
+            <div className="w-40 h-4 bg-gray-200 rounded mb-2" />
+            <div className="w-52 h-4 bg-gray-200 rounded" />
+          </div>
+        </div>
+        {/* Media skeleton */}
+        <div className="flex flex-col gap-2 items-center justify-center md:justify-start md:items-start min-w-[220px] max-w-[220px]">
+          <div className="w-[220px] h-[160px] bg-gray-200 rounded-xl" />
+          <div className="w-[220px] h-[20px] bg-gray-200 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home({ setCurrentView, onShowPublicProfile }: HomeProps) {
   const [feeds, setFeeds] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +110,11 @@ export default function Home({ setCurrentView, onShowPublicProfile }: HomeProps)
       <Navbar currentView="home" setCurrentView={setCurrentView} />
       <section className="flex flex-col flex-grow items-center px-4 py-6">
         {loading ? (
-          <div className="text-center text-gray-500">Loading posts...</div>
+          <div className="w-full max-w-3xl space-y-8">
+            {[...Array(3)].map((_, i) => (
+              <FeedSkeleton key={i} />
+            ))}
+          </div>
         ) : (
           <div className="w-full max-w-3xl space-y-8">
             {feeds.length === 0 ? (
