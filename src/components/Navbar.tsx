@@ -11,7 +11,16 @@ interface NavbarProps {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-// Safely extract profilePic from an unknown user shape without using `any`
+// Define a type for your user object based on what your backend returns
+interface AppUser {
+  username?: string;
+  profilePic?: string;
+  // Add serviceType if available
+  serviceType?: string;
+  // Other fields as needed
+  [key: string]: string | undefined;
+}
+
 function getProfilePicFromUser(u: unknown): string {
   if (typeof u === "object" && u !== null) {
     const obj = u as Record<string, unknown>;
@@ -23,7 +32,8 @@ function getProfilePicFromUser(u: unknown): string {
 
 export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user, loading } = useAuth();
+  // Use AppUser type for user
+  const { user, loading } = useAuth() as { user: AppUser | null; loading: boolean };
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const avatarLetter = user?.username ? user.username.charAt(0).toUpperCase() : null;
@@ -33,7 +43,6 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
     setMenuOpen(false);
   };
 
-  // Try to use profilePic from auth user; if absent, fetch from API
   useEffect(() => {
     let ignore = false;
 
@@ -90,6 +99,9 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
     );
   }
 
+  // Only show "Post a Service" if provider/serviceType === 'posting'
+  const isProvider = user?.serviceType === "posting";
+
   return (
     <nav className="bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -118,10 +130,18 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           >
             Home
           </button>
-
+          {isProvider && (
+            <button
+              onClick={() => handleNavClick("post")}
+              className={`hover:text-green-200 transition-colors font-medium text-lg ${
+                currentView === "post" ? "text-green-200" : ""
+              }`}
+            >
+              Post a Service
+            </button>
+          )}
           {user ? (
             <>
-              {/* Profile button: Only avatar (image or first letter). No "Profile" text. */}
               <button
                 onClick={() => handleNavClick("profile")}
                 aria-label="Profile"
@@ -129,7 +149,6 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                   ${currentView === "profile" ? "ring-2 ring-white" : "ring-2 ring-white/20 hover:ring-white"}`}
               >
                 {avatarUrl ? (
-                  // Use plain img to avoid Next/Image domain restriction
                   <span className="block w-8 h-8 rounded-full overflow-hidden bg-white">
                     <img
                       src={avatarUrl}
@@ -193,10 +212,21 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           >
             Home
           </button>
-
+          {isProvider && (
+            <button
+              onClick={() => {
+                handleNavClick("post");
+                setMenuOpen(false);
+              }}
+              className={`font-medium text-lg text-center ${
+                currentView === "post" ? "text-green-200" : "hover:text-green-200"
+              }`}
+            >
+              Post a Service
+            </button>
+          )}
           {user ? (
             <>
-              {/* Profile button in mobile: avatar only, no text */}
               <button
                 onClick={() => {
                   handleNavClick("profile");
@@ -241,7 +271,6 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
               >
                 Sign In
               </button>
-
               <button
                 onClick={() => {
                   handleNavClick("register");

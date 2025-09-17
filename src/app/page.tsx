@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { AuthProvider } from "../components/AuthContext";
 import Home from "../pages/Home";
@@ -10,6 +9,7 @@ import Terms from "../pages/Terms";
 import Contact from "../pages/Contact";
 import Feedback from "../pages/Feedback";
 import Profile from "../pages/Profile";
+import PostService from "../pages/Post";
 
 export default function Index() {
   const [currentView, setCurrentView] = useState("home");
@@ -32,6 +32,8 @@ export default function Index() {
         return <Feedback setCurrentView={setCurrentView} />;
       case "profile":
         return <Profile setCurrentView={setCurrentView} />;
+      case "post":
+        return <PostService setCurrentView={setCurrentView} />;
       default:
         return <Home setCurrentView={setCurrentView} />;
     }
@@ -39,6 +41,7 @@ export default function Index() {
 
   return (
     <AuthProvider>
+     
       {renderContent()}
     </AuthProvider>
   );
