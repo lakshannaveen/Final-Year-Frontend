@@ -9,6 +9,21 @@ interface PostServiceFormProps {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+// Types for Nominatim reverse geocoding response
+interface NominatimReverseResult {
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    suburb?: string;
+    county?: string;
+    state_district?: string;
+    state?: string;
+    district?: string;
+  };
+  display_name: string;
+}
+
 export default function PostService({ setCurrentView }: PostServiceFormProps) {
   const { user, loading: authLoading } = useAuth();
   const [serviceName, setServiceName] = useState("");
@@ -25,6 +40,9 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
 
   // For Navbar
   const [currentView, setCurrentViewLocal] = useState("post");
+
+  // Spinner for location icon
+  const [locationLoading, setLocationLoading] = useState(false);
 
   // Navbar links fix: update setCurrentView in Navbar and here to sync navigation
   const handleNavChange = (view: string) => {
@@ -55,19 +73,45 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
     );
   }
 
-  // Get user's current location
+  // Get user's current location as city/area name, not lat/lng
   const handleGetCurrentLocation = () => {
     if (!navigator.geolocation) {
       setModal({ type: "error", message: "Geolocation is not supported by your browser." });
       return;
     }
+    setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        setLocation(`Lat: ${lat}, Lng: ${lng}`);
+
+        try {
+          // Use Nominatim OpenStreetMap reverse geocoding to get area/city name
+          const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
+          const res = await fetch(url, {
+            headers: { "User-Agent": "Kone-frontend/1.0 (lakshannaveen@gmail.com)" }
+          });
+          const data: NominatimReverseResult = await res.json();
+          const area =
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.village ||
+            data.address?.suburb ||
+            data.address?.county ||
+            data.address?.state_district ||
+            data.address?.state ||
+            data.address?.district;
+          const locationStr = area
+            ? area
+            : data.display_name;
+          setLocation(locationStr);
+        } catch {
+          setModal({ type: "error", message: "Unable to retrieve your location name." });
+        }
+        setLocationLoading(false);
       },
       () => {
+        setLocationLoading(false);
         setModal({ type: "error", message: "Unable to retrieve your location." });
       }
     );
@@ -170,7 +214,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
       // Upload video if provided
       if (video) {
         const videoForm = new FormData();
-        videoForm.append("image", video); // Assuming backend can handle videos via same endpoint
+        videoForm.append("image", video);
 
         const vidRes = await fetch(`${API_URL}/api/profile/upload`, {
           method: "POST",
@@ -274,7 +318,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
               <label className="block text-green-700 font-semibold mb-1">
                 Location (City/Area)
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <input
                   type="text"
                   placeholder="Enter location or use current location"
@@ -286,11 +330,18 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
                 />
                 <button
                   type="button"
-                  className="px-3 py-2 bg-green-700 text-white rounded hover:bg-green-800 transition font-semibold"
+                  className="px-3 py-2 bg-green-700 text-white rounded hover:bg-green-800 transition font-semibold flex items-center justify-center min-w-[40px] min-h-[40px]"
                   onClick={handleGetCurrentLocation}
                   title="Use current location"
+                  disabled={locationLoading}
+                  style={{ position: "relative" }}
                 >
-                  📍
+                  {/* Spinner when loading, else icon */}
+                  {locationLoading ? (
+                    <span className="inline-block w-5 h-5 border-2 border-green-200 border-t-green-700 rounded-full animate-spin"></span>
+                  ) : (
+                    <span role="img" aria-label="location">📍</span>
+                  )}
                 </button>
               </div>
             </div>
