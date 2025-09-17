@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   Globe,
   Phone,
-  Link as LinkIcon,
   Image as ImageIcon
 } from "lucide-react";
 
@@ -200,19 +199,17 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
             </div>
           )}
 
-          {/* Bio */}
-          <div className="w-full max-w-lg mb-8">
-            <div className="flex items-center justify-between mb-3">
-              <label className="block text-green-800 font-semibold text-lg">About Me</label>
-            </div>
-            <div className="bg-green-50 text-gray-800 px-5 py-4 rounded-lg border border-green-100 min-h-[120px]">
-              {profile.bio ? (
+          {/* Bio only if exists */}
+          {profile.bio && (
+            <div className="w-full max-w-lg mb-8">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-green-800 font-semibold text-lg">About Me</label>
+              </div>
+              <div className="bg-green-50 text-gray-800 px-5 py-4 rounded-lg border border-green-100 min-h-[120px]">
                 <p className="leading-relaxed">{profile.bio}</p>
-              ) : (
-                <p className="text-gray-500 italic">No bio added yet.</p>
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
