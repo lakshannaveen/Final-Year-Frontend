@@ -14,6 +14,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "../components/AuthContext";
+import ProfileFeed from "./ProfileFeed"; // Import ProfileFeed at the bottom
 
 interface UserProfile {
   _id: string;
@@ -34,7 +35,6 @@ interface ProfileProps {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-// Simple skeleton loader
 function Skeleton({ className = "" }: { className?: string }) {
   return (
     <div className={`animate-pulse bg-gray-200 ${className}`}></div>
@@ -46,7 +46,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
 
-  // Add username state for editing
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [phone, setPhone] = useState("");
@@ -65,7 +64,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const fileInputPic = useRef<HTMLInputElement>(null);
   const fileInputCover = useRef<HTMLInputElement>(null);
 
-  // Keep track of object URLs to revoke and avoid memory leaks
   const objectUrlRef = useRef<string | null>(null);
   const coverObjectUrlRef = useRef<string | null>(null);
 
@@ -190,7 +188,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       }
 
       const body: Record<string, unknown> = {
-        username, // include username in PUT body
+        username,
         bio,
         profilePic: profilePicUrl,
       };
@@ -292,26 +290,17 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100">
         <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-6">
-          {/* Skeleton Cover */}
           <Skeleton className="w-full h-48 sm:h-56 mb-[-64px] rounded-xl" />
-
-          {/* Skeleton Avatar */}
           <div className="flex flex-col items-center -mt-20 sm:-mt-24 mb-4">
             <Skeleton className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white mb-2" />
             <Skeleton className="w-48 h-8 rounded-lg mb-2" />
             <Skeleton className="w-24 h-6 rounded-lg mb-2" />
           </div>
-
-          {/* Skeleton Info */}
           <div className="flex flex-col items-center gap-2 mb-6">
             <Skeleton className="w-32 h-6 rounded-full" />
             <Skeleton className="w-32 h-6 rounded-full" />
           </div>
-
-          {/* Skeleton Contact */}
           <Skeleton className="w-full h-20 rounded-lg mb-6" />
-
-          {/* Skeleton Bio */}
           <Skeleton className="w-full h-24 rounded-lg" />
         </div>
       </div>
@@ -338,7 +327,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
-      {/* Header with Back Button and Actions (Share or Save/Cancel in edit mode) */}
       <div className="max-w-2xl mx-auto mb-6 flex justify-between items-center">
         <button
           onClick={() => setCurrentView("home")}
@@ -415,7 +403,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             </>
           )}
 
-          {/* Logout */}
           <button
             onClick={async () => {
               await logout();
@@ -431,7 +418,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       </div>
 
       <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden">
-        {/* Cover Image - Only for posting accounts */}
         {isPostingAccount && (
           <div className="relative h-48 sm:h-56 bg-gradient-to-r from-green-200 to-emerald-200">
             {previewCover || profile.coverImage ? (
@@ -466,9 +452,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           </div>
         )}
 
-        {/* Card Content */}
         <div className={`flex flex-col items-center ${isPostingAccount ? "-mt-20 sm:-mt-24" : "pt-8"} pb-8 px-6 sm:px-8`}>
-          {/* Avatar */}
           <div className="relative mb-4">
             <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
               {previewPic || profile.profilePic ? (
@@ -502,9 +486,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             />
           </div>
 
-          {/* Info */}
           <div className="w-full text-center mb-6">
-            {/* Username Editable */}
             {editMode ? (
               <div className="mb-2 flex flex-col items-center">
                 <input
@@ -561,7 +543,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             </p>
           </div>
 
-          {/* Contact Information - editable ONLY for posting accounts */}
           {isPostingAccount && editMode && (
             <div className="w-full max-w-lg mb-6 space-y-4">
               <div>
@@ -597,7 +578,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             </div>
           )}
 
-          {/* Display contact info ONLY for posting accounts in view mode */}
           {isPostingAccount && !editMode && (profile.phone || profile.website) && (
             <div className="w-full max-w-lg mb-6 bg-green-50 p-4 rounded-lg border border-green-100">
               <h3 className="text-green-800 font-semibold mb-3">Contact Information</h3>
@@ -625,7 +605,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             </div>
           )}
 
-          {/* Bio */}
           <div className="w-full max-w-lg mb-8">
             <div className="flex items-center justify-between mb-3">
               <label className="block text-green-800 font-semibold text-lg">About Me</label>
@@ -662,7 +641,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             )}
           </div>
 
-          {/* Action Buttons (bottom) */}
           <div className="flex gap-4 flex-wrap justify-center w-full max-w-md">
             {editMode ? (
               <>
@@ -709,7 +687,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             )}
           </div>
 
-          {/* Success/Error Messages */}
           {success && (
             <div className="mt-6 p-4 bg-green-100 text-green-800 rounded-lg text-center w-full max-w-md border border-green-200">
               {success}
@@ -723,6 +700,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           )}
         </div>
       </div>
+
+      {/* Show your posts after profile card */}
+      <ProfileFeed />
     </div>
   );
 }
