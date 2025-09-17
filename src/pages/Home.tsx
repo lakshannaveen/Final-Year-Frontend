@@ -89,6 +89,9 @@ function FeedSkeleton() {
 export default function Home({ setCurrentView, onShowPublicProfile }: HomeProps) {
   const [feeds, setFeeds] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [modalPhotoUrl, setModalPhotoUrl] = useState<string | null>(null);
+  const [modalPhotoAlt, setModalPhotoAlt] = useState<string>("");
 
   useEffect(() => {
     async function fetchFeeds() {
@@ -104,6 +107,41 @@ export default function Home({ setCurrentView, onShowPublicProfile }: HomeProps)
     }
     fetchFeeds();
   }, []);
+
+  // Long press handler for photo
+  let photoPressTimer: NodeJS.Timeout | null = null;
+
+  const handlePhotoMouseDown = (photoUrl: string, alt: string) => {
+    photoPressTimer = setTimeout(() => {
+      setModalPhotoUrl(photoUrl);
+      setModalPhotoAlt(alt);
+      setShowPhotoModal(true);
+    }, 500); // 500ms for long press
+  };
+
+  const handlePhotoMouseUp = () => {
+    if (photoPressTimer) clearTimeout(photoPressTimer);
+    photoPressTimer = null;
+  };
+
+  const handlePhotoTouchStart = (photoUrl: string, alt: string) => {
+    photoPressTimer = setTimeout(() => {
+      setModalPhotoUrl(photoUrl);
+      setModalPhotoAlt(alt);
+      setShowPhotoModal(true);
+    }, 500);
+  };
+
+  const handlePhotoTouchEnd = () => {
+    if (photoPressTimer) clearTimeout(photoPressTimer);
+    photoPressTimer = null;
+  };
+
+  const closeModal = () => {
+    setShowPhotoModal(false);
+    setModalPhotoUrl(null);
+    setModalPhotoAlt("");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -211,6 +249,11 @@ export default function Home({ setCurrentView, onShowPublicProfile }: HomeProps)
                             alt="Post Photo"
                             className="rounded-xl border object-cover"
                             style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
+                            onMouseDown={() => handlePhotoMouseDown(feed.photo!, feed.title)}
+                            onMouseUp={handlePhotoMouseUp}
+                            onMouseLeave={handlePhotoMouseUp}
+                            onTouchStart={() => handlePhotoTouchStart(feed.photo!, feed.title)}
+                            onTouchEnd={handlePhotoTouchEnd}
                           />
                         )}
                         {feed.video && (
@@ -227,6 +270,29 @@ export default function Home({ setCurrentView, onShowPublicProfile }: HomeProps)
                 </div>
               ))
             )}
+          </div>
+        )}
+        {/* Photo Modal */}
+        {showPhotoModal && modalPhotoUrl && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+            onClick={closeModal}
+          >
+            <div className="relative">
+              <img
+                src={modalPhotoUrl}
+                alt={modalPhotoAlt}
+                className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl border-8 border-white"
+                onClick={e => e.stopPropagation()}
+              />
+              <button
+                className="absolute top-2 right-2 bg-white text-gray-800 p-2 rounded-full shadow hover:bg-gray-100"
+                onClick={closeModal}
+                aria-label="Close"
+              >
+                &#10005;
+              </button>
+            </div>
           </div>
         )}
       </section>
