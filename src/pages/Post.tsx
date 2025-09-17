@@ -197,37 +197,37 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
       let videoUrl = "";
 
       // Upload photo if provided
-      if (photo) {
-        const photoForm = new FormData();
-        photoForm.append("image", photo);
+   if (photo) {
+  const photoForm = new FormData();
+  photoForm.append("file", photo);
 
-        const imgRes = await fetch(`${API_URL}/api/profile/upload`, {
-          method: "POST",
-          credentials: "include",
-          body: photoForm,
-        });
-        const imgData = await imgRes.json();
-        if (!imgRes.ok) throw new Error(imgData?.errors?.server || "Photo upload failed");
-        photoUrl = imgData.imageUrl;
-      }
+  const imgRes = await fetch(`${API_URL}/api/feed/upload`, {
+    method: "POST",
+    credentials: "include",
+    body: photoForm,
+  });
+  const imgData = await imgRes.json();
+  if (!imgRes.ok) throw new Error(imgData?.errors?.server || "Photo upload failed");
+  photoUrl = imgData.fileUrl;
+}
 
-      // Upload video if provided
-      if (video) {
-        const videoForm = new FormData();
-        videoForm.append("image", video);
+// Upload video if provided
+if (video) {
+  const videoForm = new FormData();
+  videoForm.append("file", video);
 
-        const vidRes = await fetch(`${API_URL}/api/profile/upload`, {
-          method: "POST",
-          credentials: "include",
-          body: videoForm,
-        });
-        const vidData = await vidRes.json();
-        if (!vidRes.ok) throw new Error(vidData?.errors?.server || "Video upload failed");
-        videoUrl = vidData.imageUrl;
-      }
+  const vidRes = await fetch(`${API_URL}/api/feed/upload`, {
+    method: "POST",
+    credentials: "include",
+    body: videoForm,
+  });
+  const vidData = await vidRes.json();
+  if (!vidRes.ok) throw new Error(vidData?.errors?.server || "Video upload failed");
+  videoUrl = vidData.fileUrl;
+}
 
-      // Send service post request
-      const res = await fetch(`${API_URL}/api/services`, {
+      // Save to Feed DB
+      const res = await fetch(`${API_URL}/api/feed`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -268,7 +268,6 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
   };
 
   // Consistent placeholder text color for all inputs, including file fields, and textarea
-  // Use Tailwind's placeholder:text-black (or you can use a custom CSS class for this)
   const placeholderColorClass = "placeholder:text-black";
 
   return (
