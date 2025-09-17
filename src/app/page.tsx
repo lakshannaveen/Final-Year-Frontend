@@ -10,14 +10,21 @@ import Contact from "../pages/Contact";
 import Feedback from "../pages/Feedback";
 import Profile from "../pages/Profile";
 import PostService from "../pages/Post";
+import PublicProfile from "../pages/PublicProfile";
 
 export default function Index() {
   const [currentView, setCurrentView] = useState("home");
+  const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
+
+  const handleShowPublicProfile = (userId: string) => {
+    setPublicProfileId(userId);
+    setCurrentView("publicprofile");
+  };
 
   const renderContent = () => {
     switch (currentView) {
       case "home":
-        return <Home setCurrentView={setCurrentView} />;
+        return <Home setCurrentView={setCurrentView} onShowPublicProfile={handleShowPublicProfile} />;
       case "register":
         return <Register setCurrentView={setCurrentView} />;
       case "signin":
@@ -34,14 +41,19 @@ export default function Index() {
         return <Profile setCurrentView={setCurrentView} />;
       case "post":
         return <PostService setCurrentView={setCurrentView} />;
+      case "publicprofile":
+        return publicProfileId ? (
+          <PublicProfile userId={publicProfileId} setCurrentView={setCurrentView} />
+        ) : (
+          <Home setCurrentView={setCurrentView} onShowPublicProfile={handleShowPublicProfile} />
+        );
       default:
-        return <Home setCurrentView={setCurrentView} />;
+        return <Home setCurrentView={setCurrentView} onShowPublicProfile={handleShowPublicProfile} />;
     }
   };
 
   return (
     <AuthProvider>
-     
       {renderContent()}
     </AuthProvider>
   );

@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 
 interface HomeProps {
   setCurrentView: (view: string) => void;
+  onShowPublicProfile: (userId: string) => void;
 }
 
 interface FeedUser {
@@ -52,7 +53,7 @@ function timeAgo(dateString: string): string {
   return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
-export default function Home({ setCurrentView }: HomeProps) {
+export default function Home({ setCurrentView, onShowPublicProfile }: HomeProps) {
   const [feeds, setFeeds] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -74,7 +75,6 @@ export default function Home({ setCurrentView }: HomeProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar currentView="home" setCurrentView={setCurrentView} />
-
       <section className="flex flex-col flex-grow items-center px-4 py-6">
         {loading ? (
           <div className="text-center text-gray-500">Loading posts...</div>
@@ -90,7 +90,11 @@ export default function Home({ setCurrentView }: HomeProps) {
                   style={{ minHeight: "240px" }}
                 >
                   {/* Profile pic and username, top left */}
-                  <div className="flex flex-col items-center md:items-start mr-0 md:mr-8 min-w-[100px] mb-4 md:mb-0">
+                  <div
+                    className="flex flex-col items-center md:items-start mr-0 md:mr-8 min-w-[100px] mb-4 md:mb-0 cursor-pointer hover:bg-gray-100 rounded-xl transition"
+                    onClick={() => onShowPublicProfile(feed.user._id)}
+                    title={`View ${feed.user.username}'s profile`}
+                  >
                     {feed.user.profilePic ? (
                       <img
                         src={feed.user.profilePic}
@@ -189,7 +193,6 @@ export default function Home({ setCurrentView }: HomeProps) {
           </div>
         )}
       </section>
-
       <Footer setCurrentView={setCurrentView} />
     </div>
   );
