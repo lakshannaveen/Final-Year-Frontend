@@ -27,6 +27,13 @@ interface UserProfile {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+// Simple skeleton loader
+function Skeleton({ className = "" }: { className?: string }) {
+  return (
+    <div className={`animate-pulse bg-gray-200 ${className}`}></div>
+  );
+}
+
 export default function PublicProfile({ userId, setCurrentView }: PublicProfileProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +63,29 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-700"></div>
+        <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-6">
+          {/* Skeleton Cover */}
+          <Skeleton className="w-full h-48 sm:h-56 mb-[-64px] rounded-xl" />
+
+          {/* Skeleton Avatar */}
+          <div className="flex flex-col items-center -mt-20 sm:-mt-24 mb-4">
+            <Skeleton className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white mb-2" />
+            <Skeleton className="w-48 h-8 rounded-lg mb-2" />
+            <Skeleton className="w-24 h-6 rounded-lg mb-2" />
+          </div>
+
+          {/* Skeleton Info */}
+          <div className="flex flex-col items-center gap-2 mb-6">
+            <Skeleton className="w-32 h-6 rounded-full" />
+            <Skeleton className="w-32 h-6 rounded-full" />
+          </div>
+
+          {/* Skeleton Contact */}
+          <Skeleton className="w-full h-20 rounded-lg mb-6" />
+
+          {/* Skeleton Bio */}
+          <Skeleton className="w-full h-24 rounded-lg" />
+        </div>
       </div>
     );
   }
