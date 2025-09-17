@@ -120,9 +120,9 @@ export default function Register({ setCurrentView }: RegisterProps) {
   };
 
   // Google OAuth handler
- const handleGoogleSignIn = () => {
-  window.location.href = `${API_URL}/api/auth/google?serviceType=${serviceType}`;
-};
+  const handleGoogleSignIn = () => {
+    window.location.href = `${API_URL}/api/auth/google?serviceType=${serviceType}`;
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
