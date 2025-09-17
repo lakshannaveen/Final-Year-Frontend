@@ -1,5 +1,13 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  Globe,
+  Phone,
+  Link as LinkIcon,
+  Image as ImageIcon
+} from "lucide-react";
 
 interface PublicProfileProps {
   userId: string;
@@ -9,65 +17,202 @@ interface PublicProfileProps {
 interface UserProfile {
   _id: string;
   username: string;
+  phone?: string;
+  website?: string;
+  serviceType: "finding" | "posting";
+  createdAt?: string;
   bio?: string;
   profilePic?: string;
   coverImage?: string;
-  createdAt?: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function PublicProfile({ userId, setCurrentView }: PublicProfileProps) {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    async function fetchProfile() {
+    const fetchProfile = async () => {
       setLoading(true);
       try {
         const res = await fetch(`${API_URL}/api/profile/public/${userId}`);
         const data = await res.json();
-        setUser(data.user);
+        if (res.ok) {
+          setProfile(data.user);
+        } else {
+          setError(data.errors?.server || "Failed to fetch profile.");
+        }
       } catch {
-        setUser(null);
+        setError("Error connecting to server.");
       }
       setLoading(false);
-    }
-    if (userId) fetchProfile();
+    };
+    fetchProfile();
   }, [userId]);
 
-  if (loading) return <div className="text-center py-8">Loading profile...</div>;
-  if (!user) return <div className="text-center py-8 text-red-500">User not found.</div>;
+  const getInitial = (name = "") => name.charAt(0).toUpperCase();
 
-  return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-50">
-      <div className="w-full max-w-2xl mt-8 bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-        <div className="flex flex-col items-center">
-          {user.coverImage && (
-            <img src={user.coverImage} alt="Cover" className="w-full h-44 object-cover rounded-xl mb-4" />
-          )}
-          {user.profilePic ? (
-            <img
-              src={user.profilePic}
-              alt={user.username}
-              className="w-24 h-24 rounded-full object-cover border border-gray-300 mb-2"
-            />
-          ) : (
-            <div className="w-24 h-24 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-4xl border border-gray-300 mb-2">
-              {user.username?.[0]?.toUpperCase() || "?"}
-            </div>
-          )}
-          <div className="text-2xl font-bold text-green-700 mb-2">{user.username}</div>
-          {user.bio && <div className="text-gray-700 mb-2">{user.bio}</div>}
-          <div className="text-xs text-gray-500">{user.createdAt && `Joined ${new Date(user.createdAt).toLocaleDateString()}`}</div>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-700"></div>
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100">
+        <div className="text-center">
+          <p className="text-lg text-red-700 font-semibold mb-4">{error || "No profile data found."}</p>
           {setCurrentView && (
             <button
-              className="mt-6 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
               onClick={() => setCurrentView("home")}
+              className="px-4 py-2 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-800 transition"
             >
-              ← Back to Home
+              Back to Home
             </button>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  const isPostingAccount = profile.serviceType === "posting";
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
+      {/* Back Button */}
+      <div className="max-w-2xl mx-auto mb-6 flex justify-between items-center">
+        {setCurrentView && (
+          <button
+            onClick={() => setCurrentView("home")}
+            className="flex items-center text-green-700 font-semibold hover:text-green-800 transition-colors px-4 py-2 rounded-lg hover:bg-green-100"
+          >
+            <ArrowLeft size={20} className="mr-2" />
+            Back
+          </button>
+        )}
+      </div>
+
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden">
+        {/* Cover Image - Only for posting accounts */}
+        {isPostingAccount && (
+          <div className="relative h-48 sm:h-56 bg-gradient-to-r from-green-200 to-emerald-200">
+            {profile.coverImage ? (
+              <img
+                src={profile.coverImage}
+                alt="Cover"
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-6xl text-green-700 font-bold opacity-20">
+                <ImageIcon size={48} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Card Content */}
+        <div className={`flex flex-col items-center ${isPostingAccount ? "-mt-20 sm:-mt-24" : "pt-8"} pb-8 px-6 sm:px-8`}>
+          {/* Avatar */}
+          <div className="relative mb-4">
+            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
+              {profile.profilePic ? (
+                <img
+                  src={profile.profilePic}
+                  alt="Profile"
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-green-400 to-emerald-400 flex items-center justify-center text-6xl font-bold text-white">
+                  {getInitial(profile.username)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Info */}
+          <div className="w-full text-center mb-6">
+            <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">{profile.username}</h1>
+
+            <div className="flex justify-center flex-wrap gap-3 mb-4">
+              <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">
+                {isPostingAccount ? "💼 Service Provider" : "🔍 Looking for Services"}
+              </span>
+              {isPostingAccount && profile.phone && (
+                <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold text-sm flex items-center">
+                  <Phone size={14} className="mr-1" />
+                  {profile.phone}
+                </span>
+              )}
+              {isPostingAccount && profile.website && (
+                <a
+                  href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold text-sm flex items-center hover:bg-blue-200"
+                >
+                  <Globe size={14} className="mr-1" />
+                  Website
+                </a>
+              )}
+            </div>
+
+            <p className="text-gray-500 text-sm">
+              Joined:{" "}
+              {profile.createdAt &&
+                new Date(profile.createdAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+            </p>
+          </div>
+
+          {/* Contact Information - ONLY for posting accounts */}
+          {isPostingAccount && (profile.phone || profile.website) && (
+            <div className="w-full max-w-lg mb-6 bg-green-50 p-4 rounded-lg border border-green-100">
+              <h3 className="text-green-800 font-semibold mb-3">Contact Information</h3>
+              <div className="space-y-2">
+                {profile.phone && (
+                  <div className="flex items-center">
+                    <Phone size={16} className="text-green-700 mr-2" />
+                    <span className="text-gray-700">{profile.phone}</span>
+                  </div>
+                )}
+                {profile.website && (
+                  <div className="flex items-center">
+                    <Globe size={16} className="text-green-700 mr-2" />
+                    <a
+                      href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline break-all"
+                    >
+                      {profile.website}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Bio */}
+          <div className="w-full max-w-lg mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-green-800 font-semibold text-lg">About Me</label>
+            </div>
+            <div className="bg-green-50 text-gray-800 px-5 py-4 rounded-lg border border-green-100 min-h-[120px]">
+              {profile.bio ? (
+                <p className="leading-relaxed">{profile.bio}</p>
+              ) : (
+                <p className="text-gray-500 italic">No bio added yet.</p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
