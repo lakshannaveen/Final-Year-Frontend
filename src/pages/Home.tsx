@@ -31,6 +31,27 @@ interface FeedItem {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+// Facebook-style time ago formatting
+function timeAgo(dateString: string): string {
+  const now = new Date();
+  const date = new Date(dateString);
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
+}
+
 export default function Home({ setCurrentView }: HomeProps) {
   const [feeds, setFeeds] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,18 +76,21 @@ export default function Home({ setCurrentView }: HomeProps) {
       <Navbar currentView="home" setCurrentView={setCurrentView} />
 
       <section className="flex flex-col flex-grow items-center px-4 py-6">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">Welcome</h1>
         {loading ? (
           <div className="text-center text-gray-500">Loading posts...</div>
         ) : (
-          <div className="w-full max-w-3xl space-y-6">
+          <div className="w-full max-w-3xl space-y-8">
             {feeds.length === 0 ? (
               <div className="text-center text-gray-500">No posts yet.</div>
             ) : (
               feeds.map(feed => (
-                <div key={feed._id} className="bg-white rounded-lg shadow p-6 flex">
+                <div
+                  key={feed._id}
+                  className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col md:flex-row items-stretch p-6 transition hover:shadow-xl"
+                  style={{ minHeight: "240px" }}
+                >
                   {/* Profile pic and username, top left */}
-                  <div className="flex flex-col items-center mr-6 min-w-[80px]">
+                  <div className="flex flex-col items-center md:items-start mr-0 md:mr-8 min-w-[100px] mb-4 md:mb-0">
                     {feed.user.profilePic ? (
                       <img
                         src={feed.user.profilePic}
@@ -82,50 +106,81 @@ export default function Home({ setCurrentView }: HomeProps) {
                       </div>
                     )}
                     <div className="text-green-700 font-semibold text-sm text-center">{feed.user.username}</div>
+                    <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
                   </div>
-                  {/* Post details */}
-                  <div className="flex-1">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
-                      <div className="text-lg font-bold text-gray-900">{feed.title}</div>
-                      <div className="text-sm text-gray-500">{new Date(feed.createdAt).toLocaleString()}</div>
-                    </div>
-                    <div className="text-gray-800 mb-1">
-                      <span className="font-semibold">Location:</span> {feed.location}
-                    </div>
-                    <div className="text-gray-800 mb-1">
-                      <span className="font-semibold">Contact:</span> {feed.contactNumber}
-                    </div>
-                    <div className="text-gray-800 mb-1">
-                      <span className="font-semibold">Price:</span> {feed.price} {feed.priceCurrency} ({feed.priceType})
-                    </div>
-                    {feed.websiteLink && (
-                      <div className="mb-1">
-                        <a
-                          href={feed.websiteLink}
-                          className="text-green-700 underline"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Website
-                        </a>
+                  {/* Post details and media */}
+                  <div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-8">
+                    {/* Details */}
+                    <div className="flex-1 flex flex-col justify-between py-2">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="text-xl font-bold text-gray-900">{feed.title}</div>
+                          {/* Message icon */}
+                          <button
+                            className="ml-2 px-2 py-1 rounded-full bg-gray-100 hover:bg-green-100 transition border border-green-200"
+                            title="Message"
+                            aria-label="Message"
+                          >
+                            <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+                              <path d="M21 15.46V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14l4-4h10a2 2 0 0 0 2-2z"
+                                stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                fill="none"/>
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="mb-2">
+                          <span className="inline-block font-semibold text-gray-700 w-20">Location:</span>
+                          <span className="text-gray-800">{feed.location}</span>
+                        </div>
+                        <div className="mb-2">
+                          <span className="inline-block font-semibold text-gray-700 w-20">Contact:</span>
+                          <span className="text-gray-800">{feed.contactNumber}</span>
+                        </div>
+                        <div className="mb-2">
+                          <span className="inline-block font-semibold text-gray-700 w-20">Price:</span>
+                          <span className="text-gray-800">{feed.price} {feed.priceCurrency} ({feed.priceType})</span>
+                        </div>
+                        {feed.websiteLink && (
+                          <div className="mb-2">
+                            <span className="inline-block font-semibold text-gray-700 w-20">Website:</span>
+                            <a
+                              href={feed.websiteLink}
+                              className="text-green-700 underline"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {feed.websiteLink.replace(/^https?:\/\//, '')}
+                            </a>
+                          </div>
+                        )}
+                        {feed.description && (
+                          <div className="mb-2">
+                            <span className="inline-block font-semibold text-gray-700 w-20">About:</span>
+                            <span className="text-gray-700">{feed.description}</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {feed.description && (
-                      <div className="mb-2 text-gray-700">{feed.description}</div>
-                    )}
-                    {feed.photo && (
-                      <img
-                        src={feed.photo}
-                        alt="Post Photo"
-                        className="w-full max-w-sm rounded-lg border mt-2"
-                      />
-                    )}
-                    {feed.video && (
-                      <video
-                        src={feed.video}
-                        controls
-                        className="w-full max-w-sm rounded-lg border mt-2"
-                      />
+                    </div>
+                    {/* Media */}
+                    {(feed.photo || feed.video) && (
+                      <div className="flex flex-col gap-2 items-center justify-center md:justify-start md:items-start min-w-[220px] max-w-[220px]">
+                        {feed.photo && (
+                          <img
+                            src={feed.photo}
+                            alt="Post Photo"
+                            className="rounded-xl border object-cover"
+                            style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
+                          />
+                        )}
+                        {feed.video && (
+                          <video
+                            src={feed.video}
+                            controls
+                            className="rounded-xl border object-cover"
+                            style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
+                          />
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
