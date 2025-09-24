@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-
 interface MessageProps {
   setCurrentView: (view: string) => void;
   recipientId: string;
@@ -100,11 +99,12 @@ export default function Message({
       {/* Navbar (green theme, just like rest of app) */}
       <nav className="bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-lg sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center">
-          {/* Back button */}
+          {/* Back button: uses ONLY setCurrentView, never reloads the page */}
           <button
             className="text-white mr-3 p-2 rounded-lg hover:bg-green-600 transition"
             onClick={() => setCurrentView("home")}
             aria-label="Back"
+            type="button"
           >
             {/* Left Arrow SVG */}
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none">

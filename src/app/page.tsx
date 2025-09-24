@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AuthProvider } from "../components/AuthContext";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
@@ -11,12 +11,61 @@ import Feedback from "../pages/Feedback";
 import Profile from "../pages/Profile";
 import PostService from "../pages/Post";
 import PublicProfile from "../pages/PublicProfile";
-import Message from "../pages/Message"; 
+import Message from "../pages/Message";
+
+interface FeedUser {
+  _id: string;
+  username: string;
+  profilePic?: string;
+}
+
+interface FeedItem {
+  _id: string;
+  user: FeedUser;
+  title: string;
+  location: string;
+  contactNumber: string;
+  price: number;
+  priceType: string;
+  priceCurrency: string;
+  photo?: string;
+  video?: string;
+  websiteLink?: string;
+  description?: string;
+  createdAt: string;
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function Page() {
   const [currentView, setCurrentView] = useState("home");
   const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
   const [chatRecipient, setChatRecipient] = useState<{ recipientId: string, recipientUsername: string } | null>(null);
+
+  const [feeds, setFeeds] = useState<FeedItem[]>([]);
+  const [feedsLoading, setFeedsLoading] = useState<boolean>(true);
+
+  // --- SCROLL RESTORATION ---
+  // Store scroll position for feed
+  const [feedScrollPos, setFeedScrollPos] = useState(0);
+  const saveScrollPosition = (pos: number) => setFeedScrollPos(pos);
+  const getSavedScrollPosition = () => feedScrollPos;
+
+  const fetchFeeds = useCallback(async () => {
+    setFeedsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/feed/all`);
+      const data = await res.json();
+      setFeeds(data.feeds || []);
+    } catch {
+      setFeeds([]);
+    }
+    setFeedsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchFeeds();
+  }, [fetchFeeds]);
 
   const handleShowPublicProfile = (userId: string) => {
     setPublicProfileId(userId);
@@ -28,7 +77,7 @@ export default function Page() {
     setCurrentView("message");
   };
 
-  const renderContent = () => {
+  const renderContent = (): React.ReactNode => {
     switch (currentView) {
       case "home":
         return (
@@ -36,6 +85,10 @@ export default function Page() {
             setCurrentView={setCurrentView}
             onShowPublicProfile={handleShowPublicProfile}
             onShowMessage={handleShowMessage}
+            feeds={feeds}
+            loading={feedsLoading}
+            saveScrollPosition={saveScrollPosition}
+            getSavedScrollPosition={getSavedScrollPosition}
           />
         );
       case "register":
@@ -57,13 +110,7 @@ export default function Page() {
       case "publicprofile":
         return publicProfileId ? (
           <PublicProfile userId={publicProfileId} setCurrentView={setCurrentView} />
-        ) : (
-          <Home
-            setCurrentView={setCurrentView}
-            onShowPublicProfile={handleShowPublicProfile}
-            onShowMessage={handleShowMessage}
-          />
-        );
+        ) : renderContent();
       case "message":
         return chatRecipient ? (
           <Message
@@ -71,21 +118,9 @@ export default function Page() {
             recipientId={chatRecipient.recipientId}
             recipientUsername={chatRecipient.recipientUsername}
           />
-        ) : (
-          <Home
-            setCurrentView={setCurrentView}
-            onShowPublicProfile={handleShowPublicProfile}
-            onShowMessage={handleShowMessage}
-          />
-        );
+        ) : renderContent();
       default:
-        return (
-          <Home
-            setCurrentView={setCurrentView}
-            onShowPublicProfile={handleShowPublicProfile}
-            onShowMessage={handleShowMessage}
-          />
-        );
+        return renderContent();
     }
   };
 
