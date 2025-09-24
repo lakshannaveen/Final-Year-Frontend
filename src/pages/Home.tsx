@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 interface HomeProps {
   setCurrentView: (view: string) => void;
   onShowPublicProfile: (userId: string) => void;
+  onShowMessage: (recipientId: string, recipientUsername: string) => void;
 }
 
 interface FeedUser {
@@ -86,7 +87,7 @@ function FeedSkeleton() {
   );
 }
 
-export default function Home({ setCurrentView, onShowPublicProfile }: HomeProps) {
+export default function Home({ setCurrentView, onShowPublicProfile, onShowMessage }: HomeProps) {
   const [feeds, setFeeds] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -199,6 +200,7 @@ export default function Home({ setCurrentView, onShowPublicProfile }: HomeProps)
                             className="ml-2 px-2 py-1 rounded-full bg-gray-100 hover:bg-green-100 transition border border-green-200"
                             title="Message"
                             aria-label="Message"
+                            onClick={() => onShowMessage(feed.user._id, feed.user.username)}
                           >
                             <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
                               <path d="M21 15.46V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14l4-4h10a2 2 0 0 0 2-2z"

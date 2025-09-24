@@ -11,20 +11,33 @@ import Feedback from "../pages/Feedback";
 import Profile from "../pages/Profile";
 import PostService from "../pages/Post";
 import PublicProfile from "../pages/PublicProfile";
+import Message from "../pages/Message"; 
 
-export default function Index() {
+export default function Page() {
   const [currentView, setCurrentView] = useState("home");
   const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
+  const [chatRecipient, setChatRecipient] = useState<{ recipientId: string, recipientUsername: string } | null>(null);
 
   const handleShowPublicProfile = (userId: string) => {
     setPublicProfileId(userId);
     setCurrentView("publicprofile");
   };
 
+  const handleShowMessage = (recipientId: string, recipientUsername: string) => {
+    setChatRecipient({ recipientId, recipientUsername });
+    setCurrentView("message");
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case "home":
-        return <Home setCurrentView={setCurrentView} onShowPublicProfile={handleShowPublicProfile} />;
+        return (
+          <Home
+            setCurrentView={setCurrentView}
+            onShowPublicProfile={handleShowPublicProfile}
+            onShowMessage={handleShowMessage}
+          />
+        );
       case "register":
         return <Register setCurrentView={setCurrentView} />;
       case "signin":
@@ -45,10 +58,34 @@ export default function Index() {
         return publicProfileId ? (
           <PublicProfile userId={publicProfileId} setCurrentView={setCurrentView} />
         ) : (
-          <Home setCurrentView={setCurrentView} onShowPublicProfile={handleShowPublicProfile} />
+          <Home
+            setCurrentView={setCurrentView}
+            onShowPublicProfile={handleShowPublicProfile}
+            onShowMessage={handleShowMessage}
+          />
+        );
+      case "message":
+        return chatRecipient ? (
+          <Message
+            setCurrentView={setCurrentView}
+            recipientId={chatRecipient.recipientId}
+            recipientUsername={chatRecipient.recipientUsername}
+          />
+        ) : (
+          <Home
+            setCurrentView={setCurrentView}
+            onShowPublicProfile={handleShowPublicProfile}
+            onShowMessage={handleShowMessage}
+          />
         );
       default:
-        return <Home setCurrentView={setCurrentView} onShowPublicProfile={handleShowPublicProfile} />;
+        return (
+          <Home
+            setCurrentView={setCurrentView}
+            onShowPublicProfile={handleShowPublicProfile}
+            onShowMessage={handleShowMessage}
+          />
+        );
     }
   };
 
