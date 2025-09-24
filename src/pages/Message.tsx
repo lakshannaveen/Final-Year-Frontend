@@ -6,12 +6,17 @@ interface MessageProps {
   recipientId: string;
   recipientUsername: string;
   recipientProfilePic?: string;
+  postId?: string; // now can be passed
 }
 
 interface ChatMessage {
   _id: string;
   sender: string; // "me" or username
+  senderId?: string;
   senderProfilePic?: string;
+  recipientId?: string;
+  recipientUsername?: string;
+  postId?: string;
   text: string;
   createdAt: string;
 }
@@ -23,6 +28,7 @@ export default function Message({
   recipientId,
   recipientUsername,
   recipientProfilePic,
+  postId,
 }: MessageProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -36,7 +42,6 @@ export default function Message({
       setProfilePic(recipientProfilePic);
       return;
     }
-    // Fetch public profile pic using recipientId
     (async () => {
       try {
         const res = await fetch(`${API_URL}/api/profile/public/${recipientId}`);
@@ -54,23 +59,29 @@ export default function Message({
     async function fetchMessages() {
       setLoading(true);
       try {
-        // Add credentials if you use cookies for auth, or add Authorization header if JWT (see below)
-        const token = localStorage.getItem("token"); // if using JWT
-        const res = await fetch(`${API_URL}/api/messages/${recipientId}`, {
+        const token = localStorage.getItem("token");
+        let url = `${API_URL}/api/messages/${recipientId}`;
+        if (postId) url += `?postId=${postId}`;
+        const res = await fetch(url, {
           headers: token
             ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
             : { "Content-Type": "application/json" },
-          // credentials: "include", // uncomment if using cookie sessions
+          credentials: "include", // Always send cookies
         });
+        if (res.status === 401) {
+          alert("You are not authenticated. Please login again.");
+        }
         const data = await res.json();
         setMessages(data.messages || []);
-      } catch {
+        console.log("DEBUG fetchMessages:", data.messages);
+      } catch (e) {
         setMessages([]);
       }
       setLoading(false);
     }
     fetchMessages();
-  }, [recipientId]);
+    // eslint-disable-next-line
+  }, [recipientId, postId]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -84,20 +95,24 @@ export default function Message({
       _id: "temp-" + Date.now(),
       sender: "me",
       text: newMessage,
+      postId: postId,
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, tempMsg]);
     setNewMessage("");
     try {
       const token = localStorage.getItem("token");
-      await fetch(`${API_URL}/api/messages/${recipientId}`, {
+      const res = await fetch(`${API_URL}/api/messages/${recipientId}`, {
         method: "POST",
         headers: token
           ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
           : { "Content-Type": "application/json" },
-        // credentials: "include", // uncomment if using cookie sessions
-        body: JSON.stringify({ text: tempMsg.text }),
+        credentials: "include", // Always send cookies
+        body: JSON.stringify({ text: tempMsg.text, postId }), // send postId
       });
+      if (res.status === 401) {
+        alert("You are not authenticated. Please login again.");
+      }
       // Optionally, refetch messages here if you want to sync with DB
     } catch {}
   };
@@ -129,6 +144,11 @@ export default function Message({
             </div>
           )}
           <span className="font-semibold text-lg">{recipientUsername}</span>
+          {postId && (
+            <span className="ml-4 bg-white text-green-700 px-2 py-1 rounded text-xs border font-mono">
+              Post: {postId}
+            </span>
+          )}
         </div>
       </nav>
 
@@ -145,7 +165,6 @@ export default function Message({
               <div className={`flex items-end gap-2`}>
                 {/* Avatar for every message (me and other) */}
                 {msg.sender === "me" ? (
-                  // My avatar (optional: fetch from your own user profile)
                   <div className="order-2">
                     {msg.senderProfilePic ? (
                       <img
@@ -181,6 +200,13 @@ export default function Message({
                   {msg.text}
                   <div className="text-xs text-gray-400 mt-1 text-right">
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                  {/* DEBUG INFO */}
+                  <div className="text-2xs text-gray-300 mt-1">
+                    <div>ID:{msg._id}</div>
+                    <div>SenderId:{msg.senderId?.toString()}</div>
+                    <div>RecipientId:{msg.recipientId?.toString()}</div>
+                    <div>PostId:{msg.postId?.toString()}</div>
                   </div>
                 </div>
               </div>

@@ -35,7 +35,6 @@ interface FeedItem {
   createdAt: string;
 }
 
-// Facebook-style time ago formatting
 function timeAgo(dateString: string): string {
   const now = new Date();
   const date = new Date(dateString);
@@ -56,7 +55,6 @@ function timeAgo(dateString: string): string {
   return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
-// Skeleton loader for feed card
 function FeedSkeleton() {
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col md:flex-row items-stretch p-6 min-h-[240px] animate-pulse">
@@ -99,22 +97,18 @@ export default function Home({
   const [modalPhotoUrl, setModalPhotoUrl] = useState<string | null>(null);
   const [modalPhotoAlt, setModalPhotoAlt] = useState<string>("");
 
-  // Restore scroll position on mount
   useEffect(() => {
     const pos = getSavedScrollPosition();
-    // Wait for rendering
     setTimeout(() => {
       window.scrollTo(0, pos);
     }, 0);
   }, [getSavedScrollPosition]);
 
-  // Save scroll position before navigating away
   const handleNavigate = (navFn: () => void) => {
     saveScrollPosition(window.scrollY);
     navFn();
   };
 
-  // Long press handler for photo
   let photoPressTimer: NodeJS.Timeout | null = null;
 
   const handlePhotoMouseDown = (photoUrl: string, alt: string) => {
@@ -275,7 +269,6 @@ export default function Home({
             ))
           )}
         </div>
-        {/* Photo Modal */}
         {showPhotoModal && modalPhotoUrl && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
