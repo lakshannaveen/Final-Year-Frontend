@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import Navbar from "../components/Navbar";
+
 
 interface MessageProps {
   setCurrentView: (view: string) => void;
