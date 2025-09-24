@@ -9,7 +9,7 @@ interface RegisterProps {
 }
 
 export default function Register({ setCurrentView }: RegisterProps) {
-  const [serviceType, setServiceType] = useState<"" | "finding" | "posting">("");
+  const [serviceType, setServiceType] = useState<"" | "serviceSeeker" | "posting">("");
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -158,10 +158,10 @@ export default function Register({ setCurrentView }: RegisterProps) {
           <div className="mb-6 text-center flex flex-col gap-3">
             <button
               type="button"
-              onClick={() => setServiceType("finding")}
+              onClick={() => setServiceType("serviceSeeker")}
               className="w-full px-4 py-3 rounded-lg font-semibold bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-md hover:from-green-800 hover:to-emerald-800 transition-all"
             >
-              Finding a Service
+              Service Seeker
             </button>
             <button
               type="button"
@@ -176,14 +176,14 @@ export default function Register({ setCurrentView }: RegisterProps) {
             <div className="mb-6 text-center flex justify-center">
               <button
                 type="button"
-                onClick={() => setServiceType("finding")}
+                onClick={() => setServiceType("serviceSeeker")}
                 className={`px-4 py-2 rounded-l-lg font-semibold transition-all ${
-                  serviceType === "finding"
+                  serviceType === "serviceSeeker"
                     ? "bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-md"
                     : "bg-white text-green-700 border border-green-700 hover:bg-green-50"
                 }`}
               >
-                Finding a Service
+                Service Seeker
               </button>
               <button
                 type="button"
@@ -324,11 +324,12 @@ export default function Register({ setCurrentView }: RegisterProps) {
                 xmlns="http://www.w3.org/2000/svg"
                 className="inline-block"
               >
+                {/* SVG paths unchanged */}
                 <path
                   d="M44.5 20H24V28.5H35.8C34.3 33.1 29.8 36 24 36C16.8 36 10.5 29.7 10.5 22.5C10.5 15.3 16.8 9 24 9C27.1 9 30 10.1 32.2 12.2L37.5 7.5C34.1 4.3 29.3 2 24 2C12.4 2 3 11.4 3 23C3 34.6 12.4 44 24 44C35.6 44 45 34.6 45 23C45 21.3 44.8 20.6 44.5 20Z"
                   fill="#FFC107"
                 />
-                <path
+                           <path
                   d="M6.3 14.7L12.1 19.2C13.7 15.6 18.4 12.7 24 12.7C27.2 12.7 30.1 13.9 32.2 16.1L37.6 11.7C34.2 8.3 29.4 6 24 6C16.7 6 10.5 12.2 10.5 19.5C10.5 22.5 12.1 25.1 14.3 26.9L20.1 22.4C19.1 21.7 18.1 19.8 18.1 17.7C18.1 15.6 19.1 13.7 20.1 12.7Z"
                   fill="#FF3D00"
                 />
@@ -340,6 +341,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
                   d="M44.5 20H24V28.5H35.8C34.5 32.1 31.4 34.7 27.8 34.7C25.9 34.7 24.2 34.1 22.8 33.1L17.6 38.5C20.5 41.1 24 44 24 44C35.6 44 45 34.6 45 23C45 21.3 44.8 20.6 44.5 20Z"
                   fill="#1976D2"
                 />
+                {/* ...other paths */}
               </svg>
               <span>Register with Google</span>
             </button>
