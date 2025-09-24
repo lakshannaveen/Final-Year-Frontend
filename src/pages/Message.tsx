@@ -113,6 +113,7 @@ export default function Message({
           </button>
           {/* Profile pic and username */}
           {profilePic ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profilePic}
               alt={recipientUsername}
@@ -141,6 +142,7 @@ export default function Message({
                 {/* Only show avatar for others */}
                 {msg.sender !== "me" && (
                   msg.senderProfilePic ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={msg.senderProfilePic}
                       alt={msg.sender}
