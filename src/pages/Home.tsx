@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 interface HomeProps {
   setCurrentView: (view: string) => void;
   onShowPublicProfile: (userId: string) => void;
-  onShowMessage: (recipientId: string, recipientUsername: string) => void;
+  onShowMessage: (recipientId: string, recipientUsername: string, postId: string) => void;
   feeds: FeedItem[];
   loading: boolean;
   saveScrollPosition: (pos: number) => void;
@@ -200,7 +200,9 @@ export default function Home({
                           className="ml-2 px-2 py-1 rounded-full bg-gray-100 hover:bg-green-100 transition border border-green-200"
                           title="Message"
                           aria-label="Message"
-                          onClick={() => handleNavigate(() => onShowMessage(feed.user._id, feed.user.username))}
+                          onClick={() => handleNavigate(() =>
+                            onShowMessage(feed.user._id, feed.user.username, feed._id)
+                          )}
                         >
                           <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
                             <path d="M21 15.46V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14l4-4h10a2 2 0 0 0 2-2z"
