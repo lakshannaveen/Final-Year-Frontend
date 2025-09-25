@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -7,8 +7,7 @@ interface HomeProps {
   setCurrentView: (view: string) => void;
   onShowPublicProfile: (userId: string) => void;
   onShowMessage: (recipientId: string, recipientUsername: string, postId: string) => void;
-  feeds: FeedItem[];
-  loading: boolean;
+  // feeds and loading are NOT used for infinite scroll, you fetch within this file now
   saveScrollPosition: (pos: number) => void;
   getSavedScrollPosition: () => number;
 }
@@ -84,18 +83,66 @@ function FeedSkeleton() {
   );
 }
 
+const PAGE_SIZE = 5;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function Home({
   setCurrentView,
   onShowPublicProfile,
-  onShowMessage,
-  feeds,
-  loading,
   saveScrollPosition,
   getSavedScrollPosition,
 }: HomeProps) {
+  const [feeds, setFeeds] = useState<FeedItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [modalPhotoUrl, setModalPhotoUrl] = useState<string | null>(null);
   const [modalPhotoAlt, setModalPhotoAlt] = useState<string>("");
+
+
+
+  // Infinite scroll: fetch more when bottom comes into view
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loading || !hasMore) return;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = document.documentElement.scrollTop;
+      const clientHeight = document.documentElement.clientHeight;
+
+      if (scrollTop + clientHeight >= scrollHeight - 120) {
+        // Near bottom: load next page
+        setPage(p => p + 1);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, hasMore]);
+
+  // Fetch feeds for each page
+  useEffect(() => {
+    const fetchFeeds = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/feed/paginated?page=${page}&limit=${PAGE_SIZE}`);
+        const data = await res.json();
+        if (Array.isArray(data.feeds)) {
+          setFeeds(prev => {
+            // Avoid duplicates
+            const ids = new Set(prev.map(f => f._id));
+            return [...prev, ...data.feeds.filter((f: FeedItem) => !ids.has(f._id))];
+          });
+          setHasMore(page < data.totalPages);
+        }
+      } catch {
+        setHasMore(false);
+      }
+      setLoading(false);
+    };
+    fetchFeeds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   useEffect(() => {
     const pos = getSavedScrollPosition();
@@ -148,8 +195,8 @@ export default function Home({
       <Navbar currentView="home" setCurrentView={setCurrentView} />
       <section className="flex flex-col flex-grow items-center px-4 py-6">
         <div className="w-full max-w-3xl space-y-8">
-          {loading ? (
-            [...Array(3)].map((_, i) => <FeedSkeleton key={i} />)
+          {feeds.length === 0 && loading ? (
+            [...Array(PAGE_SIZE)].map((_, i) => <FeedSkeleton key={i} />)
           ) : feeds.length === 0 ? (
             <div className="text-center text-gray-500">No posts yet.</div>
           ) : (
@@ -189,7 +236,6 @@ export default function Home({
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="text-xl font-bold text-gray-900">{feed.title}</div>
-                        {/* Message icon removed */}
                       </div>
                       <div className="mb-2">
                         <span className="inline-block font-semibold text-gray-700 w-20">Location:</span>
@@ -254,6 +300,11 @@ export default function Home({
               </div>
             ))
           )}
+          {/* Loader Skeleton for infinite scroll */}
+          {loading && feeds.length > 0 && (
+            [...Array(PAGE_SIZE)].map((_, i) => <FeedSkeleton key={`skel-${i}`} />)
+          )}
+          {/* No pagination controls, infinite scroll only */}
         </div>
         {showPhotoModal && modalPhotoUrl && (
           <div
