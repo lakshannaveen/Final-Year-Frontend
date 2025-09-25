@@ -6,12 +6,12 @@ interface MessageProps {
   recipientId: string;
   recipientUsername: string;
   recipientProfilePic?: string;
-  postId?: string; // now can be passed
+  postId?: string;
 }
 
 interface ChatMessage {
   _id: string;
-  sender: string; // "me" or username
+  sender: string;
   senderId?: string;
   senderProfilePic?: string;
   recipientId?: string;
@@ -54,7 +54,6 @@ export default function Message({
     })();
   }, [recipientId, recipientProfilePic]);
 
-  // Fetch chat messages
   useEffect(() => {
     async function fetchMessages() {
       setLoading(true);
@@ -66,24 +65,21 @@ export default function Message({
           headers: token
             ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
             : { "Content-Type": "application/json" },
-          credentials: "include", // Always send cookies
+          credentials: "include",
         });
         if (res.status === 401) {
           alert("You are not authenticated. Please login again.");
         }
         const data = await res.json();
         setMessages(data.messages || []);
-        console.log("DEBUG fetchMessages:", data.messages);
       } catch (e) {
         setMessages([]);
       }
       setLoading(false);
     }
     fetchMessages();
-    // eslint-disable-next-line
   }, [recipientId, postId]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -102,18 +98,14 @@ export default function Message({
     setNewMessage("");
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/messages/${recipientId}`, {
+      await fetch(`${API_URL}/api/messages/${recipientId}`, {
         method: "POST",
         headers: token
           ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
           : { "Content-Type": "application/json" },
-        credentials: "include", // Always send cookies
-        body: JSON.stringify({ text: tempMsg.text, postId }), // send postId
+        credentials: "include",
+        body: JSON.stringify({ text: tempMsg.text, postId }),
       });
-      if (res.status === 401) {
-        alert("You are not authenticated. Please login again.");
-      }
-      // Optionally, refetch messages here if you want to sync with DB
     } catch {}
   };
 
@@ -163,7 +155,6 @@ export default function Message({
               className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}
             >
               <div className={`flex items-end gap-2`}>
-                {/* Avatar for every message (me and other) */}
                 {msg.sender === "me" ? (
                   <div className="order-2">
                     {msg.senderProfilePic ? (
@@ -198,15 +189,8 @@ export default function Message({
                     ${msg.sender === "me" ? "bg-green-600 text-white order-1" : "bg-white border order-2"}`}
                 >
                   {msg.text}
-                  <div className="text-xs text-gray-400 mt-1 text-right">
+                  <div className="text-xs mt-1 text-right" style={{ color: msg.sender === "me" ? "#bbf7d0" : "#059669" }}>
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </div>
-                  {/* DEBUG INFO */}
-                  <div className="text-2xs text-gray-300 mt-1">
-                    <div>ID:{msg._id}</div>
-                    <div>SenderId:{msg.senderId?.toString()}</div>
-                    <div>RecipientId:{msg.recipientId?.toString()}</div>
-                    <div>PostId:{msg.postId?.toString()}</div>
                   </div>
                 </div>
               </div>
