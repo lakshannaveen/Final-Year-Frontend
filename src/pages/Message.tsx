@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
 
 interface MessageProps {
   setCurrentView: (view: string) => void;
@@ -25,7 +25,7 @@ interface ChatMessage {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-let socket: any;
+let socket: Socket;
 
 export default function Message({
   setCurrentView,
@@ -39,30 +39,33 @@ export default function Message({
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  // Get userId from localStorage (set after login)
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    setUserId(localStorage.getItem("userId"));
+  }, []);
+
+  // Initialize Socket.IO
   useEffect(() => {
     socket = io(SOCKET_SERVER_URL, { withCredentials: true });
-
-    // Your auth should store userId in localStorage after login
-    const userId = localStorage.getItem("userId");
     if (userId) socket.emit("join", userId);
 
     socket.on("receiveMessage", (message: ChatMessage) => {
-      // Only add messages relevant to this chat
-      if (
-        (message.senderId === recipientId || message.recipientId === recipientId)
-      ) {
-        setMessages((prev) => {
-          // Avoid duplicate messages
-          if (prev.some((m) => m._id === message._id)) return prev;
-          return [...prev, message];
-        });
-      }
+      // Style as "me" only if senderId matches current user
+      const styledMessage = {
+        ...message,
+        sender: message.senderId === userId ? "me" : message.sender,
+      };
+      setMessages((prev) => {
+        if (prev.some((m) => m._id === styledMessage._id)) return prev;
+        return [...prev, styledMessage];
+      });
     });
 
     return () => {
       socket.disconnect();
     };
-  }, [recipientId]);
+  }, [userId, recipientId]);
 
   // Chat header: fetch recipient profile pic (if not already passed)
   const [profilePic, setProfilePic] = useState<string | undefined>(recipientProfilePic);
@@ -136,9 +139,10 @@ export default function Message({
         // Emit socket event for real-time delivery
         socket.emit("sendMessage", {
           recipientId,
-          message: data.message,
+          message: { ...data.message, senderId: userId }
         });
-        setMessages((prev) => [...prev, data.message]);
+        // Immediately show for sender
+        setMessages((prev) => [...prev, { ...data.message, sender: "me" }]);
       }
     } catch {}
     setNewMessage("");
