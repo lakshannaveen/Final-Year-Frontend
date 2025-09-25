@@ -68,11 +68,11 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
         ) : chats.length === 0 ? (
           <div className="text-center text-gray-400 mt-8">No messages yet.</div>
         ) : (
-          <div className="divide-y">
+          <div className="flex flex-col gap-3">
             {chats.map(chat => (
               <button
                 key={chat.recipientId}
-                className="flex w-full items-center gap-3 py-4 px-2 hover:bg-green-50 transition rounded-lg"
+                className="flex w-full items-center gap-3 py-4 px-2 bg-white border border-green-200 rounded-xl shadow-sm hover:bg-green-50 transition"
                 onClick={() => onOpenChat(chat.recipientId, chat.recipientUsername, chat.recipientProfilePic)}
               >
                 {chat.recipientProfilePic ? (
@@ -80,12 +80,12 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
                   <img
                     src={chat.recipientProfilePic}
                     alt={chat.recipientUsername}
-                    className="w-12 h-12 rounded-full object-cover border"
+                    className="w-12 h-12 rounded-full object-cover border border-green-300"
                     width={48}
                     height={48}
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-green-700 flex items-center justify-center text-white text-xl font-bold">
+                  <div className="w-12 h-12 rounded-full bg-green-700 flex items-center justify-center text-white text-xl font-bold border border-green-300">
                     {chat.recipientUsername?.charAt(0).toUpperCase()}
                   </div>
                 )}
