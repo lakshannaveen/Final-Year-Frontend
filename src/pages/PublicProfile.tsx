@@ -9,9 +9,15 @@ import {
   MessageCircle
 } from "lucide-react";
 
+interface NavigationData {
+  recipientId?: string;
+  recipientUsername?: string;
+  recipientProfilePic?: string;
+}
+
 interface PublicProfileProps {
   userId: string;
-  setCurrentView: (view: string, navData?: any) => void;
+  setCurrentView: (view: string, navData?: NavigationData) => void;
 }
 
 interface UserProfile {
