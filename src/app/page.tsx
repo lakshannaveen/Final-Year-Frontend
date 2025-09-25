@@ -125,6 +125,7 @@ export default function Page() {
           <Inbox
             setCurrentView={setCurrentView}
             onOpenChat={handleShowMessage}
+            currentView={currentView}
           />
         );
       default:
