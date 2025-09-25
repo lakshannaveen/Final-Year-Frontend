@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { useEffect, useState } from "react";
 
@@ -104,7 +105,7 @@ export default function ProfileFeed() {
 
   useEffect(() => {
     fetchMyFeeds();
-    // eslint-disable-next-line
+    
   }, []);
 
   async function fetchMyFeeds() {
@@ -166,6 +167,7 @@ export default function ProfileFeed() {
         setFeeds(prev => prev.filter(f => f._id !== feedId));
         setSuccessModal({show: true, message: "Post deleted successfully!"});
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       alert("Failed to delete post.");
     }
@@ -219,6 +221,7 @@ export default function ProfileFeed() {
       } else {
         alert("Failed to update post.");
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       alert("Failed to update post.");
     }
