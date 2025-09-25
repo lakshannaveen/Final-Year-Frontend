@@ -27,6 +27,13 @@ function getProfilePicFromUser(u: unknown): string {
   return "";
 }
 
+// Professional active link style: gradient underline, bolder text, subtle background
+const activeLink =
+  "relative font-semibold text-green-50 transition duration-200 px-4 py-2 rounded-lg" +
+  " before:absolute before:left-2 before:right-2 before:bottom-1 before:h-1 before:bg-gradient-to-r before:from-emerald-400 before:to-green-500 before:rounded-full before:content-['']";
+const inactiveLink =
+  "font-medium text-white hover:text-green-100 hover:bg-emerald-800/30 transition duration-200 px-4 py-2 rounded-lg";
+
 export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, loading } = useAuth() as { user: AppUser | null; loading: boolean };
@@ -62,7 +69,9 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
       } catch {}
     };
     loadAvatar();
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, [user]);
 
   const isProvider = user?.serviceType === "posting";
@@ -104,33 +113,21 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
         <div className="hidden md:flex flex-1 justify-center items-center gap-2">
           <button
             onClick={() => handleNavClick("home")}
-            className={`transition-colors font-medium text-lg px-4 py-2 rounded-lg ${
-              currentView === "home"
-                ? "bg-white text-green-700 shadow"
-                : "hover:bg-green-800 hover:text-green-200 text-white"
-            }`}
+            className={currentView === "home" ? activeLink : inactiveLink}
           >
             Home
           </button>
           {isProvider && (
             <button
               onClick={() => handleNavClick("post")}
-              className={`transition-colors font-medium text-lg px-4 py-2 rounded-lg ${
-                currentView === "post"
-                  ? "bg-white text-green-700 shadow"
-                  : "hover:bg-green-800 hover:text-green-200 text-white"
-              }`}
+              className={currentView === "post" ? activeLink : inactiveLink}
             >
               Post a Service
             </button>
           )}
           <button
             onClick={() => handleNavClick("inbox")}
-            className={`transition-colors font-medium text-lg flex items-center gap-2 px-4 py-2 rounded-lg ${
-              currentView === "inbox"
-                ? "bg-white text-green-700 shadow"
-                : "hover:bg-green-800 hover:text-green-200 text-white"
-            }`}
+            className={`flex items-center gap-2 ${currentView === "inbox" ? activeLink : inactiveLink}`}
             aria-label="Inbox"
             style={{ justifyContent: "center" }}
           >
@@ -147,8 +144,8 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
               aria-label="Profile"
               className={`relative flex items-center justify-center rounded-full p-[2px] transition-all ${
                 currentView === "profile"
-                  ? "ring-2 ring-white"
-                  : "ring-2 ring-white/20 hover:ring-white"
+                  ? "ring-2 ring-emerald-400"
+                  : "ring-2 ring-white/20 hover:ring-emerald-300"
               }`}
             >
               {avatarUrl ? (
@@ -207,11 +204,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           <div className="bg-gradient-to-b from-green-800 to-emerald-700 text-white flex flex-col gap-2 px-4 py-4 border-t border-green-600">
             <button
               onClick={() => handleNavClick("home")}
-              className={`w-full text-center font-medium text-lg px-4 py-3 rounded-lg ${
-                currentView === "home"
-                  ? "bg-white text-green-700 shadow"
-                  : "hover:bg-green-900 hover:text-green-200 text-white"
-              }`}
+              className={`w-full text-center ${currentView === "home" ? activeLink : inactiveLink}`}
             >
               Home
             </button>
@@ -221,11 +214,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                   handleNavClick("post");
                   setMenuOpen(false);
                 }}
-                className={`w-full text-center font-medium text-lg px-4 py-3 rounded-lg ${
-                  currentView === "post"
-                    ? "bg-white text-green-700 shadow"
-                    : "hover:bg-green-900 hover:text-green-200 text-white"
-                }`}
+                className={`w-full text-center ${currentView === "post" ? activeLink : inactiveLink}`}
               >
                 Post a Service
               </button>
@@ -235,11 +224,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                 handleNavClick("inbox");
                 setMenuOpen(false);
               }}
-              className={`w-full text-center font-medium text-lg flex items-center justify-center gap-2 px-4 py-3 rounded-lg ${
-                currentView === "inbox"
-                  ? "bg-white text-green-700 shadow"
-                  : "hover:bg-green-900 hover:text-green-200 text-white"
-              }`}
+              className={`w-full text-center flex items-center justify-center gap-2 ${currentView === "inbox" ? activeLink : inactiveLink}`}
               aria-label="Inbox"
             >
               <Mail size={22} /> Inbox
