@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState} from "react";
 
 // --- Interfaces ---
 interface FeedUser {
@@ -89,13 +89,19 @@ type EditFeedState = {
   };
 };
 
+const PAGE_SIZE = 5;
+
 // --- Main Component ---
 export default function ProfileFeed() {
   const [feeds, setFeeds] = useState<FeedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [modalPhotoUrl, setModalPhotoUrl] = useState<string | null>(null);
   const [modalPhotoAlt, setModalPhotoAlt] = useState<string>("");
+
   const [editFeed, setEditFeed] = useState<EditFeedState>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLoading, setEditLoading] = useState(false);
@@ -103,21 +109,45 @@ export default function ProfileFeed() {
   // Success Modal State
   const [successModal, setSuccessModal] = useState<{show: boolean, message: string}>({show: false, message: ""});
 
+  // Infinite scroll: fetch more when bottom comes into view
   useEffect(() => {
-    fetchMyFeeds();
-    
-  }, []);
+    const handleScroll = () => {
+      if (loading || !hasMore) return;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = document.documentElement.scrollTop;
+      const clientHeight = document.documentElement.clientHeight;
 
-  async function fetchMyFeeds() {
+      if (scrollTop + clientHeight >= scrollHeight - 120) {
+        setPage(p => p + 1);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, hasMore]);
+
+  useEffect(() => {
+    fetchMyFeeds(page);
+   
+  }, [page]);
+
+  async function fetchMyFeeds(pageNum: number) {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/feed/my`, {
+      const res = await fetch(`${API_URL}/api/feed/my-paginated?page=${pageNum}&limit=${PAGE_SIZE}`, {
         credentials: "include",
       });
       const data = await res.json();
-      setFeeds(data.feeds || []);
+      if (Array.isArray(data.feeds)) {
+        setFeeds(prev => {
+          const ids = new Set(prev.map(f => f._id));
+          return [...prev, ...data.feeds.filter((f: FeedItem) => !ids.has(f._id))];
+        });
+        setHasMore(pageNum < data.totalPages);
+      } else {
+        setHasMore(false);
+      }
     } catch {
-      setFeeds([]);
+      setHasMore(false);
     }
     setLoading(false);
   }
@@ -234,9 +264,9 @@ export default function ProfileFeed() {
     <div className="w-full min-h-screen bg-green-50">
       <div className="w-full max-w-3xl mx-auto space-y-8 my-10">
         <h2 className="text-3xl font-bold text-green-800 mb-8 text-center">Your Posts</h2>
-        {loading ? (
+        {feeds.length === 0 && loading ? (
           <>
-            {[...Array(2)].map((_, i) => (
+            {[...Array(PAGE_SIZE)].map((_, i) => (
               <FeedSkeleton key={i} />
             ))}
           </>
@@ -452,6 +482,10 @@ export default function ProfileFeed() {
               )}
             </div>
           ))
+        )}
+        {/* Skeleton loading for infinite scroll */}
+        {loading && feeds.length > 0 && (
+          [...Array(PAGE_SIZE)].map((_, i) => <FeedSkeleton key={`skel-${i}`} />)
         )}
         {/* Success Modal */}
         {successModal.show && (
