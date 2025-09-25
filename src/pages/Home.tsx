@@ -189,21 +189,7 @@ export default function Home({
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="text-xl font-bold text-gray-900">{feed.title}</div>
-                        {/* Message icon */}
-                        <button
-                          className="ml-2 px-2 py-1 rounded-full bg-gray-100 hover:bg-green-100 transition border border-green-200"
-                          title="Message"
-                          aria-label="Message"
-                          onClick={() => handleNavigate(() =>
-                            onShowMessage(feed.user._id, feed.user.username, feed._id)
-                          )}
-                        >
-                          <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-                            <path d="M21 15.46V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14l4-4h10a2 2 0 0 0 2-2z"
-                              stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                              fill="none"/>
-                          </svg>
-                        </button>
+                        {/* Message icon removed */}
                       </div>
                       <div className="mb-2">
                         <span className="inline-block font-semibold text-gray-700 w-20">Location:</span>

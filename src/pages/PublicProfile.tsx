@@ -5,12 +5,13 @@ import {
   ArrowLeft,
   Globe,
   Phone,
-  Image as ImageIcon
+  Image as ImageIcon,
+  MessageCircle
 } from "lucide-react";
 
 interface PublicProfileProps {
   userId: string;
-  setCurrentView?: (view: string) => void;
+  setCurrentView: (view: string, navData?: any) => void;
 }
 
 interface UserProfile {
@@ -29,9 +30,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 // Simple skeleton loader
 function Skeleton({ className = "" }: { className?: string }) {
-  return (
-    <div className={`animate-pulse bg-gray-200 ${className}`}></div>
-  );
+  return <div className={`animate-pulse bg-gray-200 ${className}`}></div>;
 }
 
 export default function PublicProfile({ userId, setCurrentView }: PublicProfileProps) {
@@ -60,30 +59,25 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
 
   const getInitial = (name = "") => name.charAt(0).toUpperCase();
 
+  const handleNavigate = (navFn: () => void) => {
+    navFn();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100">
         <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-6">
-          {/* Skeleton Cover */}
           <Skeleton className="w-full h-48 sm:h-56 mb-[-64px] rounded-xl" />
-
-          {/* Skeleton Avatar */}
           <div className="flex flex-col items-center -mt-20 sm:-mt-24 mb-4">
             <Skeleton className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white mb-2" />
             <Skeleton className="w-48 h-8 rounded-lg mb-2" />
             <Skeleton className="w-24 h-6 rounded-lg mb-2" />
           </div>
-
-          {/* Skeleton Info */}
           <div className="flex flex-col items-center gap-2 mb-6">
             <Skeleton className="w-32 h-6 rounded-full" />
             <Skeleton className="w-32 h-6 rounded-full" />
           </div>
-
-          {/* Skeleton Contact */}
           <Skeleton className="w-full h-20 rounded-lg mb-6" />
-
-          {/* Skeleton Bio */}
           <Skeleton className="w-full h-24 rounded-lg" />
         </div>
       </div>
@@ -95,14 +89,12 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100">
         <div className="text-center">
           <p className="text-lg text-red-700 font-semibold mb-4">{error || "No profile data found."}</p>
-          {setCurrentView && (
-            <button
-              onClick={() => setCurrentView("home")}
-              className="px-4 py-2 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-800 transition"
-            >
-              Back to Home
-            </button>
-          )}
+          <button
+            onClick={() => handleNavigate(() => setCurrentView("home"))}
+            className="px-4 py-2 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-800 transition"
+          >
+            Back to Home
+          </button>
         </div>
       </div>
     );
@@ -114,17 +106,14 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
       {/* Back Button */}
       <div className="max-w-2xl mx-auto mb-6 flex justify-between items-center">
-        {setCurrentView && (
-          <button
-            onClick={() => setCurrentView("home")}
-            className="flex items-center text-green-700 font-semibold hover:text-green-800 transition-colors px-4 py-2 rounded-lg hover:bg-green-100"
-          >
-            <ArrowLeft size={20} className="mr-2" />
-            Back
-          </button>
-        )}
+        <button
+          onClick={() => handleNavigate(() => setCurrentView("home"))}
+          className="flex items-center text-green-700 font-semibold hover:text-green-800 transition-colors px-4 py-2 rounded-lg hover:bg-green-100"
+        >
+          <ArrowLeft size={20} className="mr-2" />
+          Back
+        </button>
       </div>
-
       <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden">
         {/* Cover Image - Only for posting accounts */}
         {isPostingAccount && (
@@ -142,7 +131,6 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
             )}
           </div>
         )}
-
         {/* Card Content */}
         <div className={`flex flex-col items-center ${isPostingAccount ? "-mt-20 sm:-mt-24" : "pt-8"} pb-8 px-6 sm:px-8`}>
           {/* Avatar */}
@@ -161,11 +149,9 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
               )}
             </div>
           </div>
-
           {/* Info */}
           <div className="w-full text-center mb-6">
             <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">{profile.username}</h1>
-
             <div className="flex justify-center flex-wrap gap-3 mb-4">
               <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">
                 {isPostingAccount ? "💼 Service Provider" : "🔍 Looking for Services"}
@@ -188,7 +174,6 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                 </a>
               )}
             </div>
-
             <p className="text-gray-500 text-sm">
               Joined:{" "}
               {profile.createdAt &&
@@ -199,7 +184,24 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                 })}
             </p>
           </div>
-
+          {/* Message Button - navigation logic */}
+          <button
+            className="mb-6 px-4 py-2 bg-green-700 text-white rounded-full flex items-center gap-2 font-semibold hover:bg-green-800 transition"
+            title="Message"
+            aria-label="Message"
+            onClick={() =>
+              handleNavigate(() =>
+                setCurrentView("message", {
+                  recipientId: profile._id,
+                  recipientUsername: profile.username,
+                  recipientProfilePic: profile.profilePic,
+                })
+              )
+            }
+          >
+            <MessageCircle size={22} />
+            Message
+          </button>
           {/* Contact Information - ONLY for posting accounts */}
           {isPostingAccount && (profile.phone || profile.website) && (
             <div className="w-full max-w-lg mb-6 bg-green-50 p-4 rounded-lg border border-green-100">
@@ -227,7 +229,6 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
               </div>
             </div>
           )}
-
           {/* Bio only if exists */}
           {profile.bio && (
             <div className="w-full max-w-lg mb-8">

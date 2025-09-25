@@ -77,6 +77,8 @@ export default function Page() {
     setCurrentView("message");
   };
 
+  // Avoid infinite recursion: never call renderContent() inside itself.
+  // Only call renderContent() ONCE at the top-level.
   const renderContent = (): React.ReactNode => {
     switch (currentView) {
       case "home":
@@ -108,18 +110,42 @@ export default function Page() {
       case "post":
         return <PostService setCurrentView={setCurrentView} />;
       case "publicprofile":
-        return publicProfileId ? (
-          <PublicProfile userId={publicProfileId} setCurrentView={setCurrentView} />
-        ) : renderContent();
+        // Only render PublicProfile if publicProfileId is set
+        if (publicProfileId) {
+          return (
+            <PublicProfile
+              userId={publicProfileId}
+              setCurrentView={(view, navData) => {
+                if (view === "message" && navData) {
+                  setChatRecipient({
+                    recipientId: navData.recipientId,
+                    recipientUsername: navData.recipientUsername,
+                  });
+                  setCurrentView("message");
+                } else if (view === "home") {
+                  setCurrentView("home");
+                }
+              }}
+            />
+          );
+        }
+        // If id is missing, go back home
+        setCurrentView("home");
+        return null;
       case "message":
-        return chatRecipient ? (
-          <Message
-            setCurrentView={setCurrentView}
-            recipientId={chatRecipient.recipientId}
-            recipientUsername={chatRecipient.recipientUsername}
-            recipientProfilePic={chatRecipient.recipientProfilePic}
-          />
-        ) : renderContent();
+        if (chatRecipient) {
+          return (
+            <Message
+              setCurrentView={setCurrentView}
+              recipientId={chatRecipient.recipientId}
+              recipientUsername={chatRecipient.recipientUsername}
+              recipientProfilePic={chatRecipient.recipientProfilePic}
+            />
+          );
+        }
+        // If recipient info missing, go back home
+        setCurrentView("home");
+        return null;
       case "inbox":
         return (
           <Inbox
@@ -129,7 +155,9 @@ export default function Page() {
           />
         );
       default:
-        return renderContent();
+        // Default: go to home if unknown view
+        setCurrentView("home");
+        return null;
     }
   };
 
