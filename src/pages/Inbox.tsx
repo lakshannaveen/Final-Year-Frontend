@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import Navbar from "../components/Navbar"; // Adjust path if needed
 import Image from "next/image";
-import { Mail } from "lucide-react";
 
 interface InboxProps {
   setCurrentView: (view: string) => void;
   onOpenChat: (recipientId: string, recipientUsername: string, recipientProfilePic?: string) => void;
+  currentView: string; // For Navbar
 }
 
 interface ChatSummary {
@@ -18,7 +19,7 @@ interface ChatSummary {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-export default function Inbox({ setCurrentView, onOpenChat }: InboxProps) {
+export default function Inbox({ setCurrentView, onOpenChat, currentView }: InboxProps) {
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
@@ -55,24 +56,8 @@ export default function Inbox({ setCurrentView, onOpenChat }: InboxProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Custom Navbar for Inbox (matches your color theme) */}
-      <nav className="bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-lg sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center">
-          <button
-            className="text-white mr-3 p-2 rounded-lg hover:bg-green-600 transition"
-            onClick={() => setCurrentView("home")}
-            aria-label="Back"
-            type="button"
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <span className="font-semibold text-lg flex items-center gap-2">
-            <Mail size={22} className="inline mr-1" /> Inbox
-          </span>
-        </div>
-      </nav>
+      {/* Navbar first */}
+      <Navbar currentView={currentView} setCurrentView={setCurrentView} />
 
       {/* Chats */}
       <div className="max-w-2xl mx-auto py-4 px-2">
