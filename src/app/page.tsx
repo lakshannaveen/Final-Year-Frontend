@@ -12,6 +12,7 @@ import Profile from "../pages/Profile";
 import PostService from "../pages/Post";
 import PublicProfile from "../pages/PublicProfile";
 import Message from "../pages/Message";
+import Inbox from "../pages/Inbox";
 
 interface FeedUser {
   _id: string;
@@ -40,13 +41,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 export default function Page() {
   const [currentView, setCurrentView] = useState("home");
   const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
-  const [chatRecipient, setChatRecipient] = useState<{ recipientId: string, recipientUsername: string } | null>(null);
+  const [chatRecipient, setChatRecipient] = useState<{ recipientId: string, recipientUsername: string, recipientProfilePic?: string } | null>(null);
 
   const [feeds, setFeeds] = useState<FeedItem[]>([]);
   const [feedsLoading, setFeedsLoading] = useState<boolean>(true);
 
   // --- SCROLL RESTORATION ---
-  // Store scroll position for feed
   const [feedScrollPos, setFeedScrollPos] = useState(0);
   const saveScrollPosition = (pos: number) => setFeedScrollPos(pos);
   const getSavedScrollPosition = () => feedScrollPos;
@@ -72,8 +72,8 @@ export default function Page() {
     setCurrentView("publicprofile");
   };
 
-  const handleShowMessage = (recipientId: string, recipientUsername: string) => {
-    setChatRecipient({ recipientId, recipientUsername });
+  const handleShowMessage = (recipientId: string, recipientUsername: string, recipientProfilePic?: string) => {
+    setChatRecipient({ recipientId, recipientUsername, recipientProfilePic });
     setCurrentView("message");
   };
 
@@ -117,8 +117,16 @@ export default function Page() {
             setCurrentView={setCurrentView}
             recipientId={chatRecipient.recipientId}
             recipientUsername={chatRecipient.recipientUsername}
+            recipientProfilePic={chatRecipient.recipientProfilePic}
           />
         ) : renderContent();
+      case "inbox":
+        return (
+          <Inbox
+            setCurrentView={setCurrentView}
+            onOpenChat={handleShowMessage}
+          />
+        );
       default:
         return renderContent();
     }

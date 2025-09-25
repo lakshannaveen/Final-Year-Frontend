@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, Mail } from "lucide-react";
 import Image from "next/image";
 
 interface NavbarProps {
@@ -15,9 +15,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 interface AppUser {
   username?: string;
   profilePic?: string;
-  // Add serviceType if available
   serviceType?: string;
-  // Other fields as needed
   [key: string]: string | undefined;
 }
 
@@ -32,7 +30,6 @@ function getProfilePicFromUser(u: unknown): string {
 
 export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  // Use AppUser type for user
   const { user, loading } = useAuth() as { user: AppUser | null; loading: boolean };
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
@@ -45,19 +42,16 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
 
   useEffect(() => {
     let ignore = false;
-
     const loadAvatar = async () => {
       if (!user) {
         setAvatarUrl("");
         return;
       }
-
       const picFromAuth = getProfilePicFromUser(user);
       if (picFromAuth) {
         setAvatarUrl(picFromAuth);
         return;
       }
-
       try {
         const res = await fetch(`${API_URL}/api/profile`, {
           method: "GET",
@@ -65,41 +59,13 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
         });
         if (!res.ok) return;
         const data = await res.json();
-        if (!ignore) {
-          setAvatarUrl(data?.user?.profilePic || "");
-        }
-      } catch {
-        // silent fail, fallback to letter
-      }
+        if (!ignore) setAvatarUrl(data?.user?.profilePic || "");
+      } catch {}
     };
-
     loadAvatar();
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [user]);
 
-  if (loading) {
-    return (
-      <nav className="bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-lg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-green-600 rounded-lg animate-pulse"></div>
-            <span className="text-2xl font-bold tracking-wide">Doop</span>
-          </div>
-          <div className="hidden md:flex items-center gap-6">
-            <div className="h-6 w-16 bg-green-600 rounded animate-pulse"></div>
-            <div className="h-10 w-24 bg-green-600 rounded-lg animate-pulse"></div>
-          </div>
-          <div className="md:hidden p-2 rounded-lg bg-green-800">
-            <Menu className="w-6 h-6" />
-          </div>
-        </div>
-      </nav>
-    );
-  }
-
-  // Only show "Post a Service" if provider/serviceType === 'posting'
   const isProvider = user?.serviceType === "posting";
 
   return (
@@ -110,16 +76,9 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           onClick={() => handleNavClick("home")}
           className="flex items-center gap-2 hover:opacity-90 transition"
         >
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={40}
-            height={40}
-            className="rounded-lg"
-          />
+          <Image src="/logo.png" alt="Logo" width={40} height={40} className="rounded-lg" />
           <span className="text-2xl font-bold tracking-wide">Doop</span>
         </button>
-
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-6">
           <button
@@ -140,6 +99,16 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
               Post a Service
             </button>
           )}
+          <button
+            onClick={() => handleNavClick("inbox")}
+            className={`hover:text-green-200 transition-colors font-medium text-lg flex items-center gap-2 ${
+              currentView === "inbox" ? "text-green-200" : ""
+            }`}
+            aria-label="Inbox"
+          >
+            <Mail size={20} />
+            Inbox
+          </button>
           {user ? (
             <>
               <button
@@ -190,7 +159,6 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
             </>
           )}
         </div>
-
         {/* Mobile Menu Button */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
@@ -200,7 +168,6 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
-
       {/* Mobile Dropdown */}
       {menuOpen && (
         <div className="md:hidden bg-gradient-to-b from-green-800 to-emerald-700 text-white flex flex-col gap-4 px-6 py-6 border-t border-green-600">
@@ -225,6 +192,18 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
               Post a Service
             </button>
           )}
+          <button
+            onClick={() => {
+              handleNavClick("inbox");
+              setMenuOpen(false);
+            }}
+            className={`font-medium text-lg text-center flex items-center gap-2 ${
+              currentView === "inbox" ? "text-green-200" : "hover:text-green-200"
+            }`}
+            aria-label="Inbox"
+          >
+            <Mail size={22} /> Inbox
+          </button>
           {user ? (
             <>
               <button
