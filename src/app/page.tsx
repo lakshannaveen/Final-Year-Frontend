@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import {  useState } from "react";
 import { AuthProvider } from "../components/AuthContext";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
@@ -14,58 +14,17 @@ import PublicProfile from "../pages/PublicProfile";
 import Message from "../pages/Message";
 import Inbox from "../pages/Inbox";
 
-interface FeedUser {
-  _id: string;
-  username: string;
-  profilePic?: string;
-}
 
-interface FeedItem {
-  _id: string;
-  user: FeedUser;
-  title: string;
-  location: string;
-  contactNumber: string;
-  price: number;
-  priceType: string;
-  priceCurrency: string;
-  photo?: string;
-  video?: string;
-  websiteLink?: string;
-  description?: string;
-  createdAt: string;
-}
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function Page() {
   const [currentView, setCurrentView] = useState("home");
   const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
   const [chatRecipient, setChatRecipient] = useState<{ recipientId: string, recipientUsername: string, recipientProfilePic?: string } | null>(null);
 
-  const [feeds, setFeeds] = useState<FeedItem[]>([]);
-  const [feedsLoading, setFeedsLoading] = useState<boolean>(true);
-
   // --- SCROLL RESTORATION ---
   const [feedScrollPos, setFeedScrollPos] = useState(0);
   const saveScrollPosition = (pos: number) => setFeedScrollPos(pos);
   const getSavedScrollPosition = () => feedScrollPos;
-
-  const fetchFeeds = useCallback(async () => {
-    setFeedsLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/feed/all`);
-      const data = await res.json();
-      setFeeds(data.feeds || []);
-    } catch {
-      setFeeds([]);
-    }
-    setFeedsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchFeeds();
-  }, [fetchFeeds]);
 
   const handleShowPublicProfile = (userId: string) => {
     setPublicProfileId(userId);
@@ -77,8 +36,6 @@ export default function Page() {
     setCurrentView("message");
   };
 
-  // Avoid infinite recursion: never call renderContent() inside itself.
-  // Only call renderContent() ONCE at the top-level.
   const renderContent = (): React.ReactNode => {
     switch (currentView) {
       case "home":
@@ -87,8 +44,6 @@ export default function Page() {
             setCurrentView={setCurrentView}
             onShowPublicProfile={handleShowPublicProfile}
             onShowMessage={handleShowMessage}
-            feeds={feeds}
-            loading={feedsLoading}
             saveScrollPosition={saveScrollPosition}
             getSavedScrollPosition={getSavedScrollPosition}
           />
@@ -118,8 +73,9 @@ export default function Page() {
               setCurrentView={(view, navData) => {
                 if (view === "message" && navData) {
                   setChatRecipient({
-                    recipientId: navData.recipientId,
-                    recipientUsername: navData.recipientUsername,
+                    recipientId: navData.recipientId ?? "",
+                    recipientUsername: navData.recipientUsername ?? "",
+                    recipientProfilePic: navData.recipientProfilePic ?? undefined,
                   });
                   setCurrentView("message");
                 } else if (view === "home") {
@@ -129,7 +85,6 @@ export default function Page() {
             />
           );
         }
-        // If id is missing, go back home
         setCurrentView("home");
         return null;
       case "message":
@@ -143,7 +98,6 @@ export default function Page() {
             />
           );
         }
-        // If recipient info missing, go back home
         setCurrentView("home");
         return null;
       case "inbox":
@@ -155,7 +109,6 @@ export default function Page() {
           />
         );
       default:
-        // Default: go to home if unknown view
         setCurrentView("home");
         return null;
     }
