@@ -1,5 +1,5 @@
 "use client";
-import {  useState } from "react";
+import { useState } from "react";
 import { AuthProvider } from "../components/AuthContext";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
@@ -14,7 +14,7 @@ import PublicProfile from "../pages/PublicProfile";
 import Message from "../pages/Message";
 import Inbox from "../pages/Inbox";
 
-
+// FIX: Remove onShowMessage from Home props if not used in Home.tsx
 
 export default function Page() {
   const [currentView, setCurrentView] = useState("home");
@@ -26,13 +26,19 @@ export default function Page() {
   const saveScrollPosition = (pos: number) => setFeedScrollPos(pos);
   const getSavedScrollPosition = () => feedScrollPos;
 
+  // Show public profile handler
   const handleShowPublicProfile = (userId: string) => {
     setPublicProfileId(userId);
     setCurrentView("publicprofile");
   };
 
+  // Show message handler (used in Inbox, PublicProfile)
   const handleShowMessage = (recipientId: string, recipientUsername: string, recipientProfilePic?: string) => {
-    setChatRecipient({ recipientId, recipientUsername, recipientProfilePic });
+    setChatRecipient({
+      recipientId,
+      recipientUsername,
+      recipientProfilePic,
+    });
     setCurrentView("message");
   };
 
@@ -43,7 +49,6 @@ export default function Page() {
           <Home
             setCurrentView={setCurrentView}
             onShowPublicProfile={handleShowPublicProfile}
-            onShowMessage={handleShowMessage}
             saveScrollPosition={saveScrollPosition}
             getSavedScrollPosition={getSavedScrollPosition}
           />
@@ -65,7 +70,6 @@ export default function Page() {
       case "post":
         return <PostService setCurrentView={setCurrentView} />;
       case "publicprofile":
-        // Only render PublicProfile if publicProfileId is set
         if (publicProfileId) {
           return (
             <PublicProfile

@@ -1,13 +1,12 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Search from "../components/Search"; 
 
 interface HomeProps {
   setCurrentView: (view: string) => void;
   onShowPublicProfile: (userId: string) => void;
-  onShowMessage: (recipientId: string, recipientUsername: string, postId: string) => void;
-  // feeds and loading are NOT used for infinite scroll, you fetch within this file now
   saveScrollPosition: (pos: number) => void;
   getSavedScrollPosition: () => number;
 }
@@ -101,7 +100,10 @@ export default function Home({
   const [modalPhotoUrl, setModalPhotoUrl] = useState<string | null>(null);
   const [modalPhotoAlt, setModalPhotoAlt] = useState<string>("");
 
-
+  // Search
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<FeedItem[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // Infinite scroll: fetch more when bottom comes into view
   useEffect(() => {
@@ -112,7 +114,6 @@ export default function Home({
       const clientHeight = document.documentElement.clientHeight;
 
       if (scrollTop + clientHeight >= scrollHeight - 120) {
-        // Near bottom: load next page
         setPage(p => p + 1);
       }
     };
@@ -122,6 +123,7 @@ export default function Home({
 
   // Fetch feeds for each page
   useEffect(() => {
+    if (searchTerm) return; // Don't fetch infinite feeds while searching
     const fetchFeeds = async () => {
       setLoading(true);
       try {
@@ -142,7 +144,7 @@ export default function Home({
     };
     fetchFeeds();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, searchTerm]);
 
   useEffect(() => {
     const pos = getSavedScrollPosition();
@@ -190,17 +192,47 @@ export default function Home({
     setModalPhotoAlt("");
   };
 
+  // --- Search ---
+  const handleSearch = async (term: string) => {
+    setSearchTerm(term);
+    if (!term) {
+      setSearchResults(null);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/feed/search?query=${encodeURIComponent(term)}`);
+      const data = await res.json();
+      setSearchResults(Array.isArray(data.feeds) ? data.feeds : []);
+    } catch {
+      setSearchResults([]);
+    }
+    setSearchLoading(false);
+  };
+
+  // Results to show: either search results or infinite scroll feeds
+  const displayFeeds = searchTerm ? searchResults || [] : feeds;
+  const displayLoading = searchTerm ? searchLoading : loading;
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar currentView="home" setCurrentView={setCurrentView} />
+      {/* Search bar right below navbar */}
+      <div className="w-full max-w-3xl mx-auto mt-6 mb-4 px-2">
+        <Search
+          value={searchTerm}
+          onChange={handleSearch}
+          loading={searchLoading}
+        />
+      </div>
       <section className="flex flex-col flex-grow items-center px-4 py-6">
         <div className="w-full max-w-3xl space-y-8">
-          {feeds.length === 0 && loading ? (
+          {displayFeeds.length === 0 && displayLoading ? (
             [...Array(PAGE_SIZE)].map((_, i) => <FeedSkeleton key={i} />)
-          ) : feeds.length === 0 ? (
+          ) : displayFeeds.length === 0 ? (
             <div className="text-center text-gray-500">No posts yet.</div>
           ) : (
-            feeds.map(feed => (
+            displayFeeds.map(feed => (
               <div
                 key={feed._id}
                 className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col md:flex-row items-stretch p-6 transition hover:shadow-xl"
@@ -301,10 +333,9 @@ export default function Home({
             ))
           )}
           {/* Loader Skeleton for infinite scroll */}
-          {loading && feeds.length > 0 && (
+          {displayLoading && displayFeeds.length > 0 && (
             [...Array(PAGE_SIZE)].map((_, i) => <FeedSkeleton key={`skel-${i}`} />)
           )}
-          {/* No pagination controls, infinite scroll only */}
         </div>
         {showPhotoModal && modalPhotoUrl && (
           <div
