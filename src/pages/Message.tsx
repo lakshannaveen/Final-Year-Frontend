@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import io from "socket.io-client";
 
 interface MessageProps {
   setCurrentView: (view: string) => void;
@@ -22,6 +23,9 @@ interface ChatMessage {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+let socket: any;
 
 export default function Message({
   setCurrentView,
@@ -34,6 +38,31 @@ export default function Message({
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    socket = io(SOCKET_SERVER_URL, { withCredentials: true });
+
+    // Your auth should store userId in localStorage after login
+    const userId = localStorage.getItem("userId");
+    if (userId) socket.emit("join", userId);
+
+    socket.on("receiveMessage", (message: ChatMessage) => {
+      // Only add messages relevant to this chat
+      if (
+        (message.senderId === recipientId || message.recipientId === recipientId)
+      ) {
+        setMessages((prev) => {
+          // Avoid duplicate messages
+          if (prev.some((m) => m._id === message._id)) return prev;
+          return [...prev, message];
+        });
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [recipientId]);
 
   // Chat header: fetch recipient profile pic (if not already passed)
   const [profilePic, setProfilePic] = useState<string | undefined>(recipientProfilePic);
@@ -55,7 +84,7 @@ export default function Message({
     })();
   }, [recipientId, recipientProfilePic]);
 
-  // Fetch messages
+  // Fetch messages (history)
   useEffect(() => {
     async function fetchMessages() {
       setLoading(true);
@@ -87,49 +116,32 @@ export default function Message({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Send message, refetch after send
+  // Send message, emit via socket and also post to API for persistence
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
-    const tempMsg: ChatMessage = {
-      _id: "temp-" + Date.now(),
-      sender: "me",
-      text: newMessage,
-      postId: postId,
-      createdAt: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, tempMsg]);
-    setNewMessage("");
+
+    const token = localStorage.getItem("token");
     try {
-      const token = localStorage.getItem("token");
-      await fetch(`${API_URL}/api/messages/${recipientId}`, {
+      const res = await fetch(`${API_URL}/api/messages/${recipientId}`, {
         method: "POST",
         headers: token
           ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
           : { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ text: tempMsg.text, postId }),
+        body: JSON.stringify({ text: newMessage, postId }),
       });
-      // Refetch messages so sent message is updated correctly
-      setTimeout(() => {
-        (async () => {
-          const token = localStorage.getItem("token");
-          let url = `${API_URL}/api/messages/${recipientId}`;
-          if (postId) url += `?postId=${postId}`;
-          const res = await fetch(url, {
-            headers: token
-              ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
-              : { "Content-Type": "application/json" },
-            credentials: "include",
-          });
-          if (res.status === 401) {
-            alert("You are not authenticated. Please login again.");
-          }
-          const data = await res.json();
-          setMessages(data.messages || []);
-        })();
-      }, 300);
+      const data = await res.json();
+      if (data.message) {
+        // Emit socket event for real-time delivery
+        socket.emit("sendMessage", {
+          recipientId,
+          message: data.message,
+        });
+        setMessages((prev) => [...prev, data.message]);
+      }
     } catch {}
+    setNewMessage("");
   };
 
   return (
@@ -187,24 +199,22 @@ export default function Message({
                   {msg.sender === "me" ? (
                     <div className="order-2 flex items-center">
                       <div className="flex items-center justify-center bg-green-600 rounded-full w-7 h-7 mr-1">
-                        {/* Beautiful WhatsApp-style double checkmark for sent message */}
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        {/* WhatsApp-style double checkmark for sent message */}
+                        <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
                           <path
-                            d="M6 13l3.5 3.5L17.5 8.5"
+                            d="M14 28L22 36L34 20"
                             stroke="#fff"
-                            strokeWidth="2.2"
+                            strokeWidth="3"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            style={{ filter: "drop-shadow(0 0 1px #fff)" }}
                           />
                           <path
-                            d="M9 13l3.5 3.5L20.5 8.5"
+                            d="M24 28L32 36L44 20"
                             stroke="#fff"
-                            strokeWidth="1.7"
+                            strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            opacity="0.7"
-                            style={{ filter: "drop-shadow(0 0 1px #fff)" }}
+                            opacity="0.8"
                           />
                         </svg>
                       </div>
@@ -213,7 +223,7 @@ export default function Message({
                     <div className="order-1 flex items-center">
                       <div className="flex items-center justify-center bg-emerald-700 rounded-full w-7 h-7 mr-1">
                         {/* WhatsApp-style left arrow for received message */}
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                           <path
                             d="M17 12H7M7 12l4-4M7 12l4 4"
                             stroke="#fff"
@@ -226,7 +236,7 @@ export default function Message({
                     </div>
                   )}
                   <div
-                    className={`rounded-2xl px-4 py-2 max-w-xs shadow break-words ${msg.sender === "me"
+                    className={`rounded-2xl px-4 py-2 shadow break-words ${msg.sender === "me"
                       ? "bg-green-600 text-white order-1"
                       : "bg-white border order-2 text-green-700"
                       }`}
@@ -237,6 +247,7 @@ export default function Message({
                       boxSizing: "border-box",
                       marginBottom: "2px",
                       marginTop: "2px",
+                      overflowWrap: "break-word",
                     }}
                   >
                     {msg.text}
