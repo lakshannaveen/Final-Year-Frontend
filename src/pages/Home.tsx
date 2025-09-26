@@ -192,24 +192,54 @@ export default function Home({
     setModalPhotoAlt("");
   };
 
-  // --- Search ---
-  const handleSearch = async (term: string) => {
-    setSearchTerm(term);
-    if (!term) {
-      setSearchResults(null);
-      return;
-    }
-    setSearchLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/feed/search?query=${encodeURIComponent(term)}`);
-      const data = await res.json();
-      setSearchResults(Array.isArray(data.feeds) ? data.feeds : []);
-    } catch {
-      setSearchResults([]);
-    }
-    setSearchLoading(false);
-  };
+// In the Home component, update the handleSearch function:
 
+const handleSearch = async (term: string) => {
+  setSearchTerm(term);
+  if (!term) {
+    setSearchResults(null);
+    return;
+  }
+  
+  setSearchLoading(true);
+  try {
+    console.log("Searching for:", term);
+    const res = await fetch(
+      `${API_URL}/api/feed/search?query=${encodeURIComponent(term)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+    
+    const data = await res.json();
+    
+    if (!res.ok) {
+      throw new Error(data.error || "Search failed");
+    }
+    
+    setSearchResults(Array.isArray(data.feeds) ? data.feeds : []);
+    
+    // Log search type for debugging
+    if (data.searchType) {
+      console.log(`Search type: ${data.searchType}, Results: ${data.feeds?.length || 0}`);
+    }
+    
+  } catch (err: any) {
+    console.error("Search error in Home:", err);
+    setSearchResults([]);
+    
+    // Show user-friendly error
+    if (err.message.includes('Failed to fetch')) {
+      // Network error - maybe show offline message
+      console.log("Network error - search service may be offline");
+    }
+  } finally {
+    setSearchLoading(false);
+  }
+};
   // Results to show: either search results or infinite scroll feeds
   const displayFeeds = searchTerm ? searchResults || [] : feeds;
   const displayLoading = searchTerm ? searchLoading : loading;
