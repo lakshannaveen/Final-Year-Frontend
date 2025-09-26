@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Sparkle, Loader2, SearchIcon, MapPin, User, Tag, AlertCircle } from "lucide-react";
+import { Sparkle, Loader2, SearchIcon, MapPin, User, Tag, AlertCircle, X } from "lucide-react";
 
 interface FeedUser {
   _id: string;
@@ -233,6 +233,14 @@ export default function Search({
     onChange(suggestion.title);
   }
 
+  function handleClearInput() {
+    setInput("");
+    setError("");
+    setShowSuggestions(false);
+    setShowExampleDropdown(true);
+    onChange("");
+  }
+
   function getSuggestionIcon(suggestion: string) {
     const lower = suggestion.toLowerCase();
     if (
@@ -284,6 +292,18 @@ export default function Search({
           disabled={loading}
           onFocus={handleFocus}
         />
+        {/* Clear button (cut mark) */}
+        {input.trim() && (
+          <button
+            type="button"
+            onClick={handleClearInput}
+            className="ml-2 text-gray-400 hover:text-gray-700 focus:text-gray-700 focus:outline-none"
+            aria-label="Clear search"
+            tabIndex={0}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
         {aiStatus && (
           <Sparkle className="text-green-500 w-5 h-5 ml-2" aria-label="AI powered" />
         )}
@@ -299,7 +319,7 @@ export default function Search({
           )}
         </button>
       </form>
-      {/* Example searches dropdown when focusing on empty input */}
+      {/* Example searches dropdown when focusing on empty input or after clear */}
       {showExampleDropdown && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-50">
           <div className="px-4 pt-3 pb-2 text-sm text-gray-700 font-semibold border-b bg-gray-50 flex items-center gap-2 rounded-t-xl">
