@@ -2,7 +2,10 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import Search from "../components/Search"; 
+import Search from "../components/Search";
+
+// Use <img> for remote, non-whitelisted hosts to avoid next/image error/warning
+// For your own domain or whitelisted domains, you can use <Image /> from next/image
 
 interface HomeProps {
   setCurrentView: (view: string) => void;
@@ -123,7 +126,7 @@ export default function Home({
 
   // Fetch feeds for each page
   useEffect(() => {
-    if (searchTerm) return; // Don't fetch infinite feeds while searching
+    if (searchTerm) return;
     const fetchFeeds = async () => {
       setLoading(true);
       try {
@@ -131,7 +134,6 @@ export default function Home({
         const data = await res.json();
         if (Array.isArray(data.feeds)) {
           setFeeds(prev => {
-            // Avoid duplicates
             const ids = new Set(prev.map(f => f._id));
             return [...prev, ...data.feeds.filter((f: FeedItem) => !ids.has(f._id))];
           });
@@ -143,7 +145,6 @@ export default function Home({
       setLoading(false);
     };
     fetchFeeds();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, searchTerm]);
 
   useEffect(() => {
@@ -192,54 +193,46 @@ export default function Home({
     setModalPhotoAlt("");
   };
 
-// In the Home component, update the handleSearch function:
+  // Search handler (fixed error handling, removed any)
+  const handleSearch = async (term: string) => {
+    setSearchTerm(term);
+    if (!term) {
+      setSearchResults(null);
+      return;
+    }
 
-const handleSearch = async (term: string) => {
-  setSearchTerm(term);
-  if (!term) {
-    setSearchResults(null);
-    return;
-  }
-  
-  setSearchLoading(true);
-  try {
-    console.log("Searching for:", term);
-    const res = await fetch(
-      `${API_URL}/api/feed/search?query=${encodeURIComponent(term)}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+    setSearchLoading(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/api/feeds/search?query=${encodeURIComponent(term)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
         }
+      );
+
+      let data: { feeds?: FeedItem[]; searchType?: string; error?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
       }
-    );
-    
-    const data = await res.json();
-    
-    if (!res.ok) {
-      throw new Error(data.error || "Search failed");
+
+      if (!res.ok) {
+        const errorMsg = data && data.error ? data.error : "Search failed";
+        throw new Error(errorMsg);
+      }
+
+      setSearchResults(Array.isArray(data.feeds) ? data.feeds : []);
+    } catch (_err) {
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
     }
-    
-    setSearchResults(Array.isArray(data.feeds) ? data.feeds : []);
-    
-    // Log search type for debugging
-    if (data.searchType) {
-      console.log(`Search type: ${data.searchType}, Results: ${data.feeds?.length || 0}`);
-    }
-    
-  } catch (err: any) {
-    console.error("Search error in Home:", err);
-    setSearchResults([]);
-    
-    // Show user-friendly error
-    if (err.message.includes('Failed to fetch')) {
-      // Network error - maybe show offline message
-      console.log("Network error - search service may be offline");
-    }
-  } finally {
-    setSearchLoading(false);
-  }
-};
+  };
+
   // Results to show: either search results or infinite scroll feeds
   const displayFeeds = searchTerm ? searchResults || [] : feeds;
   const displayLoading = searchTerm ? searchLoading : loading;
@@ -249,12 +242,12 @@ const handleSearch = async (term: string) => {
       <Navbar currentView="home" setCurrentView={setCurrentView} />
       {/* Search bar right below navbar */}
       <div className="w-full max-w-3xl mx-auto mt-6 mb-4 px-2">
-     <Search
-  value={searchTerm}
-  onChange={handleSearch}
-  loading={searchLoading}
-  onShowPublicProfile={onShowPublicProfile}
-/>
+        <Search
+          value={searchTerm}
+          onChange={handleSearch}
+          loading={searchLoading}
+          onShowPublicProfile={onShowPublicProfile}
+        />
       </div>
       <section className="flex flex-col flex-grow items-center px-4 py-6">
         <div className="w-full max-w-3xl space-y-8">
@@ -276,9 +269,12 @@ const handleSearch = async (term: string) => {
                   title={`View ${feed.user.username}'s profile`}
                 >
                   {feed.user.profilePic ? (
+                    // Use <img> for external URLs to avoid next/image config errors
                     <img
                       src={feed.user.profilePic}
                       alt={feed.user.username}
+                      width={64}
+                      height={64}
                       className="w-16 h-16 rounded-full object-cover border border-gray-300 mb-2"
                     />
                   ) : (
@@ -340,6 +336,8 @@ const handleSearch = async (term: string) => {
                         <img
                           src={feed.photo}
                           alt="Post Photo"
+                          width={220}
+                          height={160}
                           className="rounded-xl border object-cover"
                           style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
                           onMouseDown={() => handlePhotoMouseDown(feed.photo!, feed.title)}
@@ -377,6 +375,8 @@ const handleSearch = async (term: string) => {
               <img
                 src={modalPhotoUrl}
                 alt={modalPhotoAlt}
+                width={800}
+                height={600}
                 className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl border-8 border-white"
                 onClick={e => e.stopPropagation()}
               />
