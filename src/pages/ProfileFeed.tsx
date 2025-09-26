@@ -196,7 +196,7 @@ export default function ProfileFeed() {
         setFeeds(prev => prev.filter(f => f._id !== feedId));
         setSuccessModal({ show: true, message: "Post deleted successfully!" });
       }
-    } catch (err) {
+    } catch {
       alert("Failed to delete post.");
     }
   };
@@ -249,7 +249,7 @@ export default function ProfileFeed() {
       } else {
         alert("Failed to update post.");
       }
-    } catch (err) {
+    } catch {
       alert("Failed to update post.");
     }
     setEditLoading(false);
