@@ -35,6 +35,16 @@ interface SearchProps {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+// Example searches for dropdown when focusing search
+const EXAMPLE_SEARCHES = [
+  "Plumber near Galle",
+  "Electrician Colombo",
+  "Carpenter Negombo",
+  "Babysitter Kandy",
+  "Driver Matara",
+  "Gardener Jaffna"
+];
+
 export default function Search({
   value,
   onChange,
@@ -46,8 +56,11 @@ export default function Search({
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showExampleDropdown, setShowExampleDropdown] = useState(false);
   const [error, setError] = useState<string>("");
   const [aiStatus, setAiStatus] = useState<boolean>(true);
+  const [searchType, setSearchType] = useState<string>("text");
+  const [message, setMessage] = useState<string>("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch AI status
@@ -69,10 +82,21 @@ export default function Search({
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
+        setShowExampleDropdown(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close suggestions/example on scroll (for Home page use)
+  useEffect(() => {
+    function handleScroll() {
+      setShowSuggestions(false);
+      setShowExampleDropdown(false);
+    }
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Fetch keyword suggestions
@@ -102,10 +126,14 @@ export default function Search({
       setSuggestions([]);
       setShowSuggestions(false);
       setError("");
+      setMessage("");
+      setSearchType("text");
       return;
     }
     setSuggestLoading(true);
     setError("");
+    setMessage("");
+    setSearchType("text");
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(
@@ -119,6 +147,8 @@ export default function Search({
         const feedsArray = Array.isArray(data.feeds) ? data.feeds : [];
         setSuggestions(feedsArray);
         setShowSuggestions(true);
+        setSearchType(data.searchType || "text");
+        setMessage(data.message || "");
       } catch (err) {
         setSuggestions([]);
         setShowSuggestions(false);
@@ -127,6 +157,8 @@ export default function Search({
             ? err.message
             : "Search failed. Please try again."
         );
+        setMessage("");
+        setSearchType("error");
       } finally {
         setSuggestLoading(false);
       }
@@ -134,11 +166,17 @@ export default function Search({
     return () => clearTimeout(timer);
   }, [input, aiStatus]);
 
+  useEffect(() => {
+    setInput(value);
+  }, [value]);
+
   function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
     const newValue = e.target.value;
     setInput(newValue);
     setError("");
     if (!newValue.trim()) onChange('');
+    setShowExampleDropdown(false);
+    if (newValue.trim()) setShowSuggestions(true);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -148,13 +186,31 @@ export default function Search({
       onChange(trimmedInput);
       setShowSuggestions(false);
       setError("");
+      setShowExampleDropdown(false);
     }
+  }
+
+  function handleFocus() {
+    if (!input.trim()) {
+      setShowExampleDropdown(true);
+    } else {
+      setShowSuggestions(true);
+    }
+  }
+
+  function handleExampleSearchClick(example: string) {
+    setInput(example);
+    setShowExampleDropdown(false);
+    setShowSuggestions(true);
+    setError("");
+    onChange(example);
   }
 
   function handleSelectKeywordSuggestion(keyword: string) {
     setInput(keyword);
     setShowSuggestions(false);
     setError("");
+    setShowExampleDropdown(false);
     const userObj = suggestions.find(
       sug => sug.user?.username?.toLowerCase() === keyword.toLowerCase()
     );
@@ -169,6 +225,7 @@ export default function Search({
     setInput(suggestion.title);
     setShowSuggestions(false);
     setError("");
+    setShowExampleDropdown(false);
     if (onShowPublicProfile && suggestion.user._id) {
       onShowPublicProfile(suggestion.user._id);
       return;
@@ -180,7 +237,7 @@ export default function Search({
     const lower = suggestion.toLowerCase();
     if (
       lower.includes("plumbing") ||
-      lower.includes("electrical") ||
+      lower.includes("electrician") ||
       lower.includes("cleaning") ||
       lower.includes("repair") ||
       lower.includes("carpentry")
@@ -198,7 +255,7 @@ export default function Search({
     const lower = suggestion.toLowerCase();
     if (
       lower.includes("plumbing") ||
-      lower.includes("electrical") ||
+      lower.includes("electrician") ||
       lower.includes("cleaning")
     )
       return "Service";
@@ -225,28 +282,54 @@ export default function Search({
           value={input}
           onChange={handleInput}
           disabled={loading}
-          onFocus={() => input.trim() && setShowSuggestions(true)}
+          onFocus={handleFocus}
         />
-        <Sparkle className="text-green-500 w-5 h-5 ml-2" aria-label="AI powered" />
+        {aiStatus && (
+          <Sparkle className="text-green-500 w-5 h-5 ml-2" aria-label="AI powered" />
+        )}
         <button
           type="submit"
           className="bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold px-6 py-2.5 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           disabled={loading || !input.trim()}
         >
           {loading ? (
-            <>
-              <Loader2 className="animate-spin w-4 h-4" />
-            </>
+            <Loader2 className="animate-spin w-4 h-4" />
           ) : (
-            <>
-              <SearchIcon className="w-4 h-4" />
-            </>
+            <SearchIcon className="w-4 h-4" />
           )}
         </button>
       </form>
+      {/* Example searches dropdown when focusing on empty input */}
+      {showExampleDropdown && (
+        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-50">
+          <div className="px-4 pt-3 pb-2 text-sm text-gray-700 font-semibold border-b bg-gray-50 flex items-center gap-2 rounded-t-xl">
+            <Sparkle className="w-4 h-4 text-green-600" />
+            Example searches
+          </div>
+          {EXAMPLE_SEARCHES.map((ex, i) => (
+            <button
+              key={ex}
+              className="w-full text-left px-4 py-3 hover:bg-green-50 flex items-center gap-3 border-b last:border-b-0 transition-colors"
+              onClick={() => handleExampleSearchClick(ex)}
+              type="button"
+            >
+              <SearchIcon className="w-4 h-4 text-green-600" />
+              <div className="flex-1 min-w-0">
+                <div className="text-gray-800 font-medium truncate">{ex}</div>
+              </div>
+              <div className="text-green-600 text-sm font-medium">Search</div>
+            </button>
+          ))}
+        </div>
+      )}
       {/* Suggestions Dropdown */}
       {showSuggestions && (suggestions.length > 0 || searchSuggestions.length > 0 || suggestLoading) && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-50 max-h-96 overflow-y-auto">
+          {(message || searchType !== "text") && (
+            <div className="px-4 py-2 text-xs text-gray-500 bg-gray-100 border-b">
+              Search powered by <b>{searchType === "ai" ? "AI" : "Smart"}</b>: {message}
+            </div>
+          )}
           {/* Keyword Suggestions */}
           {searchSuggestions.length > 0 && (
             <>
