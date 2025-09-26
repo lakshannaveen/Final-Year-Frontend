@@ -5,7 +5,6 @@ import Footer from "../components/Footer";
 import Search from "../components/Search";
 
 // Use <img> for remote, non-whitelisted hosts to avoid next/image error/warning
-// For your own domain or whitelisted domains, you can use <Image /> from next/image
 
 interface HomeProps {
   setCurrentView: (view: string) => void;
@@ -302,7 +301,17 @@ export default function Home({
                       </div>
                       <div className="mb-2">
                         <span className="inline-block font-semibold text-gray-700 w-20">Contact:</span>
-                        <span className="text-gray-800">{feed.contactNumber}</span>
+                        {feed.contactNumber ? (
+                          <a
+                            href={`tel:${feed.contactNumber}`}
+                            className="text-green-700 underline"
+                            title={`Call ${feed.contactNumber}`}
+                          >
+                            {feed.contactNumber}
+                          </a>
+                        ) : (
+                          <span className="text-gray-800">{feed.contactNumber}</span>
+                        )}
                       </div>
                       <div className="mb-2">
                         <span className="inline-block font-semibold text-gray-700 w-20">Price:</span>

@@ -164,7 +164,6 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
         setHasMore(false);
         setFeedLoading(false);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, userId]);
 
   // --- Modal helpers ---
@@ -254,7 +253,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                   {profile.serviceType === "posting" && profile.phone && (
                     <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold text-sm flex items-center">
                       <Phone size={14} className="mr-1" />
-                      {profile.phone}
+                      <a href={`tel:${profile.phone}`} className="hover:underline">{profile.phone}</a>
                     </span>
                   )}
                   {profile.serviceType === "posting" && profile.website && (
@@ -302,7 +301,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                     {profile.phone && (
                       <div className="flex items-center">
                         <Phone size={16} className="text-green-700 mr-2" />
-                        <span className="text-gray-700">{profile.phone}</span>
+                        <a href={`tel:${profile.phone}`} className="text-green-700 hover:underline">{profile.phone}</a>
                       </div>
                     )}
                     {profile.website && (
@@ -388,7 +387,17 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                     </div>
                     <div className="mb-2">
                       <span className="inline-block font-semibold text-gray-700 w-20">Contact:</span>
-                      <span className="text-gray-800">{feed.contactNumber}</span>
+                      {feed.contactNumber ? (
+                        <a
+                          href={`tel:${feed.contactNumber}`}
+                          className="text-green-700 underline"
+                          title={`Call ${feed.contactNumber}`}
+                        >
+                          {feed.contactNumber}
+                        </a>
+                      ) : (
+                        <span className="text-gray-800">{feed.contactNumber}</span>
+                      )}
                     </div>
                     <div className="mb-2">
                       <span className="inline-block font-semibold text-gray-700 w-20">Price:</span>
