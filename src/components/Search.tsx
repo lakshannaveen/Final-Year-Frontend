@@ -6,6 +6,8 @@ interface FeedUser {
   _id: string;
   username: string;
   profilePic?: string;
+  location?: string;
+  serviceType?: string;
 }
 
 interface FeedItem {
@@ -28,6 +30,7 @@ interface SearchProps {
   value: string;
   onChange: (value: string) => void;
   loading?: boolean;
+  onShowPublicProfile?: (userId: string) => void;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -36,6 +39,7 @@ export default function Search({
   value,
   onChange,
   loading,
+  onShowPublicProfile,
 }: SearchProps) {
   const [input, setInput] = useState(value);
   const [suggestions, setSuggestions] = useState<FeedItem[]>([]);
@@ -46,7 +50,6 @@ export default function Search({
   const [aiStatus, setAiStatus] = useState<boolean>(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Check AI service status on component mount
   useEffect(() => {
     const checkAIStatus = async () => {
       try {
@@ -54,14 +57,12 @@ export default function Search({
         const data = await res.json();
         setAiStatus(data.available);
       } catch (err) {
-        console.error("Failed to check AI status:", err);
         setAiStatus(false);
       }
     };
     checkAIStatus();
   }, []);
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -72,13 +73,11 @@ export default function Search({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch search suggestions (keywords)
   useEffect(() => {
     if (!input.trim() || input.length < 2) {
       setSearchSuggestions([]);
       return;
     }
-
     const fetchSearchSuggestions = async () => {
       try {
         const res = await fetch(
@@ -86,17 +85,14 @@ export default function Search({
         );
         const data = await res.json();
         setSearchSuggestions(data.suggestions || []);
-      } catch (err) {
-        console.error("Failed to fetch suggestions:", err);
+      } catch {
         setSearchSuggestions([]);
       }
     };
-
     const timer = setTimeout(fetchSearchSuggestions, 300);
     return () => clearTimeout(timer);
   }, [input]);
 
-  // Fetch feed suggestions as you type (debounced)
   useEffect(() => {
     if (!input.trim()) {
       setSuggestions([]);
@@ -104,66 +100,29 @@ export default function Search({
       setError("");
       return;
     }
-
     setSuggestLoading(true);
     setError("");
-    
     const timer = setTimeout(async () => {
       try {
-        console.log("Fetching search results for:", input);
         const res = await fetch(
           `${API_URL}/api/feeds/search?query=${encodeURIComponent(input.trim())}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            }
-          }
+          { method: 'GET', headers: { 'Content-Type': 'application/json' } }
         );
-        
         const data = await res.json();
-        
         if (!res.ok) {
-          // Handle different HTTP status codes
-          if (res.status === 500) {
-            throw new Error("Search service is temporarily unavailable. Please try again.");
-          } else if (res.status === 400) {
-            throw new Error("Invalid search request.");
-          } else {
-            throw new Error(data.error || `Server error (${res.status})`);
-          }
+          throw new Error(data.error || `Server error (${res.status})`);
         }
-        
-        // Ensure we always have an array, even if the response is malformed
         const feedsArray = Array.isArray(data.feeds) ? data.feeds : [];
         setSuggestions(feedsArray);
         setShowSuggestions(true);
-        
-        // Show informational message if provided
-        if (data.message && !aiStatus) {
-          console.log("Search message:", data.message);
-        }
-        
       } catch (err: any) {
-        console.error("Search error:", err);
         setSuggestions([]);
         setShowSuggestions(false);
-        
-        // More user-friendly error messages
-        if (err.message.includes('Failed to fetch') || err.message.includes('Network')) {
-          setError("Network error. Please check your connection.");
-        } else if (err.message.includes('500') || err.message.includes('unavailable')) {
-          setError("Search service is temporarily down. Using basic search...");
-          // Fallback to local filtering if available
-          setShowSuggestions(true);
-        } else {
-          setError(err.message || "Search failed. Please try again.");
-        }
+        setError(err.message || "Search failed. Please try again.");
       } finally {
         setSuggestLoading(false);
       }
-    }, 600); // Increased debounce time
-
+    }, 600);
     return () => clearTimeout(timer);
   }, [input, aiStatus]);
 
@@ -171,11 +130,7 @@ export default function Search({
     const newValue = e.target.value;
     setInput(newValue);
     setError("");
-    
-    // If input is cleared, also clear the search
-    if (!newValue.trim()) {
-      onChange('');
-    }
+    if (!newValue.trim()) onChange('');
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -188,48 +143,53 @@ export default function Search({
     }
   }
 
-  function handleSelectSuggestion(suggestion: FeedItem) {
-    setInput(suggestion.title);
-    onChange(suggestion.title);
-    setShowSuggestions(false);
-    setError("");
-  }
-
   function handleSelectKeywordSuggestion(keyword: string) {
     setInput(keyword);
-    onChange(keyword);
     setShowSuggestions(false);
     setError("");
+    // Find user in suggestions that matches the keyword
+    const userObj = suggestions.find(
+      sug => sug.user?.username?.toLowerCase() === keyword.toLowerCase()
+    );
+    if (userObj && onShowPublicProfile && userObj.user._id) {
+      onShowPublicProfile(userObj.user._id);
+      return;
+    }
+    onChange(keyword);
+  }
+
+  function handleSelectSuggestion(suggestion: FeedItem) {
+    setInput(suggestion.title);
+    setShowSuggestions(false);
+    setError("");
+    if (onShowPublicProfile && suggestion.user._id) {
+      onShowPublicProfile(suggestion.user._id);
+      return;
+    }
+    onChange(suggestion.title);
   }
 
   function getSuggestionIcon(suggestion: string) {
-    const lowerSuggestion = suggestion.toLowerCase();
-    
-    if (lowerSuggestion.includes('plumbing') || 
-        lowerSuggestion.includes('electrical') ||
-        lowerSuggestion.includes('cleaning') ||
-        lowerSuggestion.includes('repair') ||
-        lowerSuggestion.includes('carpentry')) {
-      return <Tag className="w-4 h-4 text-blue-600" />;
-    } else if (suggestion.match(/^[A-Z][a-z]+ [A-Z][a-z]+$/) || suggestion.length <= 15) {
+    const lower = suggestion.toLowerCase();
+    if (
+      lower.includes('plumbing') || lower.includes('electrical') ||
+      lower.includes('cleaning') || lower.includes('repair') ||
+      lower.includes('carpentry')
+    ) return <Tag className="w-4 h-4 text-blue-600" />;
+    else if (suggestion.match(/^[A-Z][a-z]+ [A-Z][a-z]+$/) || suggestion.length <= 15)
       return <User className="w-4 h-4 text-green-600" />;
-    } else {
-      return <MapPin className="w-4 h-4 text-red-600" />;
-    }
+    else return <MapPin className="w-4 h-4 text-red-600" />;
   }
 
   function getSuggestionType(suggestion: string) {
-    const lowerSuggestion = suggestion.toLowerCase();
-    
-    if (lowerSuggestion.includes('plumbing') || 
-        lowerSuggestion.includes('electrical') ||
-        lowerSuggestion.includes('cleaning')) {
-      return "Service";
-    } else if (suggestion.match(/^[A-Z][a-z]+ [A-Z][a-z]+$/) || suggestion.length <= 15) {
+    const lower = suggestion.toLowerCase();
+    if (
+      lower.includes('plumbing') || lower.includes('electrical') ||
+      lower.includes('cleaning')
+    ) return "Service";
+    else if (suggestion.match(/^[A-Z][a-z]+ [A-Z][a-z]+$/) || suggestion.length <= 15)
       return "User";
-    } else {
-      return "Location";
-    }
+    else return "Location";
   }
 
   return (
@@ -251,14 +211,12 @@ export default function Search({
           disabled={loading}
           onFocus={() => input.trim() && setShowSuggestions(true)}
         />
-        
         {!aiStatus && (
           <div className="flex items-center gap-1 text-orange-600 text-sm bg-orange-50 px-2 py-1 rounded-md">
             <AlertCircle className="w-3 h-3" />
             <span className="hidden sm:inline">Basic Search</span>
           </div>
         )}
-        
         <button
           type="submit"
           className="bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold px-6 py-2.5 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -277,8 +235,7 @@ export default function Search({
           )}
         </button>
       </form>
-
-      {/* Enhanced Suggestions Dropdown */}
+      {/* Suggestions Dropdown */}
       {showSuggestions && (suggestions.length > 0 || searchSuggestions.length > 0 || suggestLoading) && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-50 max-h-96 overflow-y-auto">
           {/* Keyword Suggestions */}
@@ -305,7 +262,6 @@ export default function Search({
               ))}
             </>
           )}
-
           {/* Feed Results */}
           {suggestions.length > 0 && (
             <>
@@ -332,9 +288,7 @@ export default function Search({
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900 truncate group-hover:text-green-700 transition-colors">
-                      {sug.title}
-                    </div>
+                    <div className="font-semibold text-gray-900 truncate group-hover:text-green-700 transition-colors">{sug.title}</div>
                     <div className="text-xs text-gray-600 flex items-center gap-2 mt-1">
                       <MapPin className="w-3 h-3" />
                       <span>{sug.location}</span>
@@ -354,7 +308,6 @@ export default function Search({
               ))}
             </>
           )}
-
           {suggestLoading && (
             <div className="px-4 py-4 text-gray-600 flex items-center justify-center">
               <Loader2 className="animate-spin w-5 h-5 mr-3 text-green-600" />
@@ -363,7 +316,6 @@ export default function Search({
           )}
         </div>
       )}
-
       {/* No Results */}
       {showSuggestions && !suggestions.length && !searchSuggestions.length && !suggestLoading && !error && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-lg rounded-xl z-50 px-4 py-4 text-gray-500 text-center">
@@ -373,7 +325,6 @@ export default function Search({
           </div>
         </div>
       )}
-
       {/* Error Message */}
       {error && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-red-50 border border-red-200 shadow-lg rounded-xl z-50 overflow-hidden">

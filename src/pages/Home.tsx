@@ -249,11 +249,12 @@ const handleSearch = async (term: string) => {
       <Navbar currentView="home" setCurrentView={setCurrentView} />
       {/* Search bar right below navbar */}
       <div className="w-full max-w-3xl mx-auto mt-6 mb-4 px-2">
-        <Search
-          value={searchTerm}
-          onChange={handleSearch}
-          loading={searchLoading}
-        />
+     <Search
+  value={searchTerm}
+  onChange={handleSearch}
+  loading={searchLoading}
+  onShowPublicProfile={onShowPublicProfile}
+/>
       </div>
       <section className="flex flex-col flex-grow items-center px-4 py-6">
         <div className="w-full max-w-3xl space-y-8">
