@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 
 // --- Interfaces ---
 interface FeedUser {
@@ -107,7 +107,7 @@ export default function ProfileFeed() {
   const [editLoading, setEditLoading] = useState(false);
 
   // Success Modal State
-  const [successModal, setSuccessModal] = useState<{show: boolean, message: string}>({show: false, message: ""});
+  const [successModal, setSuccessModal] = useState<{ show: boolean, message: string }>({ show: false, message: "" });
 
   // Infinite scroll: fetch more when bottom comes into view
   useEffect(() => {
@@ -127,7 +127,6 @@ export default function ProfileFeed() {
 
   useEffect(() => {
     fetchMyFeeds(page);
-   
   }, [page]);
 
   async function fetchMyFeeds(pageNum: number) {
@@ -195,9 +194,8 @@ export default function ProfileFeed() {
       });
       if (res.ok) {
         setFeeds(prev => prev.filter(f => f._id !== feedId));
-        setSuccessModal({show: true, message: "Post deleted successfully!"});
+        setSuccessModal({ show: true, message: "Post deleted successfully!" });
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       alert("Failed to delete post.");
     }
@@ -247,18 +245,17 @@ export default function ProfileFeed() {
         const data = await res.json();
         setFeeds(prev => prev.map(f => f._id === feedId ? data.feed : f));
         cancelEditing();
-        setSuccessModal({show: true, message: "Post updated successfully!"});
+        setSuccessModal({ show: true, message: "Post updated successfully!" });
       } else {
         alert("Failed to update post.");
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       alert("Failed to update post.");
     }
     setEditLoading(false);
   };
 
-  const closeSuccessModal = () => setSuccessModal({show: false, message: ""});
+  const closeSuccessModal = () => setSuccessModal({ show: false, message: "" });
 
   return (
     <div className="w-full min-h-screen bg-green-50">
@@ -382,10 +379,10 @@ export default function ProfileFeed() {
               {/* Edit Modal */}
               {editingId === feed._id && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-                  <div className="bg-white rounded-2xl shadow-2xl border border-green-300 px-8 py-6 w-full max-w-md mx-auto flex flex-col gap-6 relative"
+                  <div className="bg-white rounded-2xl shadow-2xl border border-green-300 w-full max-w-md mx-auto relative flex flex-col"
                     style={{
                       maxHeight: "98vh",
-                      minWidth: "350px",
+                      minWidth: "320px",
                       width: "100%",
                       margin: "0 auto",
                       top: "unset",
@@ -396,76 +393,78 @@ export default function ProfileFeed() {
                       onClick={cancelEditing}
                       aria-label="Close"
                     >&#10005;</button>
-                    <h3 className="text-2xl font-bold text-green-800 mb-3 text-center">Edit Your Post</h3>
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col">
-                        <label className="font-bold text-gray-900 mb-1">Service Name</label>
-                        <input
-                          type="text"
-                          className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
-                          value={editFeed[feed._id]?.title}
-                          onChange={e => handleEditChange(feed._id, "title", e.target.value)}
-                          placeholder="Service name"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="font-bold text-gray-900 mb-1">Location</label>
-                        <input
-                          type="text"
-                          className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
-                          value={editFeed[feed._id]?.location}
-                          onChange={e => handleEditChange(feed._id, "location", e.target.value)}
-                          placeholder="Location"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="font-bold text-gray-900 mb-1">Price</label>
-                        <div className="flex gap-2 w-full">
-                          <input
-                            type="number"
-                            className="border border-gray-300 px-4 py-2 rounded w-1/3 text-black bg-white placeholder-gray-400"
-                            value={editFeed[feed._id]?.price}
-                            onChange={e => handleEditChange(feed._id, "price", Number(e.target.value))}
-                            placeholder="Amount"
-                          />
+                    <h3 className="text-2xl font-bold text-green-800 mb-3 text-center pt-8">Edit Your Post</h3>
+                    <div className="flex-1 overflow-y-auto px-8 pb-4">
+                      <div className="flex flex-col gap-4">
+                        <div className="flex flex-col">
+                          <label className="font-bold text-gray-900 mb-1">Service Name</label>
                           <input
                             type="text"
-                            className="border border-gray-300 px-4 py-2 rounded w-1/3 text-black bg-white placeholder-gray-400"
-                            value={editFeed[feed._id]?.priceCurrency}
-                            onChange={e => handleEditChange(feed._id, "priceCurrency", e.target.value)}
-                            placeholder="Currency"
+                            className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
+                            value={editFeed[feed._id]?.title}
+                            onChange={e => handleEditChange(feed._id, "title", e.target.value)}
+                            placeholder="Service name"
                           />
-                          <select
-                            className="border border-gray-300 px-3 py-2 rounded w-1/3 text-black bg-white"
-                            value={editFeed[feed._id]?.priceType}
-                            onChange={e => handleEditChange(feed._id, "priceType", e.target.value)}
-                          >
-                            <option value="hourly">Hourly</option>
-                            <option value="specific task">Specific Task</option>
-                          </select>
+                        </div>
+                        <div className="flex flex-col">
+                          <label className="font-bold text-gray-900 mb-1">Location</label>
+                          <input
+                            type="text"
+                            className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
+                            value={editFeed[feed._id]?.location}
+                            onChange={e => handleEditChange(feed._id, "location", e.target.value)}
+                            placeholder="Location"
+                          />
+                        </div>
+                        <div className="flex flex-col">
+                          <label className="font-bold text-gray-900 mb-1">Price</label>
+                          <div className="flex gap-2 w-full flex-wrap">
+                            <input
+                              type="number"
+                              className="border border-gray-300 px-4 py-2 rounded w-full sm:w-1/3 text-black bg-white placeholder-gray-400"
+                              value={editFeed[feed._id]?.price}
+                              onChange={e => handleEditChange(feed._id, "price", Number(e.target.value))}
+                              placeholder="Amount"
+                            />
+                            <input
+                              type="text"
+                              className="border border-gray-300 px-4 py-2 rounded w-full sm:w-1/3 text-black bg-white placeholder-gray-400"
+                              value={editFeed[feed._id]?.priceCurrency}
+                              onChange={e => handleEditChange(feed._id, "priceCurrency", e.target.value)}
+                              placeholder="Currency"
+                            />
+                            <select
+                              className="border border-gray-300 px-3 py-2 rounded w-full sm:w-1/3 text-black bg-white"
+                              value={editFeed[feed._id]?.priceType}
+                              onChange={e => handleEditChange(feed._id, "priceType", e.target.value)}
+                            >
+                              <option value="hourly">Hourly</option>
+                              <option value="specific task">Specific Task</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex flex-col">
+                          <label className="font-bold text-gray-900 mb-1">Website</label>
+                          <input
+                            type="text"
+                            className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
+                            value={editFeed[feed._id]?.websiteLink}
+                            onChange={e => handleEditChange(feed._id, "websiteLink", e.target.value)}
+                            placeholder="Website link (https://...)"
+                          />
+                        </div>
+                        <div className="flex flex-col">
+                          <label className="font-bold text-gray-900 mb-1">About</label>
+                          <textarea
+                            className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400 min-h-[80px]"
+                            value={editFeed[feed._id]?.description}
+                            onChange={e => handleEditChange(feed._id, "description", e.target.value)}
+                            placeholder="Describe your service"
+                          />
                         </div>
                       </div>
-                      <div className="flex flex-col">
-                        <label className="font-bold text-gray-900 mb-1">Website</label>
-                        <input
-                          type="text"
-                          className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
-                          value={editFeed[feed._id]?.websiteLink}
-                          onChange={e => handleEditChange(feed._id, "websiteLink", e.target.value)}
-                          placeholder="Website link (https://...)"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="font-bold text-gray-900 mb-1">About</label>
-                        <textarea
-                          className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400 min-h-[80px]"
-                          value={editFeed[feed._id]?.description}
-                          onChange={e => handleEditChange(feed._id, "description", e.target.value)}
-                          placeholder="Describe your service"
-                        />
-                      </div>
                     </div>
-                    <div className="mt-4 flex gap-4 justify-center">
+                    <div className="sticky bottom-0 bg-white px-8 py-4 flex gap-4 justify-center border-t border-green-100">
                       <button
                         className="px-8 py-2 bg-green-700 text-white rounded font-bold hover:bg-green-800 transition"
                         disabled={editLoading}
@@ -492,8 +491,8 @@ export default function ProfileFeed() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
             <div className="bg-white rounded-xl shadow-lg border border-green-400 px-8 py-6 flex flex-col items-center">
               <svg className="w-12 h-12 text-green-600 mb-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
-                <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M8 12l2 2 4-4"/>
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+                <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M8 12l2 2 4-4" />
               </svg>
               <div className="text-green-700 text-lg font-bold mb-2">{successModal.message}</div>
               <button className="px-6 py-2 bg-green-700 text-white rounded font-bold hover:bg-green-800 transition mt-2" onClick={closeSuccessModal}>OK</button>
