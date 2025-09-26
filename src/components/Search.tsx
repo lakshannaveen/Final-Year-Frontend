@@ -50,19 +50,21 @@ export default function Search({
   const [aiStatus, setAiStatus] = useState<boolean>(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Fetch AI status
   useEffect(() => {
     const checkAIStatus = async () => {
       try {
         const res = await fetch(`${API_URL}/api/feeds/ai-status`);
         const data = await res.json();
         setAiStatus(data.available);
-      } catch (err) {
+      } catch {
         setAiStatus(false);
       }
     };
     checkAIStatus();
   }, []);
 
+  // Click outside dropdown closes suggestions
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -73,6 +75,7 @@ export default function Search({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Fetch keyword suggestions
   useEffect(() => {
     if (!input.trim() || input.length < 2) {
       setSearchSuggestions([]);
@@ -93,6 +96,7 @@ export default function Search({
     return () => clearTimeout(timer);
   }, [input]);
 
+  // Fetch feed suggestions
   useEffect(() => {
     if (!input.trim()) {
       setSuggestions([]);
@@ -106,7 +110,7 @@ export default function Search({
       try {
         const res = await fetch(
           `${API_URL}/api/feeds/search?query=${encodeURIComponent(input.trim())}`,
-          { method: 'GET', headers: { 'Content-Type': 'application/json' } }
+          { method: "GET", headers: { "Content-Type": "application/json" } }
         );
         const data = await res.json();
         if (!res.ok) {
@@ -115,10 +119,14 @@ export default function Search({
         const feedsArray = Array.isArray(data.feeds) ? data.feeds : [];
         setSuggestions(feedsArray);
         setShowSuggestions(true);
-      } catch (err: any) {
+      } catch (err) {
         setSuggestions([]);
         setShowSuggestions(false);
-        setError(err.message || "Search failed. Please try again.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Search failed. Please try again."
+        );
       } finally {
         setSuggestLoading(false);
       }
@@ -147,7 +155,6 @@ export default function Search({
     setInput(keyword);
     setShowSuggestions(false);
     setError("");
-    // Find user in suggestions that matches the keyword
     const userObj = suggestions.find(
       sug => sug.user?.username?.toLowerCase() === keyword.toLowerCase()
     );
@@ -172,11 +179,17 @@ export default function Search({
   function getSuggestionIcon(suggestion: string) {
     const lower = suggestion.toLowerCase();
     if (
-      lower.includes('plumbing') || lower.includes('electrical') ||
-      lower.includes('cleaning') || lower.includes('repair') ||
-      lower.includes('carpentry')
-    ) return <Tag className="w-4 h-4 text-blue-600" />;
-    else if (suggestion.match(/^[A-Z][a-z]+ [A-Z][a-z]+$/) || suggestion.length <= 15)
+      lower.includes("plumbing") ||
+      lower.includes("electrical") ||
+      lower.includes("cleaning") ||
+      lower.includes("repair") ||
+      lower.includes("carpentry")
+    )
+      return <Tag className="w-4 h-4 text-blue-600" />;
+    else if (
+      suggestion.match(/^[A-Z][a-z]+ [A-Z][a-z]+$/) ||
+      suggestion.length <= 15
+    )
       return <User className="w-4 h-4 text-green-600" />;
     else return <MapPin className="w-4 h-4 text-red-600" />;
   }
@@ -184,10 +197,15 @@ export default function Search({
   function getSuggestionType(suggestion: string) {
     const lower = suggestion.toLowerCase();
     if (
-      lower.includes('plumbing') || lower.includes('electrical') ||
-      lower.includes('cleaning')
-    ) return "Service";
-    else if (suggestion.match(/^[A-Z][a-z]+ [A-Z][a-z]+$/) || suggestion.length <= 15)
+      lower.includes("plumbing") ||
+      lower.includes("electrical") ||
+      lower.includes("cleaning")
+    )
+      return "Service";
+    else if (
+      suggestion.match(/^[A-Z][a-z]+ [A-Z][a-z]+$/) ||
+      suggestion.length <= 15
+    )
       return "User";
     else return "Location";
   }
@@ -199,24 +217,17 @@ export default function Search({
         onSubmit={handleSubmit}
         autoComplete="off"
       >
-        <SearchIcon className="text-green-600 w-5 h-5 flex-shrink-0" />
+        <SearchIcon className="text-green-600 w-6 h-6 flex-shrink-0" />
         <input
           type="text"
-          placeholder={aiStatus ? 
-            "Search services, locations, or usernames... (AI Powered)" : 
-            "Search services, locations, or usernames... (Basic Search)"}
+          placeholder={aiStatus ? "AI powered search..." : "Search..."}
           className="flex-1 bg-transparent outline-none text-lg text-gray-700 placeholder-gray-500 min-w-0"
           value={input}
           onChange={handleInput}
           disabled={loading}
           onFocus={() => input.trim() && setShowSuggestions(true)}
         />
-        {!aiStatus && (
-          <div className="flex items-center gap-1 text-orange-600 text-sm bg-orange-50 px-2 py-1 rounded-md">
-            <AlertCircle className="w-3 h-3" />
-            <span className="hidden sm:inline">Basic Search</span>
-          </div>
-        )}
+        <Sparkle className="text-green-500 w-5 h-5 ml-2" aria-label="AI powered" />
         <button
           type="submit"
           className="bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold px-6 py-2.5 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -225,12 +236,10 @@ export default function Search({
           {loading ? (
             <>
               <Loader2 className="animate-spin w-4 h-4" />
-              <span className="hidden sm:inline">Searching...</span>
             </>
           ) : (
             <>
               <SearchIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Search</span>
             </>
           )}
         </button>
@@ -243,7 +252,7 @@ export default function Search({
             <>
               <div className="px-4 pt-3 pb-2 text-sm text-gray-700 font-semibold border-b bg-gray-50 flex items-center gap-2 rounded-t-xl">
                 <Sparkle className="w-4 h-4 text-green-600" />
-                Quick Search Suggestions
+                Suggestions
               </div>
               {searchSuggestions.map((suggestion, index) => (
                 <button
@@ -267,7 +276,7 @@ export default function Search({
             <>
               <div className="px-4 pt-3 pb-2 text-sm text-gray-700 font-semibold border-b bg-gray-50 flex items-center gap-2">
                 <Sparkle className="w-4 h-4 text-green-600" />
-                {aiStatus ? "AI-Powered Results" : "Search Results"} ({suggestions.length})
+                Results ({suggestions.length})
               </div>
               {suggestions.map((sug) => (
                 <button
@@ -277,6 +286,7 @@ export default function Search({
                   type="button"
                 >
                   {sug.user?.profilePic ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={sug.user.profilePic}
                       alt={sug.user.username}
@@ -311,7 +321,7 @@ export default function Search({
           {suggestLoading && (
             <div className="px-4 py-4 text-gray-600 flex items-center justify-center">
               <Loader2 className="animate-spin w-5 h-5 mr-3 text-green-600" />
-              <span>{aiStatus ? "AI is searching..." : "Searching..."}</span>
+              <span>AI searching...</span>
             </div>
           )}
         </div>
@@ -321,7 +331,7 @@ export default function Search({
         <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-lg rounded-xl z-50 px-4 py-4 text-gray-500 text-center">
           <div className="flex items-center justify-center gap-2">
             <SearchIcon className="w-4 h-4" />
-            <span>No results found. Try different keywords.</span>
+            <span>No results found.</span>
           </div>
         </div>
       )}
