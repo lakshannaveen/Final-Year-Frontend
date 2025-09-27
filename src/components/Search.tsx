@@ -91,7 +91,6 @@ export default function Search({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-
   // Fetch keyword suggestions
   useEffect(() => {
     if (!input.trim() || input.length < 2) {
@@ -282,6 +281,7 @@ export default function Search({
   }
 
   return (
+    // Make sure your search bar container is just below your navbar with no overlap.
     <div className="relative w-full" ref={dropdownRef}>
       <form
         className="flex items-center gap-2 bg-white border border-gray-300 rounded-xl shadow-lg px-4 py-3 hover:shadow-xl transition-shadow focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-200"
@@ -327,7 +327,10 @@ export default function Search({
       </form>
       {/* Example searches dropdown when focusing on empty input or after clear */}
       {showExampleDropdown && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-50">
+        <div
+          className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-30"
+          style={{maxHeight: "24rem", overflowY: "auto"}}
+        >
           <div className="px-4 pt-3 pb-2 text-sm text-gray-700 font-semibold border-b bg-gray-50 flex items-center gap-2 rounded-t-xl">
             <Sparkle className="w-4 h-4 text-green-600" />
             Example searches
@@ -351,7 +354,7 @@ export default function Search({
       {/* Suggestions Dropdown */}
       {showSuggestions && (suggestions.length > 0 || searchSuggestions.length > 0 || suggestLoading || nearYou.length > 0) && (
         <div
-          className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-50 max-h-96 overflow-y-auto"
+          className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-30 max-h-96 overflow-y-auto"
           ref={suggestionsDropdownRef}
           onScroll={handleDropdownScroll}
         >
@@ -489,7 +492,7 @@ export default function Search({
       )}
       {/* No Results */}
       {showSuggestions && !suggestions.length && !searchSuggestions.length && !suggestLoading && !error && !nearYou.length && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-lg rounded-xl z-50 px-4 py-4 text-gray-500 text-center">
+        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-lg rounded-xl z-30 px-4 py-4 text-gray-500 text-center">
           <div className="flex items-center justify-center gap-2">
             <SearchIcon className="w-4 h-4" />
             <span>No results found.</span>
@@ -498,7 +501,7 @@ export default function Search({
       )}
       {/* Error Message */}
       {error && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-red-50 border border-red-200 shadow-lg rounded-xl z-50 overflow-hidden">
+        <div className="absolute left-0 right-0 top-full mt-1 bg-red-50 border border-red-200 shadow-lg rounded-xl z-30 overflow-hidden">
           <div className="px-4 py-3">
             <div className="flex items-center gap-2 text-red-700 font-semibold">
               <AlertCircle className="w-4 h-4" />
