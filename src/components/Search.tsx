@@ -63,6 +63,7 @@ export default function Search({
   const [message, setMessage] = useState<string>("");
   const [nearYou, setNearYou] = useState<FeedItem[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const suggestionsDropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch AI status
   useEffect(() => {
@@ -90,15 +91,6 @@ export default function Search({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close suggestions/example on scroll (for Home page use)
-  useEffect(() => {
-    function handleScroll() {
-      setShowSuggestions(false);
-      setShowExampleDropdown(false);
-    }
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Fetch keyword suggestions
   useEffect(() => {
@@ -280,6 +272,15 @@ export default function Search({
     else return "Location";
   }
 
+  // This function checks if the user scrolled the dropdown to the bottom
+  function handleDropdownScroll(e: React.UIEvent<HTMLDivElement>) {
+    const target = e.target as HTMLDivElement;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 4) { // allow 4px fudge factor
+      setShowSuggestions(false);
+      setShowExampleDropdown(false);
+    }
+  }
+
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <form
@@ -349,7 +350,11 @@ export default function Search({
       )}
       {/* Suggestions Dropdown */}
       {showSuggestions && (suggestions.length > 0 || searchSuggestions.length > 0 || suggestLoading || nearYou.length > 0) && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-50 max-h-96 overflow-y-auto">
+        <div
+          className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-50 max-h-96 overflow-y-auto"
+          ref={suggestionsDropdownRef}
+          onScroll={handleDropdownScroll}
+        >
           {(message || searchType !== "text") && (
             <div className="px-4 py-2 text-xs text-gray-500 bg-gray-100 border-b">
               Search powered by <b>{searchType === "ai" ? "AI" : searchType === "near-you" ? "Near You" : "Smart"}</b>: {message}
