@@ -61,6 +61,7 @@ export default function Search({
   const [aiStatus, setAiStatus] = useState<boolean>(true);
   const [searchType, setSearchType] = useState<string>("text");
   const [message, setMessage] = useState<string>("");
+  const [nearYou, setNearYou] = useState<FeedItem[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch AI status
@@ -128,6 +129,7 @@ export default function Search({
       setError("");
       setMessage("");
       setSearchType("text");
+      setNearYou([]);
       return;
     }
     setSuggestLoading(true);
@@ -149,6 +151,7 @@ export default function Search({
         setShowSuggestions(true);
         setSearchType(data.searchType || "text");
         setMessage(data.message || "");
+        setNearYou(Array.isArray(data.nearYou) ? data.nearYou : []);
       } catch (err) {
         setSuggestions([]);
         setShowSuggestions(false);
@@ -159,6 +162,7 @@ export default function Search({
         );
         setMessage("");
         setSearchType("error");
+        setNearYou([]);
       } finally {
         setSuggestLoading(false);
       }
@@ -238,6 +242,7 @@ export default function Search({
     setError("");
     setShowSuggestions(false);
     setShowExampleDropdown(true);
+    setNearYou([]);
     onChange("");
   }
 
@@ -343,12 +348,60 @@ export default function Search({
         </div>
       )}
       {/* Suggestions Dropdown */}
-      {showSuggestions && (suggestions.length > 0 || searchSuggestions.length > 0 || suggestLoading) && (
+      {showSuggestions && (suggestions.length > 0 || searchSuggestions.length > 0 || suggestLoading || nearYou.length > 0) && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-50 max-h-96 overflow-y-auto">
           {(message || searchType !== "text") && (
             <div className="px-4 py-2 text-xs text-gray-500 bg-gray-100 border-b">
-              Search powered by <b>{searchType === "ai" ? "AI" : "Smart"}</b>: {message}
+              Search powered by <b>{searchType === "ai" ? "AI" : searchType === "near-you" ? "Near You" : "Smart"}</b>: {message}
             </div>
+          )}
+          {/* Near You Results */}
+          {nearYou.length > 0 && (
+            <>
+              <div className="px-4 pt-3 pb-2 text-sm text-gray-700 font-semibold border-b bg-green-50 flex items-center gap-2 rounded-t-xl">
+                <MapPin className="w-4 h-4 text-green-600" />
+                Services Near You
+              </div>
+              {nearYou.map((sug) => (
+                <button
+                  key={`nearyou-${sug._id}`}
+                  className="w-full text-left px-4 py-3 hover:bg-green-50 flex items-center gap-3 border-b last:border-b-0 transition-colors group"
+                  onClick={() => handleSelectSuggestion(sug)}
+                  type="button"
+                >
+                  {sug.user?.profilePic ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={sug.user.profilePic}
+                      alt={sug.user.username}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 group-hover:border-green-500 transition-colors"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-lg border-2 border-gray-300 group-hover:border-green-500 transition-colors">
+                      {sug.user?.username?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-gray-900 truncate group-hover:text-green-700 transition-colors">{sug.title}</div>
+                    <div className="text-xs text-gray-600 flex items-center gap-2 mt-1">
+                      <MapPin className="w-3 h-3" />
+                      <span>{sug.location}</span>
+                      {sug.user?.username && (
+                        <>
+                          <span>•</span>
+                          <User className="w-3 h-3" />
+                          <span>{sug.user.username}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-green-700 font-bold whitespace-nowrap text-sm">
+                    {sug.price} {sug.priceCurrency}
+                  </div>
+                </button>
+              ))}
+              <div className="border-t" />
+            </>
           )}
           {/* Keyword Suggestions */}
           {searchSuggestions.length > 0 && (
@@ -430,7 +483,7 @@ export default function Search({
         </div>
       )}
       {/* No Results */}
-      {showSuggestions && !suggestions.length && !searchSuggestions.length && !suggestLoading && !error && (
+      {showSuggestions && !suggestions.length && !searchSuggestions.length && !suggestLoading && !error && !nearYou.length && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-lg rounded-xl z-50 px-4 py-4 text-gray-500 text-center">
           <div className="flex items-center justify-center gap-2">
             <SearchIcon className="w-4 h-4" />
