@@ -2,7 +2,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "./AuthContext";
-import { Menu, X, User, Mail, Bot } from "lucide-react";
+import { Menu, X, User, Mail, Bot, Send, Clock, Zap, MessageCircle } from "lucide-react";
 import Image from "next/image";
 
 interface NavbarProps {
@@ -17,6 +17,13 @@ interface AppUser {
   profilePic?: string;
   serviceType?: string;
   [key: string]: string | undefined;
+}
+
+interface ChatMessage {
+  id: string;
+  type: 'user' | 'ai';
+  content: string;
+  timestamp: Date;
 }
 
 function getProfilePicFromUser(u: unknown): string {
@@ -44,11 +51,12 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
   // AI Chatbox state
   const [aiOpen, setAiOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const [response, setResponse] = useState<string | null>(null);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [usage, setUsage] = useState({ uses: 0, max: 5 });
   const [aiError, setAiError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchAIUsage = async () => {
     try {
@@ -65,14 +73,28 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
   useEffect(() => {
     if (aiOpen) {
       fetchAIUsage();
+      // Focus input when chat opens
+      setTimeout(() => inputRef.current?.focus(), 300);
     }
   }, [aiOpen]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory, aiLoading]);
 
   const handleAIChat = async () => {
     if (!prompt.trim() || usage.uses >= usage.max || aiLoading) return;
     
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: prompt.trim(),
+      timestamp: new Date()
+    };
+
+    setChatHistory(prev => [...prev, userMessage]);
     setAiError(null);
-    setResponse(null);
     setAiLoading(true);
     
     try {
@@ -95,7 +117,13 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           setAiError(data.error || "Service temporarily unavailable. Please try again.");
         }
       } else if (data.answer) {
-        setResponse(data.answer);
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: data.answer,
+          timestamp: new Date()
+        };
+        setChatHistory(prev => [...prev, aiMessage]);
         setUsage({ uses: data.uses, max: data.max });
       } else {
         setAiError("No response generated. Please try a different question.");
@@ -107,10 +135,6 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
     
     setAiLoading(false);
     setPrompt("");
-    
-    setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -122,6 +146,37 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
   const handleNavClick = (view: string) => {
     setCurrentView(view);
     setMenuOpen(false);
+  };
+
+  const clearChat = () => {
+    setChatHistory([]);
+    setAiError(null);
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  // Quick question suggestions
+  const quickQuestions = [
+    "What is Doop and how does it work?",
+    "How do I book a service?",
+    "What services are available?",
+    "How to become a service provider?"
+  ];
+
+  const handleQuickQuestion = (question: string) => {
+    setPrompt(question);
+    // Auto-submit after a brief delay
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
   };
 
   useEffect(() => {
@@ -218,17 +273,29 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
           
           {/* Right: Profile + Hamburger + AI Chat */}
           <div className="flex items-center gap-3">
-            {/* AI Chatbox Button - Available to all users */}
+            {/* AI Chatbox Button - Professional styling */}
             <button
               onClick={() => setAiOpen(true)}
-              className="bg-emerald-600 p-2 rounded-full hover:bg-emerald-500 transition relative"
-              title="AI Assistant - Ask me anything!"
+              className="relative group bg-gradient-to-br from-emerald-500 to-green-600 p-3 rounded-xl hover:from-emerald-400 hover:to-green-500 transition-all duration-200 shadow-lg hover:shadow-xl border border-emerald-400/20"
+              title="AI Assistant - Get instant help"
             >
-              <Bot size={22} />
-              <span className="sr-only">Chat with AI</span>
-              <span className="absolute -top-1 -right-1 bg-white text-green-700 text-xs px-1.5 py-0.5 rounded-full font-bold border border-green-700">
+              <div className="flex items-center gap-2">
+                <MessageCircle size={20} className="text-white" />
+                <span className="text-white font-medium text-sm hidden sm:block">AI Assistant</span>
+              </div>
+              
+              {/* Usage badge */}
+              <div className="absolute -top-2 -right-2 bg-white text-green-700 text-xs font-bold px-2 py-1 rounded-full border-2 border-green-600 shadow-sm">
                 {usage.max - usage.uses}
-              </span>
+              </div>
+              
+              {/* Pulse animation when available */}
+              {usage.uses < usage.max && (
+                <div className="absolute -top-1 -right-1">
+                  <div className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-green-400 opacity-75"></div>
+                  <div className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></div>
+                </div>
+              )}
             </button>
             
             {/* User Profile */}
@@ -238,12 +305,12 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                 aria-label="Profile"
                 className={`relative flex items-center justify-center rounded-full p-[2px] transition-all ${
                   currentView === "profile"
-                    ? "ring-2 ring-emerald-400"
-                    : "ring-2 ring-white/20 hover:ring-emerald-300"
+                    ? "ring-2 ring-emerald-400 shadow-lg"
+                    : "ring-2 ring-white/20 hover:ring-emerald-300 hover:shadow-lg"
                 }`}
               >
                 {avatarUrl ? (
-                  <span className="block w-8 h-8 rounded-full overflow-hidden bg-white">
+                  <span className="block w-8 h-8 rounded-full overflow-hidden bg-white shadow-inner">
                     <img
                       src={avatarUrl}
                       alt="Profile avatar"
@@ -255,7 +322,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                     />
                   </span>
                 ) : avatarLetter ? (
-                  <span className="w-8 h-8 rounded-full bg-white text-green-700 flex items-center justify-center font-bold">
+                  <span className="w-8 h-8 rounded-full bg-white text-green-700 flex items-center justify-center font-bold shadow-inner">
                     {avatarLetter}
                   </span>
                 ) : (
@@ -332,10 +399,10 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                   setAiOpen(true);
                   setMenuOpen(false);
                 }}
-                className="w-full text-center flex items-center justify-center gap-2 bg-emerald-700/80 hover:bg-emerald-600 py-2 rounded-lg mt-2"
+                className="w-full text-center flex items-center justify-center gap-2 bg-emerald-700/80 hover:bg-emerald-600 py-3 rounded-lg mt-2 font-semibold"
                 aria-label="Open AI Chat"
               >
-                <Bot size={22} /> AI Assistant ({usage.max - usage.uses} left)
+                <MessageCircle size={22} /> AI Assistant ({usage.max - usage.uses} left)
               </button>
               
               {!user && (
@@ -373,103 +440,195 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
         </div>
       </nav>
 
-      {/* AI Chat Modal */}
+      {/* Professional AI Chat Modal */}
       {aiOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-5 relative flex flex-col max-h-[90vh]">
-            <button
-              onClick={() => setAiOpen(false)}
-              className="absolute top-3 right-3 text-green-800 hover:text-red-500 transition"
-              aria-label="Close AI Chat"
-            >
-              <X size={28} />
-            </button>
-            
-            <div className="flex items-center gap-3 mb-4">
-              <Bot size={28} className="text-emerald-600" />
-              <h2 className="text-xl font-bold text-green-800">AI Assistant</h2>
-              <span className="ml-auto bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                {usage.uses}/{usage.max} used today
-              </span>
-            </div>
-            
-            <div className="flex-1 min-h-[120px] max-h-96 overflow-y-auto border-2 border-gray-200 rounded-lg p-4 bg-gray-50 mb-4">
-              {!response && !aiError && (
-                <div className="text-gray-500 text-center py-8">
-                  <Bot size={48} className="mx-auto mb-2 text-gray-400" />
-                  <p className="text-black font-medium">Hello! I am your AI assistant.</p>
-                  <p className="text-black text-sm mt-2">Ask me anything - general knowledge, Doop platform questions, service inquiries, or anything else!</p>
-                  <p className="text-black text-sm mt-1">You have {usage.max - usage.uses} questions left today.</p>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full h-[80vh] flex flex-col overflow-hidden border border-gray-200">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/20 p-2 rounded-xl">
+                    <Bot size={24} className="text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Doop AI Assistant</h2>
+                    <p className="text-emerald-100 text-sm">Get instant help and answers</p>
+                  </div>
                 </div>
-              )}
-              
-              {response && (
-                <div className="mb-4 p-3 bg-white rounded-lg border border-green-200">
-                  <div className="flex items-start gap-2">
-                    <Bot size={18} className="text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <span className="font-semibold text-green-700 text-sm">AI:</span>
-                      <p className="text-gray-900 whitespace-pre-wrap mt-1 text-black">{response}</p>
+                
+                <div className="flex items-center gap-3">
+                  {/* Usage indicator */}
+                  <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <Zap size={14} className="text-yellow-300" />
+                      <span>{usage.max - usage.uses} questions left today</span>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => setAiOpen(false)}
+                    className="text-white hover:text-emerald-200 transition p-2 rounded-lg hover:bg-white/10"
+                    aria-label="Close AI Chat"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Chat Messages Area */}
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+              {chatHistory.length === 0 && !aiLoading && (
+                <div className="text-center py-12">
+                  <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 max-w-md mx-auto">
+                    <Bot size={48} className="text-emerald-600 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Welcome to Doop AI Assistant!</h3>
+                    <p className="text-gray-600 mb-6">I am here to help you with anything about Doop platform, services, or general questions.</p>
+                    
+                    {/* Quick Questions */}
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-500 font-medium">Try asking:</p>
+                      {quickQuestions.map((question, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleQuickQuestion(question)}
+                          className="w-full text-left p-3 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition text-sm text-emerald-800 font-medium"
+                        >
+                          {question}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
               )}
-              
-              {aiError && (
-                <div className="mb-4 p-3 bg-red-50 rounded-lg border border-red-200">
-                  <div className="flex items-start gap-2">
-                    <X size={18} className="text-red-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <span className="font-semibold text-red-700 text-sm">Error:</span>
-                      <p className="text-red-800 whitespace-pre-wrap mt-1">{aiError}</p>
+
+              {/* Chat Messages */}
+              <div className="space-y-4">
+                {chatHistory.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl p-4 ${
+                        message.type === 'user'
+                          ? 'bg-emerald-600 text-white rounded-br-none'
+                          : 'bg-white text-gray-800 rounded-bl-none border border-gray-200 shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {message.type === 'ai' && (
+                          <div className="bg-emerald-100 p-1 rounded-lg mt-1">
+                            <Bot size={14} className="text-emerald-600" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                            {message.content}
+                          </p>
+                          <div className={`flex items-center gap-1 mt-2 text-xs ${
+                            message.type === 'user' ? 'text-emerald-100' : 'text-gray-500'
+                          }`}>
+                            <Clock size={12} />
+                            <span>{formatTime(message.timestamp)}</span>
+                          </div>
+                        </div>
+                        {message.type === 'user' && (
+                          <div className="bg-emerald-500 p-1 rounded-lg mt-1">
+                            <User size={14} className="text-white" />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-              
-              {aiLoading && (
-                <div className="flex items-center gap-2 text-gray-600">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent"></div>
-                  <span className="text-black">AI is thinking...</span>
-                </div>
-              )}
-              
-              <div ref={chatEndRef} />
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                className="flex-1 border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-500 text-black placeholder-gray-500 bg-white"
-                placeholder={
-                  usage.uses >= usage.max 
-                    ? "Daily limit reached - try again tomorrow" 
-                    : "Ask me anything... (What is Doop? General knowledge, etc.)"
-                }
-                value={prompt}
-                onChange={e => setPrompt(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={aiLoading || usage.uses >= usage.max}
-                maxLength={500}
-              />
-              <button
-                className="bg-emerald-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px]"
-                onClick={handleAIChat}
-                disabled={aiLoading || !prompt.trim() || usage.uses >= usage.max}
-              >
-                {aiLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    <span>Asking...</span>
+                ))}
+
+                {/* Loading Indicator */}
+                {aiLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-none p-4 max-w-[80%]">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-emerald-100 p-1 rounded-lg">
+                          <Bot size={14} className="text-emerald-600" />
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                          <span className="text-sm">Thinking...</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  "Ask AI"
                 )}
-              </button>
+
+                {/* Error Message */}
+                {aiError && (
+                  <div className="flex justify-start">
+                    <div className="bg-red-50 border border-red-200 rounded-2xl rounded-bl-none p-4 max-w-[80%]">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-red-100 p-1 rounded-lg">
+                          <X size={14} className="text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-red-800 text-sm font-medium">Unable to process request</p>
+                          <p className="text-red-600 text-sm mt-1">{aiError}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={chatEndRef} />
+              </div>
             </div>
-            
-            <div className="mt-3 text-xs text-gray-500 text-center">
-              <p className="text-black">Ask me anything! General knowledge, Doop platform help, or service questions • {usage.max} questions per day</p>
+
+            {/* Input Area */}
+            <div className="border-t border-gray-200 bg-white p-6">
+              <div className="flex gap-3">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  className="flex-1 border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 text-gray-800 placeholder-gray-500 bg-white text-sm font-medium"
+                  placeholder={
+                    usage.uses >= usage.max 
+                      ? "Daily limit reached - try again tomorrow" 
+                      : "Ask me anything about Doop, services, or general topics..."
+                  }
+                  value={prompt}
+                  onChange={e => setPrompt(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={aiLoading || usage.uses >= usage.max}
+                  maxLength={500}
+                />
+                <button
+                  className="bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold px-6 py-3 rounded-xl hover:from-emerald-400 hover:to-green-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-w-[60px] flex items-center justify-center shadow-lg hover:shadow-xl disabled:shadow-none"
+                  onClick={handleAIChat}
+                  disabled={aiLoading || !prompt.trim() || usage.uses >= usage.max}
+                >
+                  {aiLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                  ) : (
+                    <Send size={20} />
+                  )}
+                </button>
+              </div>
+              
+              {/* Footer Info */}
+              <div className="flex justify-between items-center mt-3">
+                <button
+                  onClick={clearChat}
+                  className="text-xs text-gray-500 hover:text-gray-700 transition font-medium"
+                >
+                  Clear conversation
+                </button>
+                <div className="text-xs text-gray-500 font-medium">
+                  {usage.uses}/{usage.max} questions used today
+                </div>
+              </div>
             </div>
           </div>
         </div>
