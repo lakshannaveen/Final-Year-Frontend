@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "./AuthContext";
-import { Menu, X, User, Mail, MessageCircle } from "lucide-react";
+import { Menu, X, User, Mail, Bot } from "lucide-react"; // Changed MessageCircle to Bot for AI icon
 import Image from "next/image";
 import AIAssistant from "./AIAssistant";
 
@@ -46,7 +46,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-  const fetchAIUsage = async () => {
+  const fetchAIUsage = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/api/huggingface/usage`);
       if (res.ok) {
@@ -56,13 +56,13 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
     } catch (error) {
       console.log('Failed to fetch AI usage:', error);
     }
-  };
+  }, [API_URL]);
 
   useEffect(() => {
     if (aiOpen) {
       fetchAIUsage();
     }
-  }, [aiOpen]);
+  }, [aiOpen, fetchAIUsage]);
 
   const handleNavClick = (view: string) => {
     setCurrentView(view);
@@ -172,7 +172,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                 title="AI Assistant - Get instant help"
               >
                 <div className="flex items-center gap-2">
-                  <MessageCircle size={20} className="text-white" />
+                  <Bot size={20} className="text-white" /> {/* Changed from MessageCircle to Bot */}
                   <span className="text-white font-medium text-sm">AI Assistant</span>
                 </div>
                 
@@ -251,7 +251,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                 className="relative bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-lg hover:from-emerald-400 hover:to-green-500 transition-all duration-200 shadow-lg"
                 title="AI Assistant"
               >
-                <MessageCircle size={20} className="text-white" />
+                <Bot size={20} className="text-white" /> {/* Changed from MessageCircle to Bot */}
                 <div className="absolute -top-1 -right-1 bg-white text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full border border-green-600">
                   {usage.max - usage.uses}
                 </div>
@@ -365,7 +365,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                   className="w-full text-center flex items-center justify-center gap-2 bg-emerald-700/80 hover:bg-emerald-600 py-3 rounded-lg mt-2 font-semibold"
                   aria-label="Open AI Chat"
                 >
-                  <MessageCircle size={20} /> AI Assistant ({usage.max - usage.uses} left)
+                  <Bot size={20} /> AI Assistant ({usage.max - usage.uses} left)
                 </button>
                 
                 {/* Additional Auth options in mobile menu for consistency */}
