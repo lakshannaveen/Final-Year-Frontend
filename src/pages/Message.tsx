@@ -37,37 +37,88 @@ export default function Message({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Get userId from localStorage (set after login)
-  const [userId, setUserId] = useState<string | null>(null);
+  // Get current user info on component mount
   useEffect(() => {
-    setUserId(localStorage.getItem("userId"));
+    async function getCurrentUser() {
+      try {
+        console.log("🔍 Getting current user info...");
+        const res = await fetch(`${API_URL}/api/auth/me`, {
+          credentials: 'include',
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          console.log("👤 Current user data:", data);
+          if (data.user) {
+            setUserId(data.user.id);
+          }
+        } else {
+          console.error("❌ Failed to get current user");
+        }
+      } catch (error) {
+        console.error("❌ Error getting current user:", error);
+      }
+    }
+    
+    getCurrentUser();
   }, []);
 
-  // Initialize Socket.IO
+  // Initialize Socket.IO with JWT cookies
   useEffect(() => {
-    socket = io(SOCKET_SERVER_URL, { withCredentials: true });
-    if (userId) socket.emit("join", userId);
+    console.log("🔄 Initializing Socket.IO connection...");
+    
+    socket = io(SOCKET_SERVER_URL, { 
+      withCredentials: true,
+      transports: ['websocket', 'polling']
+    });
 
+    socket.on("connect", () => {
+      console.log("✅ Socket.IO connected successfully! Socket ID:", socket.id);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Socket.IO disconnected");
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("❌ Socket.IO connection error:", error);
+    });
+
+    // Listen for new messages
     socket.on("receiveMessage", (message: ChatMessage) => {
+      console.log("📨 Received real-time message:", message);
+      console.log("👤 Current userId:", userId, "Message senderId:", message.senderId);
+      
       // Style as "me" only if senderId matches current user
       const styledMessage = {
         ...message,
         sender: message.senderId === userId ? "me" : message.sender,
       };
+      
+      console.log("🎨 Styled message for display:", styledMessage);
+      
       setMessages((prev) => {
-        if (prev.some((m) => m._id === styledMessage._id)) return prev;
+        // Avoid duplicates by checking _id
+        if (prev.some((m) => m._id === styledMessage._id)) {
+          console.log("⚠️ Duplicate message detected, skipping...");
+          return prev;
+        }
+        console.log("✅ Adding new message to state");
         return [...prev, styledMessage];
       });
     });
 
     return () => {
+      console.log("🧹 Cleaning up Socket.IO connection...");
+      socket.off("receiveMessage");
       socket.disconnect();
     };
-  }, [userId, recipientId]);
+  }, [userId]);
 
-  // Chat header: fetch recipient profile pic (if not already passed)
+  // Chat header: fetch recipient profile pic
   const [profilePic, setProfilePic] = useState<string | undefined>(recipientProfilePic);
 
   useEffect(() => {
@@ -92,21 +143,24 @@ export default function Message({
     async function fetchMessages() {
       setLoading(true);
       try {
-        const token = localStorage.getItem("token");
         let url = `${API_URL}/api/messages/${recipientId}`;
         if (postId) url += `?postId=${postId}`;
+        
+        console.log("📡 Fetching messages from:", url);
+        
         const res = await fetch(url, {
-          headers: token
-            ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
-            : { "Content-Type": "application/json" },
           credentials: "include",
         });
+        
         if (res.status === 401) {
           alert("You are not authenticated. Please login again.");
         }
+        
         const data = await res.json();
+        console.log("📥 Fetched messages:", data.messages);
         setMessages(data.messages || []);
       } catch (e) {
+        console.error("❌ Failed to fetch messages:", e);
         setMessages([]);
       }
       setLoading(false);
@@ -119,33 +173,76 @@ export default function Message({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Send message, emit via socket and also post to API for persistence
+  // Send message
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const token = localStorage.getItem("token");
+    const messageText = newMessage.trim();
+    
+    // Create optimistic message
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage: ChatMessage = {
+      _id: tempId,
+      sender: "me",
+      senderId: userId || undefined,
+      text: messageText,
+      createdAt: new Date().toISOString(),
+      recipientId,
+      recipientUsername,
+      postId,
+    };
+
+    // Add optimistic message immediately
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setNewMessage("");
+
     try {
+      console.log("📤 Sending message to API...");
       const res = await fetch(`${API_URL}/api/messages/${recipientId}`, {
         method: "POST",
-        headers: token
-          ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
-          : { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
-        body: JSON.stringify({ text: newMessage, postId }),
+        body: JSON.stringify({ text: messageText, postId }),
       });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
       const data = await res.json();
-      if (data.message) {
-        // Emit socket event for real-time delivery
+      console.log("✅ Message sent successfully:", data.message);
+
+      // Replace optimistic message with real one
+      setMessages((prev) => 
+        prev.map(msg => 
+          msg._id === tempId ? { ...data.message, sender: "me" } : msg
+        )
+      );
+
+      // Emit socket event for real-time delivery
+      if (socket && socket.connected) {
+        console.log("🔊 Emitting socket event to recipient:", recipientId);
         socket.emit("sendMessage", {
           recipientId,
-          message: { ...data.message, senderId: userId }
+          message: { 
+            ...data.message, 
+            senderId: userId
+          }
         });
-        // Immediately show for sender
-        setMessages((prev) => [...prev, { ...data.message, sender: "me" }]);
+      } else {
+        console.log("⚠️ Socket not connected, cannot emit real-time message");
       }
-    } catch {}
-    setNewMessage("");
+
+    } catch (error) {
+      console.error("❌ Failed to send message:", error);
+      // Remove optimistic message on error
+      setMessages((prev) => prev.filter(msg => msg._id !== tempId));
+      alert("Failed to send message. Please try again.");
+      setNewMessage(messageText); // Restore the message
+    }
   };
 
   return (
@@ -172,6 +269,16 @@ export default function Message({
         </div>
       </nav>
 
+      {/* Debug Info */}
+      <div className="max-w-3xl mx-auto w-full px-4 py-2">
+        <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+          <div>User ID: {userId || "Not found"}</div>
+          <div>Recipient ID: {recipientId}</div>
+          <div>Messages: {messages.length}</div>
+          <div>Socket: {socket?.connected ? "Connected" : "Disconnected"}</div>
+        </div>
+      </div>
+
       {/* Chat messages */}
       <div
         className="flex-1 px-4 py-3 space-y-2 max-w-3xl mx-auto w-full"
@@ -192,18 +299,17 @@ export default function Message({
           className="hide-scrollbar"
         >
           {loading ? (
-            <div className="text-center text-gray-400 mt-8">Loading...</div>
+            <div className="text-center text-gray-400 mt-8">Loading messages...</div>
           ) : (
             messages.map((msg, idx) => (
               <div
-                key={msg._id + idx}
+                key={msg._id || `msg-${idx}`}
                 className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}
               >
                 <div className={`flex items-end gap-2`}>
                   {msg.sender === "me" ? (
                     <div className="order-2 flex items-center">
                       <div className="flex items-center justify-center bg-green-600 rounded-full w-7 h-7 mr-1">
-                        {/* WhatsApp-style double checkmark for sent message */}
                         <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
                           <path
                             d="M14 28L22 36L34 20"
@@ -226,7 +332,6 @@ export default function Message({
                   ) : (
                     <div className="order-1 flex items-center">
                       <div className="flex items-center justify-center bg-emerald-700 rounded-full w-7 h-7 mr-1">
-                        {/* WhatsApp-style left arrow for received message */}
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                           <path
                             d="M17 12H7M7 12l4-4M7 12l4 4"
@@ -273,7 +378,7 @@ export default function Message({
         onSubmit={handleSend}
       >
         <input
-          className="flex-1 rounded-2xl border px-4 py-2 text-gray-800 focus:outline-none"
+          className="flex-1 rounded-2xl border px-4 py-2 text-gray-800 focus:outline-none focus:border-green-500"
           type="text"
           placeholder="Type a message..."
           value={newMessage}
@@ -281,7 +386,8 @@ export default function Message({
         />
         <button
           type="submit"
-          className="bg-green-600 text-white px-4 py-2 rounded-2xl font-semibold hover:bg-green-700 transition"
+          disabled={!newMessage.trim()}
+          className="bg-green-600 text-white px-4 py-2 rounded-2xl font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           Send
         </button>
