@@ -51,6 +51,24 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
   const [aiOpen, setAiOpen] = useState(false);
   const [usage, setUsage] = useState({ uses: 0, max: 10 });
 
+  // Fetch unread message count
+  const fetchUnreadCount = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/api/messages/unread-count`, {
+        credentials: "include",
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error("Failed to fetch unread count:", error);
+    }
+  }, [user, API_URL]);
+
   // Always fetch initial usage on mount
   const fetchAIUsage = useCallback(async () => {
     try {
@@ -61,24 +79,6 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
       }
     } catch { }
   }, [API_URL]);
-
-  // Fetch unread message count
-  const fetchUnreadCount = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      const res = await fetch(`${API_URL}/api/messages/inbox`, {
-        credentials: "include",
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        // For now, we'll show the total number of chats as unread indicator
-        // You can enhance this to track actual unread messages if needed
-        setUnreadCount(data.chats?.length || 0);
-      }
-    } catch { }
-  }, [user, API_URL]);
 
   useEffect(() => {
     fetchAIUsage();
@@ -101,16 +101,24 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
     });
 
     // Listen for new messages to update unread count
-    socket.on("receiveMessage", () => {
-      // Refresh unread count when new message arrives
-      fetchUnreadCount();
+    socket.on("receiveMessage", (message) => {
+      // If the message is for current user and not from themselves, increment count
+      if (message.recipientId === user.id && message.sender !== "me") {
+        setUnreadCount(prev => prev + 1);
+      }
+    });
+
+    // Listen for unread count updates from server
+    socket.on("unreadCountUpdate", (data) => {
+      setUnreadCount(data.unreadCount || 0);
     });
 
     return () => {
       socket.off("receiveMessage");
+      socket.off("unreadCountUpdate");
       socket.disconnect();
     };
-  }, [user, fetchUnreadCount]);
+  }, [user]);
 
   const handleNavClick = (view: string) => {
     setCurrentView(view);
@@ -119,6 +127,13 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
     // Reset unread count when opening inbox
     if (view === "inbox") {
       setUnreadCount(0);
+      // Mark all as read when opening inbox
+      fetch(`${API_URL}/api/messages/mark-all-inbox-read`, {
+        method: "PUT",
+        credentials: "include",
+      }).then(() => {
+        fetchUnreadCount(); // Refresh count after marking all as read
+      }).catch(console.error);
     }
   };
 
@@ -215,7 +230,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 <span className="hidden sm:inline">Inbox</span>
                 {unreadCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                    {unreadCount}
+                    {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </button>
@@ -414,7 +429,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                   <Mail size={20} /> Inbox
                   {unreadCount > 0 && (
                     <span className="absolute right-4 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                      {unreadCount}
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </button>

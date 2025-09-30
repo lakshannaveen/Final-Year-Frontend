@@ -15,6 +15,7 @@ interface ChatSummary {
   recipientProfilePic?: string;
   lastMessage: string;
   lastMessageTime: string;
+  unreadCount: number;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -86,6 +87,27 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
     setLoading(false);
   };
 
+  // Mark all messages from a user as read when opening chat
+  const handleOpenChat = async (recipientId: string, recipientUsername: string, recipientProfilePic?: string) => {
+    try {
+      // Mark all messages from this user as read
+      await fetch(`${API_URL}/api/messages/${recipientId}/mark-all-read`, {
+        method: "PUT",
+        credentials: "include",
+      });
+      
+      // Refresh inbox to update unread counts
+      fetchInbox();
+      
+      // Open the chat
+      onOpenChat(recipientId, recipientUsername, recipientProfilePic);
+    } catch (error) {
+      console.error("Failed to mark messages as read:", error);
+      // Still open the chat even if marking as read fails
+      onOpenChat(recipientId, recipientUsername, recipientProfilePic);
+    }
+  };
+
   // Initial fetch
   useEffect(() => {
     fetchInbox();
@@ -121,9 +143,9 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
             {chats.map(chat => (
               <button
                 key={chat.recipientId}
-                className="flex w-full items-center gap-3 py-4 px-2 bg-white border border-green-200 rounded-xl shadow-sm hover:bg-green-50 transition duration-200"
+                className="flex w-full items-center gap-3 py-4 px-2 bg-white border border-green-200 rounded-xl shadow-sm hover:bg-green-50 transition duration-200 relative"
                 onClick={() => {
-                  onOpenChat(chat.recipientId, chat.recipientUsername, chat.recipientProfilePic);
+                  handleOpenChat(chat.recipientId, chat.recipientUsername, chat.recipientProfilePic);
                 }}
               >
                 {chat.recipientProfilePic ? (
@@ -144,20 +166,27 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
                   <div className="font-semibold text-lg text-green-900 truncate">
                     {chat.recipientUsername}
                   </div>
-                  <div className="text-gray-600 text-sm truncate">
+                  <div className={`text-sm truncate ${chat.unreadCount > 0 ? 'text-green-700 font-medium' : 'text-gray-600'}`}>
                     {chat.lastMessage}
                   </div>
                 </div>
-                <div className="text-xs text-gray-400 whitespace-nowrap">
-                  {new Date(chat.lastMessageTime).toLocaleDateString([], { 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}
-                  <br />
-                  {new Date(chat.lastMessageTime).toLocaleTimeString([], { 
-                    hour: "2-digit", 
-                    minute: "2-digit" 
-                  })}
+                <div className="flex flex-col items-end gap-1">
+                  <div className="text-xs text-gray-400 whitespace-nowrap">
+                    {new Date(chat.lastMessageTime).toLocaleDateString([], { 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                    <br />
+                    {new Date(chat.lastMessageTime).toLocaleTimeString([], { 
+                      hour: "2-digit", 
+                      minute: "2-digit" 
+                    })}
+                  </div>
+                  {chat.unreadCount > 0 && (
+                    <div className="bg-green-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {chat.unreadCount > 9 ? '9+' : chat.unreadCount}
+                    </div>
+                  )}
                 </div>
               </button>
             ))}

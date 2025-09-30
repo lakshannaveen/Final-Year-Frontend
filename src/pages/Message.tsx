@@ -19,6 +19,7 @@ interface ChatMessage {
   recipientUsername?: string;
   postId?: string;
   text: string;
+  read: boolean;
   createdAt: string;
 }
 
@@ -94,6 +95,18 @@ export default function Message({
           }
         }
         
+        // If it's a new message from someone else, mark it as read
+        if (!isFromCurrentUser && !styledMessage.read) {
+          // Mark as read on the server
+          fetch(`${API_URL}/api/messages/${styledMessage._id}/read`, {
+            method: "PUT",
+            credentials: "include",
+          }).catch(console.error);
+          
+          // Update local state to show as read
+          styledMessage.read = true;
+        }
+        
         return [...prev, styledMessage];
       });
     });
@@ -141,6 +154,28 @@ export default function Message({
         }
         
         const data = await res.json();
+        
+        // Mark all messages as read when opening the chat
+        if (data.messages && data.messages.length > 0) {
+          const unreadMessages = data.messages.filter((msg: ChatMessage) => 
+            msg.sender !== "me" && !msg.read
+          );
+          
+          if (unreadMessages.length > 0) {
+            // Mark all as read on the server
+            fetch(`${API_URL}/api/messages/${recipientId}/mark-all-read`, {
+              method: "PUT",
+              credentials: "include",
+            }).catch(console.error);
+            
+            // Update local state to show all as read
+            data.messages = data.messages.map((msg: ChatMessage) => ({
+              ...msg,
+              read: msg.sender === "me" ? msg.read : true
+            }));
+          }
+        }
+        
         setMessages(data.messages || []);
       } catch (e) {
         console.error("Failed to fetch messages:", e);
@@ -170,6 +205,7 @@ export default function Message({
       sender: "me",
       senderId: userId || undefined,
       text: messageText,
+      read: true, // Messages sent by user are automatically read
       createdAt: new Date().toISOString(),
       recipientId,
       recipientUsername,
@@ -274,23 +310,35 @@ export default function Message({
                   {msg.sender === "me" ? (
                     <div className="order-2 flex items-center">
                       <div className="flex items-center justify-center bg-green-600 rounded-full w-7 h-7 mr-1">
-                        <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
-                          <path
-                            d="M14 28L22 36L34 20"
-                            stroke="#fff"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M24 28L32 36L44 20"
-                            stroke="#fff"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            opacity="0.8"
-                          />
-                        </svg>
+                        {msg.read ? (
+                          <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+                            <path
+                              d="M14 28L22 36L34 20"
+                              stroke="#fff"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M24 28L32 36L44 20"
+                              stroke="#fff"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              opacity="0.8"
+                            />
+                          </svg>
+                        ) : (
+                          <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+                            <path
+                              d="M14 28L22 36L34 20"
+                              stroke="#fff"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -332,6 +380,7 @@ export default function Message({
                     {!msg._id.startsWith('temp-') && (
                       <div className="text-xs mt-1 text-right" style={{ color: msg.sender === "me" ? "#bbf7d0" : "#059669" }}>
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {/* REMOVED DUPLICATE CHECKMARKS HERE */}
                       </div>
                     )}
                   </div>
