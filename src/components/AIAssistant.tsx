@@ -29,7 +29,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
 
   const fetchAIUsage = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/huggingface/usage`);
+      const res = await fetch(`${API_URL}/api/ai/usage`);
       if (res.ok) {
         const data = await res.json();
         setUsage({ uses: data.uses, max: data.max });
@@ -83,7 +83,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
         content: msg.content
       }));
 
-      const res = await fetch(`${API_URL}/api/huggingface/chat`, {
+      const res = await fetch(`${API_URL}/api/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -142,7 +142,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
       [messageId]: isHelpful ? 'helpful' : 'not-helpful'
     }));
     
-    // In a real app, you'd send this feedback to your backend
+    // In a real app, you&apos;d send this feedback to your backend
     console.log(`Feedback for message ${messageId}: ${isHelpful ? 'helpful' : 'not-helpful'}`);
   };
 
@@ -154,12 +154,12 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     });
   };
 
-  // Enhanced quick question suggestions
+  // Doop-specific quick questions
   const quickQuestions = [
     {
       question: "What is Doop and how does it work?",
       icon: "🤔",
-      category: "Platform"
+      category: "Platform Basics"
     },
     {
       question: "How do I book a cleaning service?",
@@ -179,7 +179,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     {
       question: "Tell me about your pricing structure",
       icon: "💰",
-      category: "Platform"
+      category: "Pricing"
     },
     {
       question: "How to contact customer support?",
@@ -189,12 +189,22 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     {
       question: "What makes Doop different from others?",
       icon: "⭐",
-      category: "Platform"
+      category: "Platform Basics"
     },
     {
       question: "How are service providers verified?",
       icon: "✅",
-      category: "Providers"
+      category: "Safety"
+    },
+    {
+      question: "What is your cancellation policy?",
+      icon: "📝",
+      category: "Policies"
+    },
+    {
+      question: "Do you offer emergency services?",
+      icon: "🚨",
+      category: "Services"
     }
   ];
 
@@ -222,7 +232,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
         ref={modalRef}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col overflow-hidden border-2 border-emerald-200/50"
       >
-        {/* Enhanced Header */}
+        {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700 text-white p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -239,7 +249,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Enhanced Usage indicator */}
+              {/* Usage indicator */}
               <div className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium backdrop-blur-sm">
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Zap size={12} className="text-yellow-300" />
@@ -259,7 +269,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
           </div>
         </div>
 
-        {/* Enhanced Chat Messages Area */}
+        {/* Chat Messages Area */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-gradient-to-b from-gray-50 to-emerald-50">
           {chatHistory.length === 0 && !aiLoading && (
             <div className="text-center py-8 sm:py-12">
@@ -269,10 +279,10 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3">Welcome to Doop AI Assistant! 👋</h3>
                 <p className="text-gray-600 text-sm sm:text-base mb-6 leading-relaxed">
-                  I'm your intelligent assistant here to help with anything about the Doop platform, services, bookings, or general questions. I provide conversational, helpful responses similar to ChatGPT!
+                  I&apos;m your intelligent assistant here to help with anything about the Doop platform. I can answer questions about services, bookings, becoming a provider, pricing, and more!
                 </p>
                 
-                {/* Enhanced Quick Questions with Categories */}
+                {/* Quick Questions with Categories */}
                 <div className="space-y-4">
                   <p className="text-sm text-gray-500 font-medium">Quick questions to get started:</p>
                   
@@ -295,21 +305,25 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                   ))}
                 </div>
 
-                {/* Tips Section */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-800 font-medium mb-2">💡 Pro Tips:</p>
-                  <ul className="text-xs text-blue-700 space-y-1">
-                    <li>• Ask follow-up questions for more details</li>
-                    <li>• Be specific about your location or needs</li>
-                    <li>• I can help with both Doop and general topics</li>
-                    <li>• Use the feedback buttons to improve responses</li>
-                  </ul>
+                {/* Usage Info */}
+                <div className="mt-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <p className="text-sm text-emerald-800 font-medium mb-2">📊 Daily Usage:</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-emerald-700">Questions used today:</span>
+                    <span className="text-sm font-bold text-emerald-800">{usage.uses}/{usage.max}</span>
+                  </div>
+                  <div className="w-full bg-emerald-200 rounded-full h-2 mt-2">
+                    <div 
+                      className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${(usage.uses / usage.max) * 100}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Enhanced Chat Messages */}
+          {/* Chat Messages */}
           <div className="space-y-3 sm:space-y-4">
             {chatHistory.map((message) => (
               <div
@@ -388,7 +402,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
               </div>
             ))}
 
-            {/* Enhanced Loading Indicator */}
+            {/* Loading Indicator */}
             {aiLoading && (
               <div className="flex justify-start">
                 <div className="bg-white border border-emerald-100 rounded-2xl rounded-bl-none p-3 sm:p-4 max-w-[80%] shadow-md">
@@ -412,7 +426,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
               </div>
             )}
 
-            {/* Enhanced Error Message */}
+            {/* Error Message */}
             {aiError && (
               <div className="flex justify-start">
                 <div className="bg-red-50 border border-red-200 rounded-2xl rounded-bl-none p-3 sm:p-4 max-w-[80%] shadow-md">
@@ -433,7 +447,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
           </div>
         </div>
 
-        {/* Enhanced Input Area */}
+        {/* Input Area */}
         <div className="border-t border-emerald-100 bg-white p-3 sm:p-6 shadow-lg">
           <div className="flex gap-2 sm:gap-3">
             <input
@@ -443,7 +457,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
               placeholder={
                 usage.uses >= usage.max 
                   ? "🚫 Daily limit reached - try again tomorrow" 
-                  : "💭 Ask me anything about Doop, services, or general topics..."
+                  : "💭 Ask me anything about Doop services, bookings, or providers..."
               }
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
@@ -464,7 +478,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
             </button>
           </div>
           
-          {/* Enhanced Footer Info */}
+          {/* Footer Info */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-3">
             <button
               onClick={clearChat}
