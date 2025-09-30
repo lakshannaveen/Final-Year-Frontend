@@ -40,66 +40,21 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
-
-  // Get current user info on component mount
-  useEffect(() => {
-    async function getCurrentUser() {
-      try {
-        console.log("🔍 Inbox - Getting current user info...");
-        const res = await fetch(`${API_URL}/api/auth/me`, {
-          credentials: 'include',
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          console.log("👤 Inbox - Current user data:", data);
-          if (data.user) {
-            setUserId(data.user.id);
-          }
-        } else {
-          console.error("❌ Inbox - Failed to get current user");
-        }
-      } catch (error) {
-        console.error("❌ Inbox - Error getting current user:", error);
-      }
-    }
-    
-    getCurrentUser();
-  }, []);
 
   // Initialize Socket.IO with JWT cookies
   useEffect(() => {
-    console.log("🔄 Inbox - Initializing Socket.IO connection...");
-    
     socket = io(SOCKET_SERVER_URL, { 
       withCredentials: true,
       transports: ['websocket', 'polling']
     });
 
-    socket.on("connect", () => {
-      console.log("✅ Inbox - Socket.IO connected! Socket ID:", socket.id);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("❌ Inbox - Socket.IO disconnected");
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("❌ Inbox - Socket.IO connection error:", error);
-    });
-
     // Listen for new messages to refresh inbox
-    socket.on("receiveMessage", (message: any) => {
-      console.log("📨 Inbox - New message received:", message);
-      console.log("🔄 Inbox - Refreshing inbox due to new message...");
-      
+    socket.on("receiveMessage", () => {
       // Refresh the inbox to show updated last message and time
       fetchInbox();
     });
 
     return () => {
-      console.log("🧹 Inbox - Cleaning up Socket.IO connection...");
       socket.off("receiveMessage");
       socket.disconnect();
     };
@@ -110,15 +65,12 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
     setLoading(true);
     setError("");
     try {
-      console.log("📡 Inbox - Fetching inbox data...");
-      
       const res = await fetch(`${API_URL}/api/messages/inbox`, {
         credentials: "include",
       });
       
       if (!res.ok) {
         const errText = await res.text();
-        console.error("❌ Inbox - Failed to load inbox:", res.status, errText);
         setError(`Failed to load inbox (${res.status}): ${errText}`);
         setChats([]);
         setLoading(false);
@@ -126,10 +78,8 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
       }
       
       const data = await res.json();
-      console.log("📥 Inbox - Loaded chats:", data.chats);
       setChats(data.chats || []);
     } catch (e) {
-      console.error("❌ Inbox - Unexpected error:", e);
       setError("Unexpected error: " + (e as Error).message);
       setChats([]);
     }
@@ -150,15 +100,6 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
       <div className="max-w-2xl mx-auto px-4 py-4">
         <h1 className="text-2xl font-bold text-green-900">Messages</h1>
         <p className="text-gray-600 mt-1">Your conversations</p>
-      </div>
-
-      {/* Debug Info */}
-      <div className="max-w-2xl mx-auto px-4 py-2">
-        <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
-          <div>User ID: {userId || "Not found"}</div>
-          <div>Chats loaded: {chats.length}</div>
-          <div>Socket: {socket?.connected ? "Connected" : "Disconnected"}</div>
-        </div>
       </div>
 
       {/* Chats */}
@@ -182,7 +123,6 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
                 key={chat.recipientId}
                 className="flex w-full items-center gap-3 py-4 px-2 bg-white border border-green-200 rounded-xl shadow-sm hover:bg-green-50 transition duration-200"
                 onClick={() => {
-                  console.log("💬 Opening chat with:", chat.recipientUsername, chat.recipientId);
                   onOpenChat(chat.recipientId, chat.recipientUsername, chat.recipientProfilePic);
                 }}
               >

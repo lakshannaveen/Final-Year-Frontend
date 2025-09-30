@@ -4,6 +4,7 @@ import { useAuth } from "./AuthContext";
 import { Menu, X, User, Mail, Bot } from "lucide-react";
 import Image from "next/image";
 import AIAssistant from "./AIAssistant";
+import io, { Socket } from "socket.io-client";
 
 interface NavbarProps {
   currentView: string;
@@ -17,6 +18,11 @@ interface AppUser {
   serviceType?: string;
   [key: string]: string | undefined;
 }
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+let socket: Socket;
 
 function getProfilePicFromUser(u: unknown): string {
   if (typeof u === "object" && u !== null) {
@@ -36,6 +42,7 @@ const inactiveLink =
 export default function Navbar({ currentView, setCurrentView, onShowPublicProfile }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, loading } = useAuth() as { user: AppUser | null; loading: boolean };
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const avatarLetter = user?.username ? user.username.charAt(0).toUpperCase() : null;
@@ -43,8 +50,6 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
   // AI Chatbox state
   const [aiOpen, setAiOpen] = useState(false);
   const [usage, setUsage] = useState({ uses: 0, max: 10 });
-
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   // Always fetch initial usage on mount
   const fetchAIUsage = useCallback(async () => {
@@ -57,9 +62,28 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
     } catch { }
   }, [API_URL]);
 
+  // Fetch unread message count
+  const fetchUnreadCount = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/api/messages/inbox`, {
+        credentials: "include",
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        // For now, we'll show the total number of chats as unread indicator
+        // You can enhance this to track actual unread messages if needed
+        setUnreadCount(data.chats?.length || 0);
+      }
+    } catch { }
+  }, [user, API_URL]);
+
   useEffect(() => {
     fetchAIUsage();
-  }, [fetchAIUsage]);
+    fetchUnreadCount();
+  }, [fetchAIUsage, fetchUnreadCount]);
 
   useEffect(() => {
     if (aiOpen) {
@@ -67,9 +91,35 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
     }
   }, [aiOpen, fetchAIUsage]);
 
+  // Initialize Socket.IO for real-time unread count updates
+  useEffect(() => {
+    if (!user) return;
+
+    socket = io(SOCKET_SERVER_URL, { 
+      withCredentials: true,
+      transports: ['websocket', 'polling']
+    });
+
+    // Listen for new messages to update unread count
+    socket.on("receiveMessage", () => {
+      // Refresh unread count when new message arrives
+      fetchUnreadCount();
+    });
+
+    return () => {
+      socket.off("receiveMessage");
+      socket.disconnect();
+    };
+  }, [user, fetchUnreadCount]);
+
   const handleNavClick = (view: string) => {
     setCurrentView(view);
     setMenuOpen(false);
+    
+    // Reset unread count when opening inbox
+    if (view === "inbox") {
+      setUnreadCount(0);
+    }
   };
 
   useEffect(() => {
@@ -157,12 +207,17 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
               )}
               <button
                 onClick={() => handleNavClick("inbox")}
-                className={`flex items-center gap-2 ${currentView === "inbox" ? activeLink : inactiveLink}`}
+                className={`flex items-center gap-2 relative ${currentView === "inbox" ? activeLink : inactiveLink}`}
                 aria-label="Inbox"
                 style={{ justifyContent: "center" }}
               >
                 <Mail size={20} />
                 <span className="hidden sm:inline">Inbox</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
             </div>
 
@@ -179,7 +234,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                   <span className="text-white font-medium text-sm">AI Assistant</span>
                 </div>
 
-                {/* Pulse animation when available - MOVED BEFORE BADGE */}
+                {/* Pulse animation when available */}
                 {usage.uses < usage.max && (
                   <div className="absolute -top-1 -right-1 pointer-events-none">
                     <div className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-green-400 opacity-75"></div>
@@ -187,7 +242,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                   </div>
                 )}
 
-                {/* Usage badge - MOVED AFTER PULSE so it appears on top */}
+                {/* Usage badge */}
                 <div className="absolute -top-2 -right-2 bg-white text-green-700 text-xs font-bold px-2 py-1 rounded-full border-2 border-green-600 shadow-sm z-10">
                   {usage.max - usage.uses}
                 </div>
@@ -351,12 +406,17 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                     handleNavClick("inbox");
                     setMenuOpen(false);
                   }}
-                  className={`w-full text-center flex items-center justify-center gap-2 py-3 rounded-lg ${
+                  className={`w-full text-center flex items-center justify-center gap-2 py-3 rounded-lg relative ${
                     currentView === "inbox" ? activeLink : inactiveLink
                   }`}
                   aria-label="Inbox"
                 >
                   <Mail size={20} /> Inbox
+                  {unreadCount > 0 && (
+                    <span className="absolute right-4 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
                 </button>
 
                 {/* Additional AI Chat option in mobile menu */}

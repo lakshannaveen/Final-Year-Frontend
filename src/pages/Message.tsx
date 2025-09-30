@@ -44,22 +44,18 @@ export default function Message({
   useEffect(() => {
     async function getCurrentUser() {
       try {
-        console.log("🔍 Getting current user info...");
         const res = await fetch(`${API_URL}/api/auth/me`, {
           credentials: 'include',
         });
         
         if (res.ok) {
           const data = await res.json();
-          console.log("👤 Current user data:", data);
           if (data.user) {
             setUserId(data.user.id);
           }
-        } else {
-          console.error("❌ Failed to get current user");
         }
       } catch (error) {
-        console.error("❌ Error getting current user:", error);
+        console.error("Error getting current user:", error);
       }
     }
     
@@ -68,37 +64,18 @@ export default function Message({
 
   // Initialize Socket.IO with JWT cookies
   useEffect(() => {
-    console.log("🔄 Initializing Socket.IO connection...");
-    
     socket = io(SOCKET_SERVER_URL, { 
       withCredentials: true,
       transports: ['websocket', 'polling']
     });
 
-    socket.on("connect", () => {
-      console.log("✅ Socket.IO connected successfully! Socket ID:", socket.id);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("❌ Socket.IO disconnected");
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("❌ Socket.IO connection error:", error);
-    });
-
     // Listen for new messages
     socket.on("receiveMessage", (message: ChatMessage) => {
-      console.log("📨 Received real-time message:", message);
-      console.log("👤 Current userId:", userId, "Message senderId:", message.senderId);
-      
       // Style as "me" only if senderId matches current user
       const styledMessage = {
         ...message,
         sender: message.senderId === userId ? "me" : message.sender,
       };
-      
-      console.log("🎨 Styled message for display:", styledMessage);
       
       setMessages((prev) => {
         // Avoid duplicates by checking _id and also check if it's from current user
@@ -106,7 +83,6 @@ export default function Message({
         const isFromCurrentUser = styledMessage.senderId === userId;
         
         if (isDuplicate) {
-          console.log("⚠️ Duplicate message detected, skipping...");
           return prev;
         }
         
@@ -114,18 +90,15 @@ export default function Message({
         if (isFromCurrentUser) {
           const hasOptimisticMessage = prev.some(m => m._id && m._id.startsWith('temp-'));
           if (hasOptimisticMessage) {
-            console.log("🔄 Replacing optimistic message with real message");
             return prev.filter(m => !m._id.startsWith('temp-')).concat(styledMessage);
           }
         }
         
-        console.log("✅ Adding new message to state");
         return [...prev, styledMessage];
       });
     });
 
     return () => {
-      console.log("🧹 Cleaning up Socket.IO connection...");
       socket.off("receiveMessage");
       socket.disconnect();
     };
@@ -159,8 +132,6 @@ export default function Message({
         let url = `${API_URL}/api/messages/${recipientId}`;
         if (postId) url += `?postId=${postId}`;
         
-        console.log("📡 Fetching messages from:", url);
-        
         const res = await fetch(url, {
           credentials: "include",
         });
@@ -170,10 +141,9 @@ export default function Message({
         }
         
         const data = await res.json();
-        console.log("📥 Fetched messages:", data.messages);
         setMessages(data.messages || []);
       } catch (e) {
-        console.error("❌ Failed to fetch messages:", e);
+        console.error("Failed to fetch messages:", e);
         setMessages([]);
       }
       setLoading(false);
@@ -211,7 +181,6 @@ export default function Message({
     setNewMessage("");
 
     try {
-      console.log("📤 Sending message to API...");
       const res = await fetch(`${API_URL}/api/messages/${recipientId}`, {
         method: "POST",
         headers: {
@@ -225,17 +194,11 @@ export default function Message({
         throw new Error(`HTTP ${res.status}`);
       }
       
-      const data = await res.json();
-      console.log("✅ Message sent successfully:", data.message);
-
       // Remove the optimistic message - the real one will come via socket
       setMessages((prev) => prev.filter(msg => msg._id !== tempId));
 
-      // Don't emit socket event here - the server will handle real-time delivery
-      console.log("✅ Message sent via API, real-time delivery handled by server");
-
     } catch (error) {
-      console.error("❌ Failed to send message:", error);
+      console.error("Failed to send message:", error);
       // Remove optimistic message on error
       setMessages((prev) => prev.filter(msg => msg._id !== tempId));
       alert("Failed to send message. Please try again.");
@@ -279,16 +242,6 @@ export default function Message({
           )}
         </div>
       </nav>
-
-      {/* Debug Info */}
-      <div className="max-w-3xl mx-auto w-full px-4 py-2">
-        <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
-          <div>User ID: {userId || "Not found"}</div>
-          <div>Recipient ID: {recipientId}</div>
-          <div>Messages: {messages.length}</div>
-          <div>Socket: {socket?.connected ? "Connected" : "Disconnected"}</div>
-        </div>
-      </div>
 
       {/* Chat messages */}
       <div
