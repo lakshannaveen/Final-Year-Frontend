@@ -54,126 +54,6 @@ interface AIAssistantProps {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-/**
- * List of service-related keywords we try to detect to trigger a provider search
- */
-const SERVICE_KEYWORDS = [
-  "plumber",
-  "plumbing",
-  "electrician",
-  "electrical",
-  "carpenter",
-  "woodwork",
-  "cleaner",
-  "cleaning",
-  "tutor",
-  "teacher",
-  "teaching",
-  "driver",
-  "chauffeur",
-  "chef",
-  "cook",
-  "babysitter",
-  "nanny",
-  "gardener",
-  "garden",
-  "mechanic",
-  "repair",
-  "painting",
-  "painter",
-  "ac repair",
-  "appliance",
-  "mason",
-  "welding",
-  "decorator",
-  "photographer",
-  "photo",
-  "makeup",
-  "beauty",
-  "salon",
-  "hair",
-  "barber",
-  "pet",
-  "vet",
-  "laundry",
-  "moving",
-  "mover",
-  "security",
-  "guard",
-  "coach",
-  "fitness",
-  "yoga",
-  "trainer"
-];
-
-/**
- * Extract meaningful search terms from a user prompt.
- * Returns distinct lowercased terms that match known service keywords
- */
-const extractServiceTerms = (prompt: string): string[] => {
-  const words = prompt
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-  const matches = new Set<string>();
-  for (const w of words) {
-    for (const kw of SERVICE_KEYWORDS) {
-      if (kw.includes(w) || w.includes(kw)) {
-        matches.add(kw);
-      }
-    }
-  }
-  // Fallback: if user typed something like "find plumber near me"
-  if (matches.size === 0) {
-    // Heuristic: include nouns after verbs like find / need / want
-    const idx = words.findIndex((w) => ["find", "need", "want", "search", "looking"].includes(w));
-    if (idx !== -1 && words[idx + 1]) {
-      matches.add(words[idx + 1]);
-    }
-  }
-  return Array.from(matches).slice(0, 4);
-};
-
-/**
- * Decide if a prompt is a service search intent
- */
-const isServiceIntent = (prompt: string): boolean => {
-  const lower = prompt.toLowerCase();
-  if (/(find|search|looking for|need|want|near|in)\b/.test(lower)) return true;
-  return SERVICE_KEYWORDS.some((kw) => lower.includes(kw));
-};
-
-/**
- * Rank service suggestions by how well they match the prompt.
- * Simple scoring based on keyword hits in title, location, serviceType and username.
- */
-const rankSuggestions = (prompt: string, suggestions: ServiceSuggestion[]): ServiceSuggestion[] => {
-  if (!suggestions.length) return suggestions;
-  const terms = extractServiceTerms(prompt);
-  if (!terms.length) return suggestions;
-
-  return [...suggestions]
-    .map((s) => {
-      const haystack =
-        `${s.title} ${s.location} ${s.user?.serviceType || ""} ${s.user?.username || ""}`.toLowerCase();
-      let score = 0;
-      for (const t of terms) {
-        if (haystack.includes(t)) score += 5;
-        // partial overlaps
-        const parts = t.split(/\s+/);
-        for (const p of parts) {
-          if (p.length > 3 && haystack.includes(p)) score += 2;
-        }
-      }
-      // Prefer those with a price (if some are missing)
-      if (typeof s.price === "number" && s.price >= 0) score += 1;
-      return { suggestion: s, score };
-    })
-    .sort((a, b) => b.score - a.score)
-    .map((x) => x.suggestion);
-};
-
 export default function AIAssistant({
   isOpen,
   onClose,
@@ -189,14 +69,13 @@ export default function AIAssistant({
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch usage when opened
   useEffect(() => {
     const fetchAIUsage = async () => {
       try {
         const res = await fetch(`${API_URL}/api/ai/usage`);
         if (res.ok) {
           const data = await res.json();
-            onUsageChange({ uses: data.uses, max: data.max });
+          onUsageChange({ uses: data.uses, max: data.max });
         }
       } catch {
         // silent
@@ -235,34 +114,6 @@ export default function AIAssistant({
         content: msg.content
       }));
 
-      const serviceIntent = isServiceIntent(cleanPrompt);
-      let serviceSuggestions: ServiceSuggestion[] = [];
-      let serviceAttempted = false;
-
-      if (serviceIntent) {
-        serviceAttempted = true;
-        try {
-          // Compose a refined search query
-            const terms = extractServiceTerms(cleanPrompt);
-          // If we have extracted terms, join them; else fallback to entire prompt
-          const effectiveQuery = terms.length ? terms.join(" ") : cleanPrompt;
-          const searchRes = await fetch(
-            `${API_URL}/api/feeds/search?query=${encodeURIComponent(effectiveQuery)}`,
-            { method: "GET", headers: { "Content-Type": "application/json" } }
-          );
-
-          if (searchRes.ok) {
-            const searchData = await searchRes.json();
-            const raw = (searchData.feeds || []) as ServiceSuggestion[];
-
-            // Rank & take top 5
-            serviceSuggestions = rankSuggestions(cleanPrompt, raw).slice(0, 5);
-          }
-        } catch (err) {
-          console.error("Service search failed:", err);
-        }
-      }
-
       const res = await fetch(`${API_URL}/api/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -290,11 +141,10 @@ export default function AIAssistant({
       } else if (data.answer) {
         let enhancedAnswer = data.answer;
 
-        if (serviceIntent) {
-          if (serviceSuggestions.length > 0) {
-            enhancedAnswer += `\n\n✨ I found ${serviceSuggestions.length} service provider${
-              serviceSuggestions.length > 1 ? "s" : ""
-            } that match your request. Check them below.`;
+        // Show provider suggestions if present
+        if (data.serviceSearchMeta?.attempted) {
+          if (data.suggestions && data.suggestions.length > 0) {
+            enhancedAnswer += `\n\n✨ I found ${data.suggestions.length} service provider${data.suggestions.length > 1 ? "s" : ""} that match your request. Check them below.`;
           } else {
             enhancedAnswer += `\n\n⚠️ No match service provider. Try refining your search (e.g. add location or a more specific service).`;
           }
@@ -305,14 +155,8 @@ export default function AIAssistant({
           type: "ai",
           content: enhancedAnswer,
           timestamp: new Date(),
-          suggestions: serviceSuggestions,
-          serviceSearchMeta: serviceIntent
-            ? {
-                attempted: true,
-                query: cleanPrompt,
-                found: serviceSuggestions.length
-              }
-            : undefined
+          suggestions: data.suggestions || [],
+          serviceSearchMeta: data.serviceSearchMeta
         };
         setChatHistory((prev) => [...prev, aiMessage]);
       } else {
@@ -346,7 +190,7 @@ export default function AIAssistant({
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("en-US", {
+    return new Date(date).toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true
@@ -360,6 +204,7 @@ export default function AIAssistant({
     }
   };
 
+  // Quick questions for starter UI
   const quickQuestions = [
     {
       question: "What is Doop and how does it work?",
@@ -465,9 +310,6 @@ export default function AIAssistant({
               <span className="xs:hidden">{usage.max - usage.uses} left</span>
             </div>
           </div>
-          
-            
-
         </div>
       </div>
 
@@ -489,12 +331,10 @@ export default function AIAssistant({
                   the Doop platform. I can answer questions about services, bookings,
                   becoming a provider, pricing, and more!
                 </p>
-
                 <div className="space-y-4">
                   <p className="text-sm text-gray-500 font-medium">
                     Quick questions to get started:
                   </p>
-
                   {Object.entries(groupedQuestions).map(([category, questions]) => (
                     <div key={category} className="space-y-2">
                       <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
@@ -517,7 +357,6 @@ export default function AIAssistant({
                     </div>
                   ))}
                 </div>
-
                 <div className="mt-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
                   <p className="text-sm text-emerald-800 font-medium mb-2">
                     📊 Daily Usage:
@@ -574,7 +413,6 @@ export default function AIAssistant({
                               <Clock size={10} />
                               <span>{formatTime(message.timestamp)}</span>
                             </div>
-
                             <div className="flex items-center gap-1">
                               <span className="text-xs text-gray-500 mr-2">
                                 Was this helpful?
@@ -618,7 +456,6 @@ export default function AIAssistant({
                     </div>
                   </div>
                 </div>
-
                 {/* Service Suggestions or No Match Info */}
                 {message.serviceSearchMeta?.attempted && (
                   <div className="mt-3 ml-0 sm:ml-10 space-y-2">
@@ -668,7 +505,6 @@ export default function AIAssistant({
                 )}
               </div>
             ))}
-
             {/* Loading Indicator */}
             {aiLoading && (
               <div className="flex justify-start">
@@ -698,7 +534,6 @@ export default function AIAssistant({
                 </div>
               </div>
             )}
-
             {/* Error Message */}
             {aiError && (
               <div className="flex justify-start">
@@ -717,12 +552,10 @@ export default function AIAssistant({
                 </div>
               </div>
             )}
-
             <div ref={chatEndRef} />
           </div>
         </div>
       </div>
-
       {/* Input Area */}
       <div className="border-t border-emerald-100 bg-white p-3 sm:p-6 shadow-lg">
         <div className="flex gap-2 sm:gap-3">
@@ -753,7 +586,6 @@ export default function AIAssistant({
             )}
           </button>
         </div>
-
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-3">
           <button
             onClick={clearChat}
