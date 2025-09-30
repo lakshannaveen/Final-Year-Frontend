@@ -101,11 +101,24 @@ export default function Message({
       console.log("🎨 Styled message for display:", styledMessage);
       
       setMessages((prev) => {
-        // Avoid duplicates by checking _id
-        if (prev.some((m) => m._id === styledMessage._id)) {
+        // Avoid duplicates by checking _id and also check if it's from current user
+        const isDuplicate = prev.some((m) => m._id === styledMessage._id);
+        const isFromCurrentUser = styledMessage.senderId === userId;
+        
+        if (isDuplicate) {
           console.log("⚠️ Duplicate message detected, skipping...");
           return prev;
         }
+        
+        // If it's from current user and we have an optimistic message, replace it
+        if (isFromCurrentUser) {
+          const hasOptimisticMessage = prev.some(m => m._id && m._id.startsWith('temp-'));
+          if (hasOptimisticMessage) {
+            console.log("🔄 Replacing optimistic message with real message");
+            return prev.filter(m => !m._id.startsWith('temp-')).concat(styledMessage);
+          }
+        }
+        
         console.log("✅ Adding new message to state");
         return [...prev, styledMessage];
       });
@@ -180,8 +193,8 @@ export default function Message({
 
     const messageText = newMessage.trim();
     
-    // Create optimistic message
-    const tempId = `temp-${Date.now()}`;
+    // Create optimistic message with unique temp ID
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const optimisticMessage: ChatMessage = {
       _id: tempId,
       sender: "me",
@@ -215,26 +228,11 @@ export default function Message({
       const data = await res.json();
       console.log("✅ Message sent successfully:", data.message);
 
-      // Replace optimistic message with real one
-      setMessages((prev) => 
-        prev.map(msg => 
-          msg._id === tempId ? { ...data.message, sender: "me" } : msg
-        )
-      );
+      // Remove the optimistic message - the real one will come via socket
+      setMessages((prev) => prev.filter(msg => msg._id !== tempId));
 
-      // Emit socket event for real-time delivery
-      if (socket && socket.connected) {
-        console.log("🔊 Emitting socket event to recipient:", recipientId);
-        socket.emit("sendMessage", {
-          recipientId,
-          message: { 
-            ...data.message, 
-            senderId: userId
-          }
-        });
-      } else {
-        console.log("⚠️ Socket not connected, cannot emit real-time message");
-      }
+      // Don't emit socket event here - the server will handle real-time delivery
+      console.log("✅ Message sent via API, real-time delivery handled by server");
 
     } catch (error) {
       console.error("❌ Failed to send message:", error);
@@ -243,6 +241,19 @@ export default function Message({
       alert("Failed to send message. Please try again.");
       setNewMessage(messageText); // Restore the message
     }
+  };
+
+  // Generate unique key for each message
+  const getMessageKey = (msg: ChatMessage, index: number) => {
+    if (msg._id) {
+      return msg._id;
+    }
+    // For optimistic messages with temp IDs, use the temp ID
+    if (msg._id && msg._id.startsWith('temp-')) {
+      return msg._id;
+    }
+    // Fallback to index (shouldn't happen)
+    return `msg-${index}`;
   };
 
   return (
@@ -303,7 +314,7 @@ export default function Message({
           ) : (
             messages.map((msg, idx) => (
               <div
-                key={msg._id || `msg-${idx}`}
+                key={getMessageKey(msg, idx)}
                 className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}
               >
                 <div className={`flex items-end gap-2`}>
@@ -360,9 +371,16 @@ export default function Message({
                     }}
                   >
                     {msg.text}
-                    <div className="text-xs mt-1 text-right" style={{ color: msg.sender === "me" ? "#bbf7d0" : "#059669" }}>
-                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </div>
+                    {msg._id && msg._id.startsWith('temp-') && (
+                      <div className="text-xs mt-1 text-right italic" style={{ color: msg.sender === "me" ? "#bbf7d0" : "#059669" }}>
+                        Sending...
+                      </div>
+                    )}
+                    {!msg._id.startsWith('temp-') && (
+                      <div className="text-xs mt-1 text-right" style={{ color: msg.sender === "me" ? "#bbf7d0" : "#059669" }}>
+                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
