@@ -11,7 +11,8 @@ import {
   MessageSquare,
   ThumbsUp,
   ThumbsDown,
-  MapPin
+  MapPin,
+  ArrowLeft
 } from "lucide-react";
 
 interface ChatMessage {
@@ -187,7 +188,6 @@ export default function AIAssistant({
   const [feedback, setFeedback] = useState<{ [key: string]: "helpful" | "not-helpful" }>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
 
   // Fetch usage when opened
   useEffect(() => {
@@ -203,22 +203,11 @@ export default function AIAssistant({
       }
     };
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
       fetchAIUsage();
       setTimeout(() => inputRef.current?.focus(), 300);
     }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen, onClose, onUsageChange]);
+  }, [isOpen, onUsageChange]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -442,53 +431,50 @@ export default function AIAssistant({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4">
-      <div
-        ref={modalRef}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col overflow-hidden border-2 border-emerald-200/50"
-      >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700 text-white p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-xl shadow-lg">
-                <Bot size={24} className="text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
-                  <Sparkles size={20} className="text-yellow-300" />
-                  Doop AI Assistant
-                </h2>
-                <p className="text-emerald-100 text-xs sm:text-sm">
-                  Your intelligent helper for all things Doop
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium backdrop-blur-sm">
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Zap size={12} className="text-yellow-300" />
-                  <span className="hidden xs:inline">
-                    {usage.max - usage.uses} questions left
-                  </span>
-                  <span className="xs:hidden">{usage.max - usage.uses} left</span>
-                </div>
-              </div>
-
-              <button
-                onClick={onClose}
-                className="text-white hover:text-emerald-200 transition p-1 sm:p-2 rounded-lg hover:bg-white/10 active:scale-95"
-                aria-label="Close AI Chat"
-              >
-                <X size={20} />
-              </button>
-            </div>
+    <div className="fixed inset-0 z-50 flex flex-col bg-white min-h-screen h-full w-full max-w-full overflow-x-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700 text-white p-4 sm:p-6 flex items-center justify-between relative">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="text-white hover:text-emerald-200 transition p-1 sm:p-2 rounded-lg hover:bg-white/10 active:scale-95 mr-2"
+            aria-label="Back"
+          >
+            <ArrowLeft size={22} />
+          </button>
+          <div className="bg-white/20 p-2 rounded-xl shadow-lg">
+            <Bot size={24} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+              <Sparkles size={20} className="text-yellow-300" />
+              Doop AI Assistant
+            </h2>
+            <p className="text-emerald-100 text-xs sm:text-sm">
+              Your intelligent helper for all things Doop
+            </p>
           </div>
         </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium backdrop-blur-sm">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Zap size={12} className="text-yellow-300" />
+              <span className="hidden xs:inline">
+                {usage.max - usage.uses} questions left
+              </span>
+              <span className="xs:hidden">{usage.max - usage.uses} left</span>
+            </div>
+          </div>
+          
+            
 
-        {/* Chat Area */}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-gradient-to-b from-gray-50 to-emerald-50">
+          {/* Welcome and Quick Questions */}
           {chatHistory.length === 0 && !aiLoading && (
             <div className="text-center py-8 sm:py-12">
               <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border border-emerald-100 max-w-2xl mx-auto">
@@ -735,56 +721,56 @@ export default function AIAssistant({
             <div ref={chatEndRef} />
           </div>
         </div>
+      </div>
 
-        {/* Input Area */}
-        <div className="border-t border-emerald-100 bg-white p-3 sm:p-6 shadow-lg">
-          <div className="flex gap-2 sm:gap-3">
-            <input
-              ref={inputRef}
-              type="text"
-              className="flex-1 border-2 border-emerald-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-gray-800 placeholder-gray-500 bg-white text-sm sm:text-base font-medium transition-all duration-200"
-              placeholder={
-                usage.uses >= usage.max
-                  ? "🚫 Daily limit reached - try again tomorrow"
-                  : "💭 Ask about Doop or search services (e.g. 'find electrician in Colombo')..."
-              }
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={aiLoading || usage.uses >= usage.max}
-              maxLength={500}
-            />
-            <button
-              className="bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-emerald-400 hover:to-green-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-w-[50px] sm:min-w-[60px] flex items-center justify-center shadow-lg hover:shadow-xl disabled:shadow-none active:scale-95"
-              onClick={handleAIChat}
-              disabled={aiLoading || !prompt.trim() || usage.uses >= usage.max}
-            >
-              {aiLoading ? (
-                <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent"></div>
-              ) : (
-                <Send size={18} className="sm:size-5" />
-              )}
-            </button>
-          </div>
+      {/* Input Area */}
+      <div className="border-t border-emerald-100 bg-white p-3 sm:p-6 shadow-lg">
+        <div className="flex gap-2 sm:gap-3">
+          <input
+            ref={inputRef}
+            type="text"
+            className="flex-1 border-2 border-emerald-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-gray-800 placeholder-gray-500 bg-white text-sm sm:text-base font-medium transition-all duration-200"
+            placeholder={
+              usage.uses >= usage.max
+                ? "🚫 Daily limit reached - try again tomorrow"
+                : "💭 Ask about Doop or search services (e.g. 'find electrician in Colombo')..."
+            }
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={aiLoading || usage.uses >= usage.max}
+            maxLength={500}
+          />
+          <button
+            className="bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-emerald-400 hover:to-green-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-w-[50px] sm:min-w-[60px] flex items-center justify-center shadow-lg hover:shadow-xl disabled:shadow-none active:scale-95"
+            onClick={handleAIChat}
+            disabled={aiLoading || !prompt.trim() || usage.uses >= usage.max}
+          >
+            {aiLoading ? (
+              <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent"></div>
+            ) : (
+              <Send size={18} className="sm:size-5" />
+            )}
+          </button>
+        </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-3">
-            <button
-              onClick={clearChat}
-              className="text-xs text-gray-500 hover:text-emerald-700 transition font-medium flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-gray-100"
-            >
-              <span>🗑️</span>
-              Clear conversation
-            </button>
-            <div className="flex items-center gap-3 text-xs text-gray-500">
-              <div className="font-medium bg-gray-100 px-2 py-1 rounded-lg">
-                📊 Used: {usage.uses}/{usage.max} questions today
-              </div>
-              {usage.uses >= usage.max && (
-                <div className="text-orange-600 font-medium bg-orange-100 px-2 py-1 rounded-lg">
-                  🔄 Resets in 24 hours
-                </div>
-              )}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-3">
+          <button
+            onClick={clearChat}
+            className="text-xs text-gray-500 hover:text-emerald-700 transition font-medium flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-gray-100"
+          >
+            <span>🗑️</span>
+            Clear conversation
+          </button>
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="font-medium bg-gray-100 px-2 py-1 rounded-lg">
+              📊 Used: {usage.uses}/{usage.max} questions today
             </div>
+            {usage.uses >= usage.max && (
+              <div className="text-orange-600 font-medium bg-orange-100 px-2 py-1 rounded-lg">
+                🔄 Resets in 24 hours
+              </div>
+            )}
           </div>
         </div>
       </div>
