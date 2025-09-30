@@ -238,7 +238,12 @@ export default function Home({
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar currentView="home" setCurrentView={setCurrentView} />
+      <Navbar 
+        currentView="home" 
+        setCurrentView={setCurrentView}
+        onShowPublicProfile={onShowPublicProfile}
+      />
+      
       {/* Search bar right below navbar */}
       <div className="w-full max-w-3xl mx-auto mt-6 mb-4 px-2">
         <Search
@@ -248,6 +253,7 @@ export default function Home({
           onShowPublicProfile={onShowPublicProfile}
         />
       </div>
+      
       <section className="flex flex-col flex-grow items-center px-4 py-6">
         <div className="w-full max-w-3xl space-y-8">
           {displayFeeds.length === 0 && displayLoading ? (

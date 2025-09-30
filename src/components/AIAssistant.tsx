@@ -1,12 +1,29 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { X, Bot, Send, Clock, Zap, User, Sparkles, MessageSquare, ThumbsUp, ThumbsDown } from "lucide-react";
+import { X, Bot, Send, Clock, Zap, User, Sparkles, MessageSquare, ThumbsUp, ThumbsDown, MapPin } from "lucide-react";
 
 interface ChatMessage {
   id: string;
   type: 'user' | 'ai';
   content: string;
   timestamp: Date;
+  suggestions?: ServiceSuggestion[];
+}
+
+interface ServiceSuggestion {
+  _id: string;
+  user: {
+    _id: string;
+    username: string;
+    profilePic?: string;
+    location?: string;
+    serviceType?: string;
+  };
+  title: string;
+  location: string;
+  price: number;
+  priceCurrency: string;
+  contactNumber: string;
 }
 
 interface AIAssistantProps {
@@ -14,11 +31,12 @@ interface AIAssistantProps {
   onClose: () => void;
   usage: { uses: number; max: number };
   onUsageChange: (usage: { uses: number; max: number }) => void;
+  onShowPublicProfile?: (userId: string) => void;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: AIAssistantProps) {
+export default function AIAssistant({ isOpen, onClose, usage, onUsageChange, onShowPublicProfile }: AIAssistantProps) {
   const [prompt, setPrompt] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
@@ -81,6 +99,27 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
         content: msg.content
       }));
 
+      // Check if query looks like a service search
+      const isServiceQuery = /\b(find|search|looking for|need|want|plumber|electrician|carpenter|cleaner|tutor|driver|chef|babysitter|gardener|mechanic|repair|near|in)\b/i.test(prompt.trim());
+      
+      let serviceSuggestions: ServiceSuggestion[] = [];
+      
+      if (isServiceQuery) {
+        try {
+          const searchRes = await fetch(
+            `${API_URL}/api/feeds/search?query=${encodeURIComponent(prompt.trim())}`,
+            { method: "GET", headers: { "Content-Type": "application/json" } }
+          );
+          
+          if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            serviceSuggestions = (searchData.feeds || []).slice(0, 5);
+          }
+        } catch (err) {
+          console.error('Service search failed:', err);
+        }
+      }
+
       const res = await fetch(`${API_URL}/api/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -106,11 +145,19 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
           setAiError(data.error || "Service temporarily unavailable. Please try again.");
         }
       } else if (data.answer) {
+        let enhancedAnswer = data.answer;
+        
+        // If we found service suggestions, append them to the answer
+        if (serviceSuggestions.length > 0) {
+          enhancedAnswer += `\n\n✨ I found ${serviceSuggestions.length} service provider${serviceSuggestions.length > 1 ? 's' : ''} that might help you. Check them out below!`;
+        }
+        
         const aiMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           type: 'ai',
-          content: data.answer,
-          timestamp: new Date()
+          content: enhancedAnswer,
+          timestamp: new Date(),
+          suggestions: serviceSuggestions
         };
         setChatHistory(prev => [...prev, aiMessage]);
       } else {
@@ -141,7 +188,6 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
       ...prev,
       [messageId]: isHelpful ? 'helpful' : 'not-helpful'
     }));
-    // Send feedback to backend if required
   };
 
   const formatTime = (date: Date) => {
@@ -152,7 +198,13 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
     });
   };
 
-  // Doop-specific quick questions
+  const handleProviderClick = (userId: string) => {
+    if (onShowPublicProfile) {
+      onClose();
+      onShowPublicProfile(userId);
+    }
+  };
+
   const quickQuestions = [
     {
       question: "What is Doop and how does it work?",
@@ -200,8 +252,8 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
       category: "Policies"
     },
     {
-      question: "Do you offer emergency services?",
-      icon: "🚨",
+      question: "Find plumber near me",
+      icon: "🔧",
       category: "Services"
     }
   ];
@@ -213,7 +265,6 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
     }, 100);
   };
 
-  // Group quick questions by category
   const groupedQuestions = quickQuestions.reduce((acc, question) => {
     if (!acc[question.category]) {
       acc[question.category] = [];
@@ -247,7 +298,6 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Usage indicator */}
               <div className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium backdrop-blur-sm">
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Zap size={12} className="text-yellow-300" />
@@ -280,7 +330,6 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
                   I&apos;m your intelligent assistant here to help with anything about the Doop platform. I can answer questions about services, bookings, becoming a provider, pricing, and more!
                 </p>
 
-                {/* Quick Questions with Categories */}
                 <div className="space-y-4">
                   <p className="text-sm text-gray-500 font-medium">Quick questions to get started:</p>
 
@@ -303,7 +352,6 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
                   ))}
                 </div>
 
-                {/* Usage Info */}
                 <div className="mt-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
                   <p className="text-sm text-emerald-800 font-medium mb-2">📊 Daily Usage:</p>
                   <div className="flex items-center justify-between">
@@ -324,79 +372,118 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
           {/* Chat Messages */}
           <div className="space-y-3 sm:space-y-4">
             {chatHistory.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
+              <div key={message.id}>
                 <div
-                  className={`max-w-[90%] sm:max-w-[80%] rounded-2xl p-3 sm:p-4 shadow-sm ${
-                    message.type === 'user'
-                      ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-br-none shadow-lg'
-                      : 'bg-white text-gray-800 rounded-bl-none border border-emerald-100 shadow-md'
-                  }`}
+                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className="flex items-start gap-2 sm:gap-3">
-                    {message.type === 'ai' && (
-                      <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-1.5 rounded-lg mt-0.5 flex-shrink-0">
-                        <Bot size={14} className="text-white" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed break-words">
-                        {message.content}
-                      </p>
-
-                      {/* Feedback buttons for AI messages */}
+                  <div
+                    className={`max-w-[90%] sm:max-w-[80%] rounded-2xl p-3 sm:p-4 shadow-sm ${
+                      message.type === 'user'
+                        ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-br-none shadow-lg'
+                        : 'bg-white text-gray-800 rounded-bl-none border border-emerald-100 shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2 sm:gap-3">
                       {message.type === 'ai' && (
-                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-                          <div className={`flex items-center gap-1 text-xs ${
-                            message.type === 'user' ? 'text-emerald-100' : 'text-gray-500'
-                          }`}>
+                        <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-1.5 rounded-lg mt-0.5 flex-shrink-0">
+                          <Bot size={14} className="text-white" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed break-words">
+                          {message.content}
+                        </p>
+
+                        {message.type === 'ai' && (
+                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Clock size={10} />
+                              <span>{formatTime(message.timestamp)}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500 mr-2">Was this helpful?</span>
+                              <button
+                                onClick={() => handleFeedback(message.id, true)}
+                                className={`p-1 rounded transition ${
+                                  feedback[message.id] === 'helpful'
+                                    ? 'text-green-600 bg-green-100'
+                                    : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                                }`}
+                              >
+                                <ThumbsUp size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleFeedback(message.id, false)}
+                                className={`p-1 rounded transition ${
+                                  feedback[message.id] === 'not-helpful'
+                                    ? 'text-red-600 bg-red-100'
+                                    : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                                }`}
+                              >
+                                <ThumbsDown size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {message.type === 'user' && (
+                          <div className="flex items-center gap-1 mt-2 text-xs text-emerald-100">
                             <Clock size={10} />
                             <span>{formatTime(message.timestamp)}</span>
                           </div>
-
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-500 mr-2">Was this helpful?</span>
-                            <button
-                              onClick={() => handleFeedback(message.id, true)}
-                              className={`p-1 rounded transition ${
-                                feedback[message.id] === 'helpful'
-                                  ? 'text-green-600 bg-green-100'
-                                  : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
-                              }`}
-                            >
-                              <ThumbsUp size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleFeedback(message.id, false)}
-                              className={`p-1 rounded transition ${
-                                feedback[message.id] === 'not-helpful'
-                                  ? 'text-red-600 bg-red-100'
-                                  : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-                              }`}
-                            >
-                              <ThumbsDown size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Only timestamp for user messages */}
+                        )}
+                      </div>
                       {message.type === 'user' && (
-                        <div className="flex items-center gap-1 mt-2 text-xs text-emerald-100">
-                          <Clock size={10} />
-                          <span>{formatTime(message.timestamp)}</span>
+                        <div className="bg-emerald-500 p-1.5 rounded-lg mt-0.5 flex-shrink-0">
+                          <User size={14} className="text-white" />
                         </div>
                       )}
                     </div>
-                    {message.type === 'user' && (
-                      <div className="bg-emerald-500 p-1.5 rounded-lg mt-0.5 flex-shrink-0">
-                        <User size={14} className="text-white" />
-                      </div>
-                    )}
                   </div>
                 </div>
+
+                {/* Service Suggestions */}
+                {message.suggestions && message.suggestions.length > 0 && (
+                  <div className="mt-3 ml-0 sm:ml-10 space-y-2">
+                    {message.suggestions.map((suggestion) => (
+                      <button
+                        key={suggestion._id}
+                        onClick={() => handleProviderClick(suggestion.user._id)}
+                        className="w-full text-left bg-white border-2 border-emerald-200 rounded-xl p-3 hover:bg-emerald-50 hover:border-emerald-400 transition-all shadow-md hover:shadow-lg group"
+                      >
+                        <div className="flex items-center gap-3">
+                          {suggestion.user.profilePic ? (
+                            <img
+                              src={suggestion.user.profilePic}
+                              alt={suggestion.user.username}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-emerald-300 group-hover:border-emerald-500 transition-colors"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg border-2 border-emerald-300 group-hover:border-emerald-500 transition-colors">
+                              {suggestion.user.username?.[0]?.toUpperCase() || "?"}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-gray-900 truncate group-hover:text-emerald-700 transition-colors">
+                              {suggestion.title}
+                            </div>
+                            <div className="text-xs text-gray-600 flex items-center gap-2 mt-1">
+                              <MapPin className="w-3 h-3" />
+                              <span>{suggestion.location}</span>
+                              <span>•</span>
+                              <User className="w-3 h-3" />
+                              <span>{suggestion.user.username}</span>
+                            </div>
+                          </div>
+                          <div className="text-emerald-700 font-bold whitespace-nowrap text-sm">
+                            {suggestion.price} {suggestion.priceCurrency}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
 
@@ -476,7 +563,6 @@ export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: A
             </button>
           </div>
 
-          {/* Footer Info */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-3">
             <button
               onClick={clearChat}

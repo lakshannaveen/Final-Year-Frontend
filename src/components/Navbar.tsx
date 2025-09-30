@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "./AuthContext";
-import { Menu, X, User, Mail, Bot } from "lucide-react"; // Changed MessageCircle to Bot for AI icon
+import { Menu, X, User, Mail, Bot } from "lucide-react";
 import Image from "next/image";
 import AIAssistant from "./AIAssistant";
 
 interface NavbarProps {
   currentView: string;
   setCurrentView: (view: string) => void;
+  onShowPublicProfile?: (userId: string) => void;
 }
 
 interface AppUser {
@@ -32,7 +33,7 @@ const activeLink =
 const inactiveLink =
   "font-medium text-white hover:text-green-100 hover:bg-emerald-800/30 transition duration-200 px-4 py-2 rounded-lg";
 
-export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
+export default function Navbar({ currentView, setCurrentView, onShowPublicProfile }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, loading } = useAuth() as { user: AppUser | null; loading: boolean };
 
@@ -413,6 +414,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
         onClose={() => setAiOpen(false)}
         usage={usage}
         onUsageChange={setUsage}
+        onShowPublicProfile={onShowPublicProfile}
       />
     </>
   );
