@@ -179,18 +179,18 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                   <span className="text-white font-medium text-sm">AI Assistant</span>
                 </div>
 
-                {/* Usage badge */}
-                <div className="absolute -top-2 -right-2 bg-white text-green-700 text-xs font-bold px-2 py-1 rounded-full border-2 border-green-600 shadow-sm">
-                  {usage.max - usage.uses}
-                </div>
-
-                {/* Pulse animation when available */}
+                {/* Pulse animation when available - MOVED BEFORE BADGE */}
                 {usage.uses < usage.max && (
-                  <div className="absolute -top-1 -right-1">
+                  <div className="absolute -top-1 -right-1 pointer-events-none">
                     <div className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-green-400 opacity-75"></div>
                     <div className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></div>
                   </div>
                 )}
+
+                {/* Usage badge - MOVED AFTER PULSE so it appears on top */}
+                <div className="absolute -top-2 -right-2 bg-white text-green-700 text-xs font-bold px-2 py-1 rounded-full border-2 border-green-600 shadow-sm z-10">
+                  {usage.max - usage.uses}
+                </div>
               </button>
 
               {/* User Profile */}
@@ -255,7 +255,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 title="AI Assistant"
               >
                 <Bot size={20} className="text-white" />
-                <div className="absolute -top-1 -right-1 bg-white text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full border border-green-600">
+                <div className="absolute -top-1 -right-1 bg-white text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full border border-green-600 z-10">
                   {usage.max - usage.uses}
                 </div>
               </button>
