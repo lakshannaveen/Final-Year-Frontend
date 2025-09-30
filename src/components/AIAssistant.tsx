@@ -12,35 +12,34 @@ interface ChatMessage {
 interface AIAssistantProps {
   isOpen: boolean;
   onClose: () => void;
+  usage: { uses: number; max: number };
+  onUsageChange: (usage: { uses: number; max: number }) => void;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
+export default function AIAssistant({ isOpen, onClose, usage, onUsageChange }: AIAssistantProps) {
   const [prompt, setPrompt] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
-  const [usage, setUsage] = useState({ uses: 0, max: 10 });
   const [aiError, setAiError] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{[key: string]: 'helpful' | 'not-helpful'}>({});
+  const [feedback, setFeedback] = useState<{ [key: string]: 'helpful' | 'not-helpful' }>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  const fetchAIUsage = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/ai/usage`);
-      if (res.ok) {
-        const data = await res.json();
-        setUsage({ uses: data.uses, max: data.max });
-      }
-    } catch (error) {
-      console.log('Failed to fetch AI usage:', error);
-    }
-  };
-
-  // Close modal when clicking outside
+  // Fetch usage when opened
   useEffect(() => {
+    const fetchAIUsage = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/ai/usage`);
+        if (res.ok) {
+          const data = await res.json();
+          onUsageChange({ uses: data.uses, max: data.max });
+        }
+      } catch { }
+    };
+
     const handleClickOutside = (event: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         onClose();
@@ -56,16 +55,15 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, onUsageChange]);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory, aiLoading]);
 
   const handleAIChat = async () => {
     if (!prompt.trim() || usage.uses >= usage.max || aiLoading) return;
-    
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       type: 'user',
@@ -76,7 +74,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     setChatHistory(prev => [...prev, userMessage]);
     setAiError(null);
     setAiLoading(true);
-    
+
     try {
       const context = chatHistory.slice(-6).map(msg => ({
         type: msg.type,
@@ -86,18 +84,22 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
       const res = await fetch(`${API_URL}/api/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           prompt: prompt.trim(),
-          context 
+          context
         }),
       });
-      
+
       const data = await res.json();
-      
+
+      // Always update usage after request
+      if (typeof data.uses === "number" && typeof data.max === "number") {
+        onUsageChange({ uses: data.uses, max: data.max });
+      }
+
       if (!res.ok) {
         if (res.status === 429) {
           setAiError(data.error || "Daily limit reached. Try again tomorrow.");
-          setUsage({ uses: data.uses || usage.max, max: data.max || usage.max });
         } else if (res.status === 400) {
           setAiError(data.error || "Please check your question and try again.");
         } else {
@@ -111,15 +113,13 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
           timestamp: new Date()
         };
         setChatHistory(prev => [...prev, aiMessage]);
-        setUsage({ uses: data.uses, max: data.max });
       } else {
         setAiError("No response generated. Please try a different question.");
       }
-    } catch (error) {
-      console.error('AI chat error:', error);
+    } catch {
       setAiError("Network error. Please check your connection and try again.");
     }
-    
+
     setAiLoading(false);
     setPrompt("");
   };
@@ -141,16 +141,14 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
       ...prev,
       [messageId]: isHelpful ? 'helpful' : 'not-helpful'
     }));
-    
-    // In a real app, you&apos;d send this feedback to your backend
-    console.log(`Feedback for message ${messageId}: ${isHelpful ? 'helpful' : 'not-helpful'}`);
+    // Send feedback to backend if required
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     });
   };
 
@@ -228,7 +226,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4">
-      <div 
+      <div
         ref={modalRef}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col overflow-hidden border-2 border-emerald-200/50"
       >
@@ -247,7 +245,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                 <p className="text-emerald-100 text-xs sm:text-sm">Your intelligent helper for all things Doop</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2 sm:gap-3">
               {/* Usage indicator */}
               <div className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium backdrop-blur-sm">
@@ -257,7 +255,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                   <span className="xs:hidden">{usage.max - usage.uses} left</span>
                 </div>
               </div>
-              
+
               <button
                 onClick={onClose}
                 className="text-white hover:text-emerald-200 transition p-1 sm:p-2 rounded-lg hover:bg-white/10 active:scale-95"
@@ -281,11 +279,11 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                 <p className="text-gray-600 text-sm sm:text-base mb-6 leading-relaxed">
                   I&apos;m your intelligent assistant here to help with anything about the Doop platform. I can answer questions about services, bookings, becoming a provider, pricing, and more!
                 </p>
-                
+
                 {/* Quick Questions with Categories */}
                 <div className="space-y-4">
                   <p className="text-sm text-gray-500 font-medium">Quick questions to get started:</p>
-                  
+
                   {Object.entries(groupedQuestions).map(([category, questions]) => (
                     <div key={category} className="space-y-2">
                       <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{category}</p>
@@ -313,7 +311,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                     <span className="text-sm font-bold text-emerald-800">{usage.uses}/{usage.max}</span>
                   </div>
                   <div className="w-full bg-emerald-200 rounded-full h-2 mt-2">
-                    <div 
+                    <div
                       className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${(usage.uses / usage.max) * 100}%` }}
                     ></div>
@@ -347,7 +345,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                       <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed break-words">
                         {message.content}
                       </p>
-                      
+
                       {/* Feedback buttons for AI messages */}
                       {message.type === 'ai' && (
                         <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
@@ -357,14 +355,14 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                             <Clock size={10} />
                             <span>{formatTime(message.timestamp)}</span>
                           </div>
-                          
+
                           <div className="flex items-center gap-1">
                             <span className="text-xs text-gray-500 mr-2">Was this helpful?</span>
                             <button
                               onClick={() => handleFeedback(message.id, true)}
                               className={`p-1 rounded transition ${
-                                feedback[message.id] === 'helpful' 
-                                  ? 'text-green-600 bg-green-100' 
+                                feedback[message.id] === 'helpful'
+                                  ? 'text-green-600 bg-green-100'
                                   : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
                               }`}
                             >
@@ -373,8 +371,8 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                             <button
                               onClick={() => handleFeedback(message.id, false)}
                               className={`p-1 rounded transition ${
-                                feedback[message.id] === 'not-helpful' 
-                                  ? 'text-red-600 bg-red-100' 
+                                feedback[message.id] === 'not-helpful'
+                                  ? 'text-red-600 bg-red-100'
                                   : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
                               }`}
                             >
@@ -383,7 +381,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Only timestamp for user messages */}
                       {message.type === 'user' && (
                         <div className="flex items-center gap-1 mt-2 text-xs text-emerald-100">
@@ -455,8 +453,8 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
               type="text"
               className="flex-1 border-2 border-emerald-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-gray-800 placeholder-gray-500 bg-white text-sm sm:text-base font-medium transition-all duration-200"
               placeholder={
-                usage.uses >= usage.max 
-                  ? "🚫 Daily limit reached - try again tomorrow" 
+                usage.uses >= usage.max
+                  ? "🚫 Daily limit reached - try again tomorrow"
                   : "💭 Ask me anything about Doop services, bookings, or providers..."
               }
               value={prompt}
@@ -477,7 +475,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
               )}
             </button>
           </div>
-          
+
           {/* Footer Info */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-3">
             <button

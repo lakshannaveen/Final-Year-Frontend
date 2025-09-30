@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "./AuthContext";
@@ -42,21 +41,24 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
 
   // AI Chatbox state
   const [aiOpen, setAiOpen] = useState(false);
-  const [usage, setUsage] = useState({ uses: 0, max: 5 });
+  const [usage, setUsage] = useState({ uses: 0, max: 10 });
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+  // Always fetch initial usage on mount
   const fetchAIUsage = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/huggingface/usage`);
+      const res = await fetch(`${API_URL}/api/ai/usage`);
       if (res.ok) {
         const data = await res.json();
         setUsage({ uses: data.uses, max: data.max });
       }
-    } catch (error) {
-      console.log('Failed to fetch AI usage:', error);
-    }
+    } catch { }
   }, [API_URL]);
+
+  useEffect(() => {
+    fetchAIUsage();
+  }, [fetchAIUsage]);
 
   useEffect(() => {
     if (aiOpen) {
@@ -89,7 +91,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
         if (!res.ok) return;
         const data = await res.json();
         if (!ignore) setAvatarUrl(data?.user?.profilePic || "");
-      } catch {}
+      } catch { }
     };
     loadAvatar();
     return () => {
@@ -135,7 +137,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
               <Image src="/logo.png" alt="Logo" width={40} height={40} className="rounded-lg" />
               <span className="text-2xl font-bold tracking-wide">Doop</span>
             </button>
-            
+
             {/* Desktop Center Menu */}
             <div className="hidden md:flex flex-1 justify-center items-center gap-2">
               <button
@@ -162,7 +164,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                 <span className="hidden sm:inline">Inbox</span>
               </button>
             </div>
-            
+
             {/* Right: Desktop - Profile + AI Chat */}
             <div className="hidden md:flex items-center gap-3">
               {/* AI Chatbox Button - Professional styling */}
@@ -172,15 +174,15 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                 title="AI Assistant - Get instant help"
               >
                 <div className="flex items-center gap-2">
-                  <Bot size={20} className="text-white" /> {/* Changed from MessageCircle to Bot */}
+                  <Bot size={20} className="text-white" />
                   <span className="text-white font-medium text-sm">AI Assistant</span>
                 </div>
-                
+
                 {/* Usage badge */}
                 <div className="absolute -top-2 -right-2 bg-white text-green-700 text-xs font-bold px-2 py-1 rounded-full border-2 border-green-600 shadow-sm">
                   {usage.max - usage.uses}
                 </div>
-                
+
                 {/* Pulse animation when available */}
                 {usage.uses < usage.max && (
                   <div className="absolute -top-1 -right-1">
@@ -189,7 +191,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                   </div>
                 )}
               </button>
-              
+
               {/* User Profile */}
               {user ? (
                 <button
@@ -251,7 +253,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                 className="relative bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-lg hover:from-emerald-400 hover:to-green-500 transition-all duration-200 shadow-lg"
                 title="AI Assistant"
               >
-                <Bot size={20} className="text-white" /> {/* Changed from MessageCircle to Bot */}
+                <Bot size={20} className="text-white" />
                 <div className="absolute -top-1 -right-1 bg-white text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full border border-green-600">
                   {usage.max - usage.uses}
                 </div>
@@ -355,7 +357,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                 >
                   <Mail size={20} /> Inbox
                 </button>
-                
+
                 {/* Additional AI Chat option in mobile menu */}
                 <button
                   onClick={() => {
@@ -367,7 +369,7 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
                 >
                   <Bot size={20} /> AI Assistant ({usage.max - usage.uses} left)
                 </button>
-                
+
                 {/* Additional Auth options in mobile menu for consistency */}
                 {!user && (
                   <div className="flex flex-col gap-2 mt-2">
@@ -406,7 +408,12 @@ export default function Navbar({ currentView, setCurrentView }: NavbarProps) {
       </nav>
 
       {/* AI Assistant Component */}
-      <AIAssistant isOpen={aiOpen} onClose={() => setAiOpen(false)} />
+      <AIAssistant
+        isOpen={aiOpen}
+        onClose={() => setAiOpen(false)}
+        usage={usage}
+        onUsageChange={setUsage}
+      />
     </>
   );
 }
