@@ -68,6 +68,7 @@ export default function AIAssistant({
   const [feedback, setFeedback] = useState<{ [key: string]: "helpful" | "not-helpful" }>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [thinkingText, setThinkingText] = useState<string>("Thinking...");
 
   useEffect(() => {
     const fetchAIUsage = async () => {
@@ -91,6 +92,20 @@ export default function AIAssistant({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory, aiLoading]);
+
+  useEffect(() => {
+    if (aiLoading) {
+      setThinkingText("Thinking...");
+      const timer = setTimeout(() => {
+        setThinkingText(
+          "This AI assistant can make mistakes. Please review responses and double-check important information."
+        );
+      }, 3000);
+      return () => clearTimeout(timer);
+    } else {
+      setThinkingText("Thinking...");
+    }
+  }, [aiLoading]);
 
   const handleAIChat = async () => {
     if (!prompt.trim() || usage.uses >= usage.max || aiLoading) return;
@@ -346,6 +361,9 @@ export default function AIAssistant({
                     ></div>
                   </div>
                 </div>
+                <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-yellow-700 text-sm font-medium">
+                  ⚠️ This AI assistant can make mistakes. Please review responses and double-check important information.
+                </div>
               </div>
             </div>
           )}
@@ -478,7 +496,7 @@ export default function AIAssistant({
             {/* Loading Indicator */}
             {aiLoading && (
               <div className="flex justify-start">
-                <div className="bg-white border border-emerald-100 rounded-2xl rounded-bl-none p-3 sm:p-4 max-w-[80%] shadow-md">
+                <div className="bg-white border border-emerald-100 rounded-2xl rounded-bl-none p-3 sm:p-4 max-w-[80%] shadow-md flex flex-col gap-2">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-1.5 rounded-lg">
                       <Bot size={14} className="text-white" />
@@ -496,11 +514,15 @@ export default function AIAssistant({
                         ></div>
                       </div>
                       <div className="text-sm text-gray-600">
-                        <span className="font-medium">Thinking</span>
-                        <span className="animate-pulse">...</span>
+                        <span className="font-medium">{thinkingText}</span>
                       </div>
                     </div>
                   </div>
+                  {thinkingText !== "Thinking..." && (
+                    <div className="text-xs text-yellow-700 bg-yellow-50 rounded px-2 py-1 border border-yellow-200 mt-1">
+                      {thinkingText}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -579,5 +601,3 @@ export default function AIAssistant({
     </div>
   );
 }
-
-// This file can make mistakes -- please review before using in production.
