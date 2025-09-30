@@ -1,7 +1,6 @@
-
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { X, Bot, Send, Clock, Zap, User, Sparkles, MessageSquare } from "lucide-react";
+import { X, Bot, Send, Clock, Zap, User, Sparkles, MessageSquare, ThumbsUp, ThumbsDown } from "lucide-react";
 
 interface ChatMessage {
   id: string;
@@ -21,8 +20,9 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
   const [prompt, setPrompt] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
-  const [usage, setUsage] = useState({ uses: 0, max: 5 });
+  const [usage, setUsage] = useState({ uses: 0, max: 10 });
   const [aiError, setAiError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{[key: string]: 'helpful' | 'not-helpful'}>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -78,10 +78,18 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     setAiLoading(true);
     
     try {
+      const context = chatHistory.slice(-6).map(msg => ({
+        type: msg.type,
+        content: msg.content
+      }));
+
       const res = await fetch(`${API_URL}/api/huggingface/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim() }),
+        body: JSON.stringify({ 
+          prompt: prompt.trim(),
+          context 
+        }),
       });
       
       const data = await res.json();
@@ -125,6 +133,17 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
   const clearChat = () => {
     setChatHistory([]);
     setAiError(null);
+    setFeedback({});
+  };
+
+  const handleFeedback = (messageId: string, isHelpful: boolean) => {
+    setFeedback(prev => ({
+      ...prev,
+      [messageId]: isHelpful ? 'helpful' : 'not-helpful'
+    }));
+    
+    // In a real app, you'd send this feedback to your backend
+    console.log(`Feedback for message ${messageId}: ${isHelpful ? 'helpful' : 'not-helpful'}`);
   };
 
   const formatTime = (date: Date) => {
@@ -139,27 +158,43 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
   const quickQuestions = [
     {
       question: "What is Doop and how does it work?",
-      icon: "🤔"
+      icon: "🤔",
+      category: "Platform"
     },
     {
-      question: "How do I book a service?",
-      icon: "📅"
+      question: "How do I book a cleaning service?",
+      icon: "🧹",
+      category: "Services"
     },
     {
-      question: "What services are available?",
-      icon: "🔧"
+      question: "What services are available in my area?",
+      icon: "📍",
+      category: "Services"
     },
     {
       question: "How to become a service provider?",
-      icon: "💼"
+      icon: "💼",
+      category: "Providers"
     },
     {
-      question: "Tell me about pricing",
-      icon: "💰"
+      question: "Tell me about your pricing structure",
+      icon: "💰",
+      category: "Platform"
     },
     {
-      question: "How to contact support?",
-      icon: "📞"
+      question: "How to contact customer support?",
+      icon: "📞",
+      category: "Support"
+    },
+    {
+      question: "What makes Doop different from others?",
+      icon: "⭐",
+      category: "Platform"
+    },
+    {
+      question: "How are service providers verified?",
+      icon: "✅",
+      category: "Providers"
     }
   ];
 
@@ -169,6 +204,15 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
       inputRef.current?.focus();
     }, 100);
   };
+
+  // Group quick questions by category
+  const groupedQuestions = quickQuestions.reduce((acc, question) => {
+    if (!acc[question.category]) {
+      acc[question.category] = [];
+    }
+    acc[question.category].push(question);
+    return acc;
+  }, {} as Record<string, typeof quickQuestions>);
 
   if (!isOpen) return null;
 
@@ -219,30 +263,47 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
         <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-gradient-to-b from-gray-50 to-emerald-50">
           {chatHistory.length === 0 && !aiLoading && (
             <div className="text-center py-8 sm:py-12">
-              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border border-emerald-100 max-w-md mx-auto">
+              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border border-emerald-100 max-w-2xl mx-auto">
                 <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                   <MessageSquare size={28} className="text-white" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3">Welcome to Doop AI Assistant! 👋</h3>
                 <p className="text-gray-600 text-sm sm:text-base mb-6 leading-relaxed">
-                  I am here to help you with anything about the Doop platform, services, bookings, or general questions. Ask me anything!
+                  I'm your intelligent assistant here to help with anything about the Doop platform, services, bookings, or general questions. I provide conversational, helpful responses similar to ChatGPT!
                 </p>
                 
-                {/* Enhanced Quick Questions */}
-                <div className="space-y-2">
+                {/* Enhanced Quick Questions with Categories */}
+                <div className="space-y-4">
                   <p className="text-sm text-gray-500 font-medium">Quick questions to get started:</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {quickQuestions.map((item, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleQuickQuestion(item.question)}
-                        className="w-full text-left p-3 bg-white hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-all duration-200 text-sm text-emerald-800 font-medium hover:shadow-md hover:border-emerald-300 active:scale-95 flex items-center gap-2"
-                      >
-                        <span className="text-base">{item.icon}</span>
-                        <span className="flex-1 text-left">{item.question}</span>
-                      </button>
-                    ))}
-                  </div>
+                  
+                  {Object.entries(groupedQuestions).map(([category, questions]) => (
+                    <div key={category} className="space-y-2">
+                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{category}</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {questions.map((item, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleQuickQuestion(item.question)}
+                            className="w-full text-left p-3 bg-white hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-all duration-200 text-sm text-emerald-800 font-medium hover:shadow-md hover:border-emerald-300 active:scale-95 flex items-center gap-2 group"
+                          >
+                            <span className="text-base group-hover:scale-110 transition-transform">{item.icon}</span>
+                            <span className="flex-1 text-left">{item.question}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tips Section */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800 font-medium mb-2">💡 Pro Tips:</p>
+                  <ul className="text-xs text-blue-700 space-y-1">
+                    <li>• Ask follow-up questions for more details</li>
+                    <li>• Be specific about your location or needs</li>
+                    <li>• I can help with both Doop and general topics</li>
+                    <li>• Use the feedback buttons to improve responses</li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -272,12 +333,50 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                       <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed break-words">
                         {message.content}
                       </p>
-                      <div className={`flex items-center gap-1 mt-2 text-xs ${
-                        message.type === 'user' ? 'text-emerald-100' : 'text-gray-500'
-                      }`}>
-                        <Clock size={10} />
-                        <span>{formatTime(message.timestamp)}</span>
-                      </div>
+                      
+                      {/* Feedback buttons for AI messages */}
+                      {message.type === 'ai' && (
+                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                          <div className={`flex items-center gap-1 text-xs ${
+                            message.type === 'user' ? 'text-emerald-100' : 'text-gray-500'
+                          }`}>
+                            <Clock size={10} />
+                            <span>{formatTime(message.timestamp)}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500 mr-2">Was this helpful?</span>
+                            <button
+                              onClick={() => handleFeedback(message.id, true)}
+                              className={`p-1 rounded transition ${
+                                feedback[message.id] === 'helpful' 
+                                  ? 'text-green-600 bg-green-100' 
+                                  : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                              }`}
+                            >
+                              <ThumbsUp size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleFeedback(message.id, false)}
+                              className={`p-1 rounded transition ${
+                                feedback[message.id] === 'not-helpful' 
+                                  ? 'text-red-600 bg-red-100' 
+                                  : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                              }`}
+                            >
+                              <ThumbsDown size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Only timestamp for user messages */}
+                      {message.type === 'user' && (
+                        <div className="flex items-center gap-1 mt-2 text-xs text-emerald-100">
+                          <Clock size={10} />
+                          <span>{formatTime(message.timestamp)}</span>
+                        </div>
+                      )}
                     </div>
                     {message.type === 'user' && (
                       <div className="bg-emerald-500 p-1.5 rounded-lg mt-0.5 flex-shrink-0">
@@ -297,13 +396,16 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                     <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-1.5 rounded-lg">
                       <Bot size={14} className="text-white" />
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-3">
                       <div className="flex space-x-1">
                         <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce"></div>
                         <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                         <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                       </div>
-                      <span className="text-sm font-medium">Thinking...</span>
+                      <div className="text-sm text-gray-600">
+                        <span className="font-medium">Thinking</span>
+                        <span className="animate-pulse">...</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -371,8 +473,15 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
               <span>🗑️</span>
               Clear conversation
             </button>
-            <div className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-lg">
-              📊 Used: {usage.uses}/{usage.max} questions today
+            <div className="flex items-center gap-3 text-xs text-gray-500">
+              <div className="font-medium bg-gray-100 px-2 py-1 rounded-lg">
+                📊 Used: {usage.uses}/{usage.max} questions today
+              </div>
+              {usage.uses >= usage.max && (
+                <div className="text-orange-600 font-medium bg-orange-100 px-2 py-1 rounded-lg">
+                  🔄 Resets in 24 hours
+                </div>
+              )}
             </div>
           </div>
         </div>
