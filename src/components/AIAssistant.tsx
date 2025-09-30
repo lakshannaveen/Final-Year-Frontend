@@ -204,7 +204,7 @@ export default function AIAssistant({
     }
   };
 
-  // Quick questions for starter UI
+  // Quick questions for starter UI (FEWER, only few platform base, "find plumber", booking, support)
   const quickQuestions = [
     {
       question: "What is Doop and how does it work?",
@@ -212,44 +212,14 @@ export default function AIAssistant({
       category: "Platform Basics"
     },
     {
-      question: "How do I book a cleaning service?",
-      icon: "🧹",
-      category: "Services"
+      question: "How to book a service?",
+      icon: "📝",
+      category: "Booking"
     },
     {
-      question: "What services are available in my area?",
-      icon: "📍",
-      category: "Services"
-    },
-    {
-      question: "How to become a service provider?",
-      icon: "💼",
-      category: "Providers"
-    },
-    {
-      question: "Tell me about your pricing structure",
-      icon: "💰",
-      category: "Pricing"
-    },
-    {
-      question: "How to contact customer support?",
+      question: "How to get customer support?",
       icon: "📞",
       category: "Support"
-    },
-    {
-      question: "What makes Doop different from others?",
-      icon: "⭐",
-      category: "Platform Basics"
-    },
-    {
-      question: "How are service providers verified?",
-      icon: "✅",
-      category: "Safety"
-    },
-    {
-      question: "What is your cancellation policy?",
-      icon: "📝",
-      category: "Policies"
     },
     {
       question: "Find plumber near me",
@@ -609,3 +579,5 @@ export default function AIAssistant({
     </div>
   );
 }
+
+// This file can make mistakes -- please review before using in production.
