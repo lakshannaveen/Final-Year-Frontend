@@ -36,6 +36,7 @@ interface ServiceSuggestion {
     profilePic?: string;
     location?: string;
     serviceType?: string;
+    status?: string; // <-- Add status for blinking ring
   };
   title: string;
   location: string;
@@ -53,6 +54,17 @@ interface AIAssistantProps {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+// --- Helper: blinking ring class
+const getRingClass = (status?: string) => {
+  if (!status) return "";
+  const lower = status.toLowerCase();
+  if (lower.includes("open to work") || status.includes("✅"))
+    return "border-4 border-green-400 animate-pulse";
+  if (lower.includes("not available") || status.includes("🛑"))
+    return "border-4 border-red-400 animate-pulse";
+  return "";
+};
 
 export default function AIAssistant({
   isOpen,
@@ -258,6 +270,32 @@ export default function AIAssistant({
     return acc;
   }, {} as Record<string, typeof quickQuestions>);
 
+  // --- Helper for blinking ring in suggestions ---
+  function renderProfilePicWithRing(user: ServiceSuggestion["user"]) {
+    const ringClass = getRingClass(user.status);
+    return (
+      <span className="relative w-12 h-12 flex items-center justify-center">
+        {ringClass && (
+          <span
+            className={`absolute -inset-1 rounded-full pointer-events-none z-0 ${ringClass}`}
+            aria-hidden
+          ></span>
+        )}
+        {user.profilePic ? (
+          <img
+            src={user.profilePic}
+            alt={user.username}
+            className="w-12 h-12 rounded-full object-cover border-2 border-emerald-300 z-10 bg-white"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg border-2 border-emerald-300 z-10">
+            {user.username?.[0]?.toUpperCase() || "?"}
+          </div>
+        )}
+      </span>
+    );
+  }
+
   if (!isOpen) return null;
 
   return (
@@ -455,17 +493,7 @@ export default function AIAssistant({
                           className="w-full text-left bg-white border-2 border-emerald-200 rounded-xl p-3 hover:bg-emerald-50 hover:border-emerald-400 transition-all shadow-md hover:shadow-lg group"
                         >
                           <div className="flex items-center gap-3">
-                            {suggestion.user.profilePic ? (
-                              <img
-                                src={suggestion.user.profilePic}
-                                alt={suggestion.user.username}
-                                className="w-12 h-12 rounded-full object-cover border-2 border-emerald-300 group-hover:border-emerald-500 transition-colors"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg border-2 border-emerald-300 group-hover:border-emerald-500 transition-colors">
-                                {suggestion.user.username?.[0]?.toUpperCase() || "?"}
-                              </div>
-                            )}
+                            {renderProfilePicWithRing(suggestion.user)}
                             <div className="flex-1 min-w-0">
                               <div className="font-semibold text-gray-900 truncate group-hover:text-emerald-700 transition-colors">
                                 {suggestion.title}
