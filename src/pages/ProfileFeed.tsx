@@ -7,6 +7,7 @@ interface FeedUser {
   _id: string;
   username: string;
   profilePic?: string;
+  status?: string; // <-- Add status for blinking ring
 }
 interface FeedItem {
   _id: string;
@@ -90,6 +91,17 @@ type EditFeedState = {
 };
 
 const PAGE_SIZE = 5;
+
+// --- Helper: blinking ring class
+const getRingClass = (status?: string) => {
+  if (!status) return "";
+  const lower = status.toLowerCase();
+  if (lower.includes("open to work") || status.includes("✅"))
+    return "border-4 border-green-400 animate-pulse";
+  if (lower.includes("not available") || status.includes("🛑"))
+    return "border-4 border-red-400 animate-pulse";
+  return "";
+};
 
 // --- Main Component ---
 export default function ProfileFeed() {
@@ -270,7 +282,9 @@ export default function ProfileFeed() {
         ) : feeds.length === 0 ? (
           <div className="text-center text-gray-500">You have not posted anything yet.</div>
         ) : (
-          feeds.map(feed => (
+          feeds.map(feed => {
+            const ringClass = getRingClass(feed.user.status);
+            return (
             <div
               key={feed._id}
               className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col md:flex-row items-stretch p-8 transition hover:shadow-xl"
@@ -281,20 +295,29 @@ export default function ProfileFeed() {
                 className="flex flex-col items-center md:items-start mr-0 md:mr-8 min-w-[120px] mb-4 md:mb-0 cursor-pointer hover:bg-gray-100 rounded-xl transition"
                 title={`Your profile`}
               >
-                {feed.user.profilePic ? (
-                  <img
-                    src={feed.user.profilePic}
-                    alt={feed.user.username}
-                    className="w-16 h-16 rounded-full object-cover border border-gray-300 mb-2"
-                  />
-                ) : (
-                  <div
-                    className="w-16 h-16 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-2xl border border-gray-300 mb-2"
-                    aria-label={feed.user.username}
-                  >
-                    {feed.user.username?.[0]?.toUpperCase() || "?"}
-                  </div>
-                )}
+                <div className="relative w-16 h-16 mb-2 flex items-center justify-center">
+                  {/* Blinking ring - OUTSIDE profile pic */}
+                  {ringClass && (
+                    <span
+                      className={`absolute -inset-1 rounded-full pointer-events-none z-0 ${ringClass}`}
+                      aria-hidden
+                    ></span>
+                  )}
+                  {feed.user.profilePic ? (
+                    <img
+                      src={feed.user.profilePic}
+                      alt={feed.user.username}
+                      className="w-16 h-16 rounded-full object-cover border border-gray-300 z-10 bg-white"
+                    />
+                  ) : (
+                    <div
+                      className="w-16 h-16 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-2xl border border-gray-300 z-10"
+                      aria-label={feed.user.username}
+                    >
+                      {feed.user.username?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  )}
+                </div>
                 <div className="text-green-700 font-bold text-base text-center">{feed.user.username}</div>
                 <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
                 <div className="mt-4 flex gap-3">
@@ -480,7 +503,7 @@ export default function ProfileFeed() {
                 </div>
               )}
             </div>
-          ))
+          )})
         )}
         {/* Skeleton loading for infinite scroll */}
         {loading && feeds.length > 0 && (
