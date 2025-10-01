@@ -393,6 +393,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 </button>
               )}
 
+              {/* Burger menu button */}
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="p-2 rounded-lg bg-green-800 hover:bg-green-600 transition"
@@ -438,18 +439,6 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
-                </button>
-
-                {/* Additional AI Chat option in mobile menu */}
-                <button
-                  onClick={() => {
-                    setAiOpen(true);
-                    setMenuOpen(false);
-                  }}
-                  className="w-full text-center flex items-center justify-center gap-2 bg-emerald-700/80 hover:bg-emerald-600 py-3 rounded-lg mt-2 font-semibold"
-                  aria-label="Open AI Chat"
-                >
-                  <Bot size={20} /> AI Assistant ({usage.max - usage.uses} left)
                 </button>
 
                 {/* Additional Auth options in mobile menu for consistency */}
