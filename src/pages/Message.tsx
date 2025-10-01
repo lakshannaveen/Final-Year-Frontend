@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import io, { Socket } from "socket.io-client";
 
 interface MessageProps {
@@ -38,8 +38,13 @@ export default function Message({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
   const [userId, setUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const initialLoadRef = useRef(true);
 
   // Get current user info on component mount
   useEffect(() => {
@@ -117,46 +122,37 @@ export default function Message({
     };
   }, [userId]);
 
-  // Chat header: fetch recipient profile pic
-  const [profilePic, setProfilePic] = useState<string | undefined>(recipientProfilePic);
-
-  useEffect(() => {
-    if (recipientProfilePic) {
-      setProfilePic(recipientProfilePic);
-      return;
-    }
-    (async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/profile/public/${recipientId}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setProfilePic(data?.user?.profilePic || undefined);
-      } catch {
-        setProfilePic(undefined);
-      }
-    })();
-  }, [recipientId, recipientProfilePic]);
-
-  // Fetch messages (history)
-  useEffect(() => {
-    async function fetchMessages() {
+  // Fetch messages (history) with pagination
+  const fetchMessages = useCallback(async (pageNum: number, isLoadMore = false) => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
       setLoading(true);
-      try {
-        let url = `${API_URL}/api/messages/${recipientId}`;
-        if (postId) url += `?postId=${postId}`;
-        
-        const res = await fetch(url, {
-          credentials: "include",
-        });
-        
-        if (res.status === 401) {
-          alert("You are not authenticated. Please login again.");
-        }
-        
-        const data = await res.json();
-        
-        // Mark all messages as read when opening the chat
-        if (data.messages && data.messages.length > 0) {
+    }
+
+    try {
+      let url = `${API_URL}/api/messages/${recipientId}?page=${pageNum}&limit=20`;
+      if (postId) url += `&postId=${postId}`;
+      
+      const res = await fetch(url, {
+        credentials: "include",
+      });
+      
+      if (res.status === 401) {
+        alert("You are not authenticated. Please login again.");
+        return;
+      }
+      
+      const data = await res.json();
+      
+      if (data.messages && data.messages.length > 0) {
+        if (isLoadMore) {
+          // For load more, prepend older messages
+          setMessages(prev => [...data.messages, ...prev]);
+        } else {
+          // Initial load, set messages and mark as read
+          setMessages(data.messages);
+          
           const unreadMessages = data.messages.filter((msg: ChatMessage) => 
             msg.sender !== "me" && !msg.read
           );
@@ -169,27 +165,59 @@ export default function Message({
             }).catch(console.error);
             
             // Update local state to show all as read
-            data.messages = data.messages.map((msg: ChatMessage) => ({
+            setMessages(prev => prev.map(msg => ({
               ...msg,
               read: msg.sender === "me" ? msg.read : true
-            }));
+            })));
           }
         }
         
-        setMessages(data.messages || []);
-      } catch (e) {
-        console.error("Failed to fetch messages:", e);
+        // Check if there are more messages to load
+        setHasMore(data.messages.length === 20);
+      } else if (!isLoadMore) {
+        setMessages([]);
+        setHasMore(false);
+      }
+    } catch (e) {
+      console.error("Failed to fetch messages:", e);
+      if (!isLoadMore) {
         setMessages([]);
       }
+    } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-    fetchMessages();
   }, [recipientId, postId]);
 
-  // Scroll to bottom on new messages
+  // Initial messages fetch
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    fetchMessages(1, false);
+  }, [fetchMessages]);
+
+  // Scroll to bottom on new messages (only on initial load and new messages)
+  useEffect(() => {
+    if (initialLoadRef.current && messages.length > 0 && !loading) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      initialLoadRef.current = false;
+    } else if (!loadingMore) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, loading, loadingMore]);
+
+  // Handle scroll for infinite loading
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current || loadingMore || !hasMore || loading) return;
+
+    const container = messagesContainerRef.current;
+    const scrollTop = container.scrollTop;
+    
+    // Load more when scrolled to top (older messages)
+    if (scrollTop === 0) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchMessages(nextPage, true);
+    }
+  }, [loadingMore, hasMore, loading, page, fetchMessages]);
 
   // Send message
   const handleSend = async (e: React.FormEvent) => {
@@ -242,6 +270,11 @@ export default function Message({
     }
   };
 
+  // Handle input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+  };
+
   // Generate unique key for each message
   const getMessageKey = (msg: ChatMessage, index: number) => {
     if (msg._id) {
@@ -289,6 +322,8 @@ export default function Message({
         }}
       >
         <div
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
           style={{
             flex: 1,
             overflowY: "auto",
@@ -298,95 +333,112 @@ export default function Message({
           }}
           className="hide-scrollbar"
         >
+          {/* Loading more indicator */}
+          {loadingMore && (
+            <div className="flex justify-center py-2">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+            </div>
+          )}
+
           {loading ? (
-            <div className="text-center text-gray-400 mt-8">Loading messages...</div>
+            <div className="flex flex-col items-center justify-center h-full space-y-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+              <div className="text-gray-400 text-sm">Loading messages...</div>
+            </div>
           ) : (
-            messages.map((msg, idx) => (
-              <div
-                key={getMessageKey(msg, idx)}
-                className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}
-              >
-                <div className={`flex items-end gap-2`}>
-                  {msg.sender === "me" ? (
-                    <div className="order-2 flex items-center">
-                      <div className="flex items-center justify-center bg-green-600 rounded-full w-7 h-7 mr-1">
-                        {msg.read ? (
-                          <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
-                            <path
-                              d="M14 28L22 36L34 20"
-                              stroke="#fff"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <path
-                              d="M24 28L32 36L44 20"
-                              stroke="#fff"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              opacity="0.8"
-                            />
-                          </svg>
-                        ) : (
-                          <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
-                            <path
-                              d="M14 28L22 36L34 20"
-                              stroke="#fff"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
+            <>
+              {messages.length === 0 ? (
+                <div className="text-center text-gray-400 mt-8 py-4">
+                  No messages yet. Start a conversation!
+                </div>
+              ) : (
+                messages.map((msg, idx) => (
+                  <div
+                    key={getMessageKey(msg, idx)}
+                    className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div className={`flex items-end gap-2`}>
+                      {msg.sender === "me" ? (
+                        <div className="order-2 flex items-center">
+                          <div className="flex items-center justify-center bg-green-600 rounded-full w-7 h-7 mr-1">
+                            {msg.read ? (
+                              <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+                                <path
+                                  d="M14 28L22 36L34 20"
+                                  stroke="#fff"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M24 28L32 36L44 20"
+                                  stroke="#fff"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  opacity="0.8"
+                                />
+                              </svg>
+                            ) : (
+                              <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+                                <path
+                                  d="M14 28L22 36L34 20"
+                                  stroke="#fff"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="order-1 flex items-center">
+                          <div className="flex items-center justify-center bg-emerald-700 rounded-full w-7 h-7 mr-1">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                              <path
+                                d="M17 12H7M7 12l4-4M7 12l4 4"
+                                stroke="#fff"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                      <div
+                        className={`rounded-2xl px-4 py-2 shadow break-words ${msg.sender === "me"
+                          ? "bg-green-600 text-white order-1"
+                          : "bg-white border order-2 text-green-700"
+                          }`}
+                        style={{
+                          wordBreak: "break-word",
+                          minWidth: "0",
+                          maxWidth: "320px",
+                          boxSizing: "border-box",
+                          marginBottom: "2px",
+                          marginTop: "2px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {msg.text}
+                        {msg._id && msg._id.startsWith('temp-') && (
+                          <div className="text-xs mt-1 text-right italic" style={{ color: msg.sender === "me" ? "#bbf7d0" : "#059669" }}>
+                            Sending...
+                          </div>
+                        )}
+                        {!msg._id.startsWith('temp-') && (
+                          <div className="text-xs mt-1 text-right" style={{ color: msg.sender === "me" ? "#bbf7d0" : "#059669" }}>
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </div>
                         )}
                       </div>
                     </div>
-                  ) : (
-                    <div className="order-1 flex items-center">
-                      <div className="flex items-center justify-center bg-emerald-700 rounded-full w-7 h-7 mr-1">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M17 12H7M7 12l4-4M7 12l4 4"
-                            stroke="#fff"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-                  <div
-                    className={`rounded-2xl px-4 py-2 shadow break-words ${msg.sender === "me"
-                      ? "bg-green-600 text-white order-1"
-                      : "bg-white border order-2 text-green-700"
-                      }`}
-                    style={{
-                      wordBreak: "break-word",
-                      minWidth: "0",
-                      maxWidth: "320px",
-                      boxSizing: "border-box",
-                      marginBottom: "2px",
-                      marginTop: "2px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {msg.text}
-                    {msg._id && msg._id.startsWith('temp-') && (
-                      <div className="text-xs mt-1 text-right italic" style={{ color: msg.sender === "me" ? "#bbf7d0" : "#059669" }}>
-                        Sending...
-                      </div>
-                    )}
-                    {!msg._id.startsWith('temp-') && (
-                      <div className="text-xs mt-1 text-right" style={{ color: msg.sender === "me" ? "#bbf7d0" : "#059669" }}>
-                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        {/* REMOVED DUPLICATE CHECKMARKS HERE */}
-                      </div>
-                    )}
                   </div>
-                </div>
-              </div>
-            ))
+                ))
+              )}
+            </>
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -402,7 +454,7 @@ export default function Message({
           type="text"
           placeholder="Type a message..."
           value={newMessage}
-          onChange={e => setNewMessage(e.target.value)}
+          onChange={handleInputChange}
         />
         <button
           type="submit"
