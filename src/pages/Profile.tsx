@@ -326,7 +326,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from_green-100 to-emerald-100">
         <div className="text-center">
           <p className="text-lg text-red-700 font-semibold mb-4">{error || "No profile data found."}</p>
           <button
@@ -341,6 +341,11 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   }
 
   const isPostingAccount = profile.serviceType === "posting";
+
+  // Determine what status is currently displayed (edit vs saved)
+  const displayStatus = editMode ? status : profile.status || "";
+  const isOpenToWork = displayStatus.includes("Open to work");
+  const isNotAvailable = displayStatus.includes("Not available");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
@@ -471,7 +476,16 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
         <div className={`flex flex-col items-center ${isPostingAccount ? "-mt-20 sm:-mt-24" : "pt-8"} pb-8 px-6 sm:px-8`}>
           <div className="relative mb-4">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
+            {/* Render a separate animated ring element behind the avatar so that only the ring blinks.
+                Both green and red rings blink (animate-pulse) as requested; avatar image and badge remain static. */}
+            {isOpenToWork && (
+              <div className="absolute -inset-2 rounded-full pointer-events-none z-0 border-4 border-green-400 animate-pulse" />
+            )}
+            {isNotAvailable && (
+              <div className="absolute -inset-2 rounded-full pointer-events-none z-0 border-4 border-red-400 animate-pulse" />
+            )}
+
+            <div className="relative z-10 w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden" aria-hidden={false} title={displayStatus ? displayStatus : undefined}>
               {previewPic || profile.profilePic ? (
                 <img
                   src={previewPic || profile.profilePic}
@@ -485,9 +499,30 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               )}
             </div>
 
+            {/* small status badge on avatar (green for open, red for not available) - badge stays static */}
+            {isOpenToWork && (
+              <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-500 ring-2 ring-white">
+                  <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </span>
+              </div>
+            )}
+
+            {isNotAvailable && (
+              <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 ring-2 ring-white">
+                  <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-9V6a1 1 0 112 0v3a1 1 0 11-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z" clipRule="evenodd" />
+                  </svg>
+                </span>
+              </div>
+            )}
+
             {editMode && (
               <button
-                className="absolute right-0 bottom-0 px-3 py-2 bg-white bg-opacity-90 text-green-700 rounded-full shadow text-sm font-semibold hover:bg-green-100 transition flex items-center"
+                className="absolute right-0 bottom-0 px-3 py-2 bg-white bg-opacity-90 text-green-700 rounded-full shadow text-sm font-semibold hover:bg-green-100 transition flex items-center z-30"
                 onClick={() => fileInputPic.current?.click()}
               >
                 <Camera size={16} />
@@ -599,9 +634,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                   )}
                 </div>
               ) : (
-                status && (
+                displayStatus && (
                   <span className="inline-block px-4 py-1 bg-yellow-100 text-yellow-900 rounded-full font-semibold text-sm mb-2">
-                    {status}
+                    {displayStatus}
                   </span>
                 )
               )}

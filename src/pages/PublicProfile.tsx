@@ -189,6 +189,16 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
   const getInitial = (name = "") => name.charAt(0).toUpperCase();
 
   // --- Render ---
+  // compute avatar ring + badge based on status
+  const displayStatus = profile?.status || "";
+  const isOpenToWork = displayStatus.toLowerCase().includes("open to work") || displayStatus.includes("✅");
+  const isNotAvailable = displayStatus.toLowerCase().includes("not available") || displayStatus.includes("🛑");
+  // Both green and red rings should blink, but the profile picture and badge must remain static.
+  // We'll render a dedicated absolute ring element (animated) behind the avatar image so only the ring blinks.
+  const ringBaseClass = "absolute -inset-2 rounded-full pointer-events-none z-0";
+  const greenRingClass = `${ringBaseClass} border-4 border-green-400 animate-pulse`;
+  const redRingClass = `${ringBaseClass} border-4 border-red-400 animate-pulse`;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-2">
       {/* Back Button */}
@@ -234,8 +244,14 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
             <div className={`flex flex-col items-center ${profile.serviceType === "posting" ? "-mt-20 sm:-mt-24" : "pt-8"} pb-8 px-6 sm:px-8`}>
               {/* Avatar */}
               <div className="relative mb-4">
-                <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
+                {/* Animated ring element (behind the avatar). It blinks via animate-pulse while avatar image stays static */}
+                {isOpenToWork && <div className={greenRingClass} aria-hidden />}
+                {isNotAvailable && <div className={redRingClass} aria-hidden />}
+
+                {/* Avatar container (on top of ring) */}
+                <div className="relative z-10 w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
                   {profile.profilePic ? (
+                    // ensure avatar image has no animation classes so it does not blink
                     <img src={profile.profilePic} alt="Profile" className="object-cover w-full h-full" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-green-400 to-emerald-400 flex items-center justify-center text-6xl font-bold text-white">
@@ -243,14 +259,25 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                     </div>
                   )}
                 </div>
-                {/* STATUS BADGE */}
-                {profile.status && (
-                  <span
-                    className="absolute bottom-0 right-0 mb-2 mr-2 bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow"
-                    title="Status"
-                  >
-                    {profile.status}
-                  </span>
+
+                {/* STATUS BADGE (small) - static, no blinking */}
+                {isOpenToWork && (
+                  <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
+                    <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-500 ring-2 ring-white" title="Open to work">
+                      <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  </div>
+                )}
+                {isNotAvailable && (
+                  <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
+                    <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 ring-2 ring-white" title="Not available">
+                      <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-9V6a1 1 0 112 0v3a1 1 0 11-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  </div>
                 )}
               </div>
               {/* Info */}
@@ -278,10 +305,14 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                     </a>
                   )}
                 </div>
-                {/* STATUS TEXT UNDER NAME */}
+
+                {/* STATUS TEXT BEFORE JOINED DATE */}
                 {profile.status && (
-                  <div className="text-emerald-700 font-semibold mb-2 text-sm">{profile.status}</div>
+                  <div className={`font-semibold mb-2 text-sm ${isOpenToWork ? "text-emerald-700" : isNotAvailable ? "text-red-700" : "text-gray-700"}`}>
+                    {profile.status}
+                  </div>
                 )}
+
                 <p className="text-gray-500 text-sm">
                   Joined:{" "}
                   {profile.createdAt &&
