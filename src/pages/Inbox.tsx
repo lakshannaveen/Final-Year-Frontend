@@ -16,6 +16,7 @@ interface ChatSummary {
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
+  recipientStatus?: string; // <-- add status for blinking
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -34,6 +35,53 @@ function ChatSkeleton() {
       </div>
       <div className="w-10 h-3 bg-gray-200 rounded" />
     </div>
+  );
+}
+
+// Helper for blinking ring
+function getRingClass(status?: string) {
+  if (!status) return "";
+  const lower = status.toLowerCase();
+  if (lower.includes("open to work") || status.includes("✅"))
+    return "border-4 border-green-400 animate-pulse";
+  if (lower.includes("not available") || status.includes("🛑"))
+    return "border-4 border-red-400 animate-pulse";
+  return "";
+}
+
+// Profile avatar with blinking ring
+function ProfilePicCircle({
+  profilePic,
+  username,
+  status,
+}: {
+  profilePic?: string;
+  username: string;
+  status?: string;
+}) {
+  const ringClass = getRingClass(status);
+  return (
+    <span className="relative w-12 h-12 flex items-center justify-center">
+      {ringClass && (
+        <span
+          className={`absolute -inset-1 rounded-full pointer-events-none z-0 ${ringClass}`}
+          aria-hidden
+        ></span>
+      )}
+      {profilePic ? (
+        <img
+          src={profilePic}
+          alt={username}
+          className="w-12 h-12 rounded-full object-cover border border-green-300 z-10 bg-white"
+          width={48}
+          height={48}
+        />
+      ) : (
+        <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold border border-green-300 z-10">
+          {username?.charAt(0).toUpperCase()}
+        </div>
+      )}
+    </span>
   );
 }
 
@@ -79,6 +127,7 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
       }
       
       const data = await res.json();
+      // If backend is not returning status, you can extend this mapping here if needed.
       setChats(data.chats || []);
     } catch (e) {
       setError("Unexpected error: " + (e as Error).message);
@@ -118,12 +167,6 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
       {/* Navbar first */}
       <Navbar currentView={currentView} setCurrentView={setCurrentView} />
 
-      {/* Header */}
-      <div className="max-w-2xl mx-auto px-4 py-4">
-        <h1 className="text-2xl font-bold text-green-900">Messages</h1>
-        <p className="text-gray-600 mt-1">Your conversations</p>
-      </div>
-
       {/* Chats */}
       <div className="max-w-2xl mx-auto py-4 px-2">
         {loading ? (
@@ -148,20 +191,11 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
                   handleOpenChat(chat.recipientId, chat.recipientUsername, chat.recipientProfilePic);
                 }}
               >
-                {chat.recipientProfilePic ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={chat.recipientProfilePic}
-                    alt={chat.recipientUsername}
-                    className="w-12 h-12 rounded-full object-cover border border-green-300"
-                    width={48}
-                    height={48}
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold border border-green-300">
-                    {chat.recipientUsername?.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <ProfilePicCircle
+                  profilePic={chat.recipientProfilePic}
+                  username={chat.recipientUsername}
+                  status={chat.recipientStatus}
+                />
                 <div className="flex-1 text-left min-w-0">
                   <div className="font-semibold text-lg text-green-900 truncate">
                     {chat.recipientUsername}
