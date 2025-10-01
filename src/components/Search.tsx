@@ -8,6 +8,7 @@ interface FeedUser {
   profilePic?: string;
   location?: string;
   serviceType?: string;
+  status?: string; // <-- To enable blinking ring
 }
 
 interface FeedItem {
@@ -35,7 +36,6 @@ interface SearchProps {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-// Example searches for dropdown when focusing search
 const EXAMPLE_SEARCHES = [
   "Plumber near Galle",
   "Electrician Colombo",
@@ -44,6 +44,17 @@ const EXAMPLE_SEARCHES = [
   "Driver Matara",
   "Gardener Jaffna"
 ];
+
+// --- Helper: blinking ring class
+const getRingClass = (status?: string) => {
+  if (!status) return "";
+  const lower = status.toLowerCase();
+  if (lower.includes("open to work") || status.includes("✅"))
+    return "border-4 border-green-400 animate-pulse";
+  if (lower.includes("not available") || status.includes("🛑"))
+    return "border-4 border-red-400 animate-pulse";
+  return "";
+};
 
 export default function Search({
   value,
@@ -79,7 +90,6 @@ export default function Search({
     checkAIStatus();
   }, []);
 
-  // Click outside dropdown closes suggestions
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -91,7 +101,6 @@ export default function Search({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch keyword suggestions
   useEffect(() => {
     if (!input.trim() || input.length < 2) {
       setSearchSuggestions([]);
@@ -112,7 +121,6 @@ export default function Search({
     return () => clearTimeout(timer);
   }, [input]);
 
-  // Fetch feed suggestions
   useEffect(() => {
     if (!input.trim()) {
       setSuggestions([]);
@@ -271,17 +279,42 @@ export default function Search({
     else return "Location";
   }
 
-  // This function checks if the user scrolled the dropdown to the bottom
   function handleDropdownScroll(e: React.UIEvent<HTMLDivElement>) {
     const target = e.target as HTMLDivElement;
-    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 4) { // allow 4px fudge factor
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 4) {
       setShowSuggestions(false);
       setShowExampleDropdown(false);
     }
   }
 
+  // --- Helper for blinking ring in search dropdown ---
+  function renderProfilePicWithRing(user: FeedUser) {
+    const ringClass = getRingClass(user.status);
+    return (
+      <span className="relative w-10 h-10 flex items-center justify-center">
+        {ringClass && (
+          <span
+            className={`absolute -inset-1 rounded-full pointer-events-none z-0 ${ringClass}`}
+            aria-hidden
+          ></span>
+        )}
+        {user.profilePic ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={user.profilePic}
+            alt={user.username}
+            className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 z-10 bg-white"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-lg border-2 border-gray-300 z-10">
+            {user.username?.[0]?.toUpperCase() || "?"}
+          </div>
+        )}
+      </span>
+    );
+  }
+
   return (
-    // Make sure your search bar container is just below your navbar with no overlap.
     <div className="relative w-full" ref={dropdownRef}>
       <form
         className="flex items-center gap-2 bg-white border border-gray-300 rounded-xl shadow-lg px-4 py-3 hover:shadow-xl transition-shadow focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-200"
@@ -298,7 +331,6 @@ export default function Search({
           disabled={loading}
           onFocus={handleFocus}
         />
-        {/* Clear button (cut mark) */}
         {input.trim() && (
           <button
             type="button"
@@ -325,7 +357,6 @@ export default function Search({
           )}
         </button>
       </form>
-      {/* Example searches dropdown when focusing on empty input or after clear */}
       {showExampleDropdown && (
         <div
           className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-30"
@@ -351,7 +382,6 @@ export default function Search({
           ))}
         </div>
       )}
-      {/* Suggestions Dropdown */}
       {showSuggestions && (suggestions.length > 0 || searchSuggestions.length > 0 || suggestLoading || nearYou.length > 0) && (
         <div
           className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-2xl rounded-xl z-30 max-h-96 overflow-y-auto"
@@ -377,18 +407,7 @@ export default function Search({
                   onClick={() => handleSelectSuggestion(sug)}
                   type="button"
                 >
-                  {sug.user?.profilePic ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={sug.user.profilePic}
-                      alt={sug.user.username}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 group-hover:border-green-500 transition-colors"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-lg border-2 border-gray-300 group-hover:border-green-500 transition-colors">
-                      {sug.user?.username?.[0]?.toUpperCase() || "?"}
-                    </div>
-                  )}
+                  {renderProfilePicWithRing(sug.user)}
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-gray-900 truncate group-hover:text-green-700 transition-colors">{sug.title}</div>
                     <div className="text-xs text-gray-600 flex items-center gap-2 mt-1">
@@ -449,18 +468,7 @@ export default function Search({
                   onClick={() => handleSelectSuggestion(sug)}
                   type="button"
                 >
-                  {sug.user?.profilePic ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={sug.user.profilePic}
-                      alt={sug.user.username}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 group-hover:border-green-500 transition-colors"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-lg border-2 border-gray-300 group-hover:border-green-500 transition-colors">
-                      {sug.user?.username?.[0]?.toUpperCase() || "?"}
-                    </div>
-                  )}
+                  {renderProfilePicWithRing(sug.user)}
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-gray-900 truncate group-hover:text-green-700 transition-colors">{sug.title}</div>
                     <div className="text-xs text-gray-600 flex items-center gap-2 mt-1">
@@ -490,7 +498,6 @@ export default function Search({
           )}
         </div>
       )}
-      {/* No Results */}
       {showSuggestions && !suggestions.length && !searchSuggestions.length && !suggestLoading && !error && !nearYou.length && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 shadow-lg rounded-xl z-30 px-4 py-4 text-gray-500 text-center">
           <div className="flex items-center justify-center gap-2">
@@ -499,7 +506,6 @@ export default function Search({
           </div>
         </div>
       )}
-      {/* Error Message */}
       {error && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-red-50 border border-red-200 shadow-lg rounded-xl z-30 overflow-hidden">
           <div className="px-4 py-3">
