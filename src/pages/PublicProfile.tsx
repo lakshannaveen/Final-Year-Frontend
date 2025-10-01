@@ -23,6 +23,7 @@ interface UserProfile {
   bio?: string;
   profilePic?: string;
   coverImage?: string;
+  status?: string; // <-- ADDED HERE
 }
 
 interface FeedUser {
@@ -242,6 +243,15 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                     </div>
                   )}
                 </div>
+                {/* STATUS BADGE */}
+                {profile.status && (
+                  <span
+                    className="absolute bottom-0 right-0 mb-2 mr-2 bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow"
+                    title="Status"
+                  >
+                    {profile.status}
+                  </span>
+                )}
               </div>
               {/* Info */}
               <div className="w-full text-center mb-6">
@@ -268,6 +278,10 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                     </a>
                   )}
                 </div>
+                {/* STATUS TEXT UNDER NAME */}
+                {profile.status && (
+                  <div className="text-emerald-700 font-semibold mb-2 text-sm">{profile.status}</div>
+                )}
                 <p className="text-gray-500 text-sm">
                   Joined:{" "}
                   {profile.createdAt &&

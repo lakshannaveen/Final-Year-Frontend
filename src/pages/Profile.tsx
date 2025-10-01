@@ -12,6 +12,7 @@ import {
   Phone,
   Link as LinkIcon,
   LogOut,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "../components/AuthContext";
 import ProfileFeed from "./ProfileFeed"; // Import ProfileFeed at the bottom
@@ -27,6 +28,7 @@ interface UserProfile {
   bio?: string;
   profilePic?: string;
   coverImage?: string;
+  status?: string;
 }
 
 interface ProfileProps {
@@ -50,6 +52,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const [bio, setBio] = useState("");
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState("");
+  const [status, setStatus] = useState("");
   const [profilePic, setProfilePic] = useState<File | null>(null);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [previewPic, setPreviewPic] = useState("");
@@ -58,6 +61,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const [success, setSuccess] = useState("");
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
 
   const { logout } = useAuth();
 
@@ -91,6 +96,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           setBio(data.user.bio || "");
           setPhone(data.user.phone || "");
           setWebsite(data.user.website || "");
+          setStatus(data.user.status || "");
           setPreviewPic(data.user.profilePic || "");
           setPreviewCover(data.user.coverImage || "");
         } else {
@@ -191,6 +197,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         username,
         bio,
         profilePic: profilePicUrl,
+        status,
       };
 
       if (isPostingAccount) {
@@ -218,6 +225,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         revokeObjectUrl(coverObjectUrlRef);
         setPreviewPic(data.user.profilePic || "");
         setPreviewCover(data.user.coverImage || "");
+        setStatus(data.user.status || "");
 
         setSuccess("Profile updated successfully!");
         setTimeout(() => setSuccess(""), 3000);
@@ -225,6 +233,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         setError(
           data.errors?.username ||
             data.errors?.server ||
+            data.errors?.status ||
             "Failed to update profile."
         );
       }
@@ -248,6 +257,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     setBio(profile?.bio || "");
     setPhone(profile?.phone || "");
     setWebsite(profile?.website || "");
+    setStatus(profile?.status || "");
     setProfilePic(null);
     setCoverImage(null);
     setShowShareOptions(false);
@@ -285,6 +295,13 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const validateUsername = (name: string) => {
     return name.trim().length >= 2 && name.trim().length <= 10;
   };
+
+  // Only two status options + none
+  const statusOptions = [
+    "",
+    "✅ Open to work",
+    "🛑 Not available",
+  ];
 
   if (loading) {
     return (
@@ -529,6 +546,64 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                   <Globe size={14} className="mr-1" />
                   Website
                 </a>
+              )}
+            </div>
+
+            {/* Status section */}
+            <div className="mb-4">
+              {editMode ? (
+                <div className="flex flex-col items-center">
+                  <label className="block text-green-800 font-semibold mb-2">
+                    Status
+                  </label>
+                  <div className="relative w-[260px]">
+                    <button
+                      type="button"
+                      className="w-full flex justify-between items-center px-4 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-400 text-gray-800 bg-white"
+                      onClick={() => setStatusDropdownOpen((o) => !o)}
+                      onBlur={() => setTimeout(() => setStatusDropdownOpen(false), 150)}
+                    >
+                      <span>
+                        {statusOptions.find((s) => s === status) === undefined || status === ""
+                          ? "None"
+                          : status}
+                      </span>
+                      <ChevronDown size={18} className="ml-2 text-green-700" />
+                    </button>
+                    {statusDropdownOpen && (
+                      <div className="absolute z-20 w-full mt-2 bg-white border border-green-200 rounded-lg shadow">
+                        {statusOptions.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            className={`block w-full text-left px-4 py-2 hover:bg-green-50 text-gray-800 ${
+                              status === option
+                                ? "bg-green-100 font-semibold"
+                                : ""
+                            }`}
+                            onClick={() => {
+                              setStatus(option);
+                              setStatusDropdownOpen(false);
+                            }}
+                          >
+                            {option === "" ? "None" : option}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {status && status.length > 32 && (
+                    <span className="text-red-500 text-sm">
+                      Status must be 32 characters or less.
+                    </span>
+                  )}
+                </div>
+              ) : (
+                status && (
+                  <span className="inline-block px-4 py-1 bg-yellow-100 text-yellow-900 rounded-full font-semibold text-sm mb-2">
+                    {status}
+                  </span>
+                )
               )}
             </div>
 
