@@ -16,6 +16,8 @@ interface AppUser {
   username?: string;
   profilePic?: string;
   serviceType?: string;
+  id?: string;
+  status?: string;
   [key: string]: string | undefined;
 }
 
@@ -45,6 +47,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [userStatus, setUserStatus] = useState<string>("");
   const avatarLetter = user?.username ? user.username.charAt(0).toUpperCase() : null;
 
   // AI Chatbox state
@@ -54,12 +57,12 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
   // Fetch unread message count
   const fetchUnreadCount = useCallback(async () => {
     if (!user) return;
-    
+
     try {
       const res = await fetch(`${API_URL}/api/messages/unread-count`, {
         credentials: "include",
       });
-      
+
       if (res.ok) {
         const data = await res.json();
         setUnreadCount(data.unreadCount || 0);
@@ -67,7 +70,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
     } catch (error) {
       console.error("Failed to fetch unread count:", error);
     }
-  }, [user, API_URL]);
+  }, [user]);
 
   // Always fetch initial usage on mount
   const fetchAIUsage = useCallback(async () => {
@@ -78,7 +81,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
         setUsage({ uses: data.uses, max: data.max });
       }
     } catch { }
-  }, [API_URL]);
+  }, []);
 
   useEffect(() => {
     fetchAIUsage();
@@ -95,7 +98,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
   useEffect(() => {
     if (!user) return;
 
-    socket = io(SOCKET_SERVER_URL, { 
+    socket = io(SOCKET_SERVER_URL, {
       withCredentials: true,
       transports: ['websocket', 'polling']
     });
@@ -123,7 +126,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
   const handleNavClick = (view: string) => {
     setCurrentView(view);
     setMenuOpen(false);
-    
+
     // Reset unread count when opening inbox
     if (view === "inbox") {
       setUnreadCount(0);
@@ -139,16 +142,17 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
 
   useEffect(() => {
     let ignore = false;
-    const loadAvatar = async () => {
+    const loadAvatarAndStatus = async () => {
       if (!user) {
         setAvatarUrl("");
+        setUserStatus("");
         return;
       }
       const picFromAuth = getProfilePicFromUser(user);
       if (picFromAuth) {
         setAvatarUrl(picFromAuth);
-        return;
       }
+      // Try to fetch profile (may include status)
       try {
         const res = await fetch(`${API_URL}/api/profile`, {
           method: "GET",
@@ -156,16 +160,28 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
         });
         if (!res.ok) return;
         const data = await res.json();
-        if (!ignore) setAvatarUrl(data?.user?.profilePic || "");
+        if (!ignore) {
+          setAvatarUrl(data?.user?.profilePic || (picFromAuth || ""));
+          setUserStatus(data?.user?.status || "");
+        }
       } catch { }
     };
-    loadAvatar();
+    loadAvatarAndStatus();
     return () => {
       ignore = true;
     };
-  }, [API_URL, user]);
+  }, [user]);
 
   const isProvider = user?.serviceType === "posting";
+
+  // Determine visual status
+  const displayStatus = userStatus || "";
+  const isOpenToWork = displayStatus.toLowerCase().includes("open to work") || displayStatus.includes("✅");
+  const isNotAvailable = displayStatus.toLowerCase().includes("not available") || displayStatus.includes("🛑");
+
+  // ring classes (we render the ring behind avatar so avatar doesn't blink)
+  const ringGreen = "absolute -inset-2 rounded-full pointer-events-none z-0 border-4 border-green-400 animate-pulse";
+  const ringRed = "absolute -inset-2 rounded-full pointer-events-none z-0 border-4 border-red-400 animate-pulse";
 
   // Skeleton loading bar
   if (loading) {
@@ -268,14 +284,14 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 <button
                   onClick={() => handleNavClick("profile")}
                   aria-label="Profile"
-                  className={`relative flex items-center justify-center rounded-full p-[2px] transition-all ${
-                    currentView === "profile"
-                      ? "ring-2 ring-emerald-400 shadow-lg"
-                      : "ring-2 ring-white/20 hover:ring-emerald-300 hover:shadow-lg"
-                  }`}
+                  className={`relative flex items-center justify-center rounded-full p-[2px] transition-all ${currentView === "profile" ? "shadow-lg" : ""}`}
                 >
+                  {/* Render ring behind avatar (animated) when status exists */}
+                  {isOpenToWork && <div className={ringGreen} aria-hidden />}
+                  {isNotAvailable && <div className={ringRed} aria-hidden />}
+
                   {avatarUrl ? (
-                    <span className="block w-8 h-8 rounded-full overflow-hidden bg-white shadow-inner">
+                    <span className="relative z-10 block w-8 h-8 rounded-full overflow-hidden bg-white shadow-inner">
                       <img
                         src={avatarUrl}
                         alt="Profile avatar"
@@ -287,7 +303,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                       />
                     </span>
                   ) : avatarLetter ? (
-                    <span className="w-8 h-8 rounded-full bg-white text-green-700 flex items-center justify-center font-bold shadow-inner">
+                    <span className="relative z-10 w-8 h-8 rounded-full bg-white text-green-700 flex items-center justify-center font-bold shadow-inner">
                       {avatarLetter}
                     </span>
                   ) : (
@@ -304,11 +320,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                   </button>
                   <button
                     onClick={() => handleNavClick("register")}
-                    className={`px-4 py-2 rounded-lg border-2 border-white font-semibold hover:bg-white hover:text-green-700 transition-all ${
-                      currentView === "register"
-                        ? "bg-white text-green-700"
-                        : "text-white"
-                    }`}
+                    className={`px-4 py-2 rounded-lg border-2 border-white font-semibold hover:bg-white hover:text-green-700 transition-all ${currentView === "register" ? "bg-white text-green-700" : "text-white"}`}
                   >
                     Register
                   </button>
@@ -353,14 +365,14 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 <button
                   onClick={() => handleNavClick("profile")}
                   aria-label="Profile"
-                  className={`relative flex items-center justify-center rounded-full p-[2px] transition-all ${
-                    currentView === "profile"
-                      ? "ring-2 ring-emerald-400 shadow-lg"
-                      : "ring-2 ring-white/20 hover:ring-emerald-300 hover:shadow-lg"
-                  }`}
+                  className="relative flex items-center justify-center rounded-full p-[2px] transition-all"
                 >
+                  {/* ring for mobile avatar */}
+                  {isOpenToWork && <div className={ringGreen} aria-hidden />}
+                  {isNotAvailable && <div className={ringRed} aria-hidden />}
+
                   {avatarUrl ? (
-                    <span className="block w-8 h-8 rounded-full overflow-hidden bg-white shadow-inner">
+                    <span className="relative z-10 block w-8 h-8 rounded-full overflow-hidden bg-white shadow-inner">
                       <img
                         src={avatarUrl}
                         alt="Profile avatar"
@@ -372,7 +384,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                       />
                     </span>
                   ) : avatarLetter ? (
-                    <span className="w-8 h-8 rounded-full bg-white text-green-700 flex items-center justify-center font-bold shadow-inner">
+                    <span className="relative z-10 w-8 h-8 rounded-full bg-white text-green-700 flex items-center justify-center font-bold shadow-inner">
                       {avatarLetter}
                     </span>
                   ) : (
@@ -397,9 +409,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
               <div className="bg-gradient-to-b from-green-800 to-emerald-700 text-white flex flex-col gap-2 px-4 py-4 rounded-lg border border-green-600">
                 <button
                   onClick={() => handleNavClick("home")}
-                  className={`w-full text-center py-3 rounded-lg ${
-                    currentView === "home" ? activeLink : inactiveLink
-                  }`}
+                  className={`w-full text-center py-3 rounded-lg ${currentView === "home" ? activeLink : inactiveLink}`}
                 >
                   Home
                 </button>
@@ -409,9 +419,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                       handleNavClick("post");
                       setMenuOpen(false);
                     }}
-                    className={`w-full text-center py-3 rounded-lg ${
-                      currentView === "post" ? activeLink : inactiveLink
-                    }`}
+                    className={`w-full text-center py-3 rounded-lg ${currentView === "post" ? activeLink : inactiveLink}`}
                   >
                     Post a Service
                   </button>
@@ -421,9 +429,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                     handleNavClick("inbox");
                     setMenuOpen(false);
                   }}
-                  className={`w-full text-center flex items-center justify-center gap-2 py-3 rounded-lg relative ${
-                    currentView === "inbox" ? activeLink : inactiveLink
-                  }`}
+                  className={`w-full text-center flex items-center justify-center gap-2 py-3 rounded-lg relative ${currentView === "inbox" ? activeLink : inactiveLink}`}
                   aria-label="Inbox"
                 >
                   <Mail size={20} /> Inbox
@@ -454,11 +460,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                         handleNavClick("signin");
                         setMenuOpen(false);
                       }}
-                      className={`w-full px-4 py-3 rounded-lg font-semibold text-center transition-all border ${
-                        currentView === "signin"
-                          ? "bg-white text-green-700"
-                          : "bg-white text-green-800 hover:bg-green-50 hover:text-green-900"
-                      }`}
+                      className={`w-full px-4 py-3 rounded-lg font-semibold text-center transition-all border ${currentView === "signin" ? "bg-white text-green-700" : "bg-white text-green-800 hover:bg-green-50 hover:text-green-900"}`}
                     >
                       Sign In
                     </button>
@@ -467,11 +469,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                         handleNavClick("register");
                         setMenuOpen(false);
                       }}
-                      className={`w-full px-4 py-3 rounded-lg border-2 font-semibold text-center transition-all ${
-                        currentView === "register"
-                          ? "bg-white text-green-700 border-white"
-                          : "text-white border-white hover:bg-white hover:text-green-700"
-                      }`}
+                      className={`w-full px-4 py-3 rounded-lg border-2 font-semibold text-center transition-all ${currentView === "register" ? "bg-white text-green-700 border-white" : "text-white border-white hover:bg-white hover:text-green-700"}`}
                     >
                       Register
                     </button>
