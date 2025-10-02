@@ -72,6 +72,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const objectUrlRef = useRef<string | null>(null);
   const coverObjectUrlRef = useRef<string | null>(null);
 
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+
   const revokeObjectUrl = (ref: React.MutableRefObject<string | null>) => {
     if (ref.current) {
       URL.revokeObjectURL(ref.current);
@@ -114,6 +116,22 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       revokeObjectUrl(coverObjectUrlRef);
     };
   }, []);
+
+  // Fix: Close dropdown on outside click
+  useEffect(() => {
+    if (!statusDropdownOpen) return;
+
+    const handleClick = (e: MouseEvent) => {
+      if (
+        statusDropdownRef.current &&
+        !statusDropdownRef.current.contains(e.target as Node)
+      ) {
+        setStatusDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [statusDropdownOpen]);
 
   // Preview image uploads
   const handlePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -587,7 +605,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
             {/* Status section - Only show and allow editing for posting accounts */}
             {isPostingAccount && (
-              <div className="mb-4">
+              <div className="mb-4" ref={statusDropdownRef}>
                 {editMode ? (
                   <div className="flex flex-col items-center">
                     <label className="block text-green-800 font-semibold mb-2">
@@ -598,7 +616,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                         type="button"
                         className="w-full flex justify-between items-center px-4 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-400 text-gray-800 bg-white"
                         onClick={() => setStatusDropdownOpen((o) => !o)}
-                        onBlur={() => setTimeout(() => setStatusDropdownOpen(false), 150)}
+                        aria-haspopup="listbox"
+                        aria-expanded={statusDropdownOpen}
+                        tabIndex={0}
                       >
                         <span>
                           {statusOptions.find((s) => s === status) === undefined || status === ""
