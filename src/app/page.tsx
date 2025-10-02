@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuthProvider } from "../components/AuthContext";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
@@ -25,6 +25,11 @@ export default function Page() {
   const [feedScrollPos, setFeedScrollPos] = useState(0);
   const saveScrollPosition = (pos: number) => setFeedScrollPos(pos);
   const getSavedScrollPosition = () => feedScrollPos;
+
+  // --- SCROLL TO TOP ON VIEW CHANGE ---
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [currentView]);
 
   // Show public profile handler
   const handleShowPublicProfile = (userId: string) => {
