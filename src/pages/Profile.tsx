@@ -197,10 +197,11 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         username,
         bio,
         profilePic: profilePicUrl,
-        status,
       };
 
+      // Only allow status update for posting accounts
       if (isPostingAccount) {
+        body.status = status;
         body.phone = phone;
         body.website = normalizeWebsite(website);
         body.coverImage = coverImageUrl;
@@ -584,63 +585,65 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               )}
             </div>
 
-            {/* Status section */}
-            <div className="mb-4">
-              {editMode ? (
-                <div className="flex flex-col items-center">
-                  <label className="block text-green-800 font-semibold mb-2">
-                    Status
-                  </label>
-                  <div className="relative w-[260px]">
-                    <button
-                      type="button"
-                      className="w-full flex justify-between items-center px-4 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-400 text-gray-800 bg-white"
-                      onClick={() => setStatusDropdownOpen((o) => !o)}
-                      onBlur={() => setTimeout(() => setStatusDropdownOpen(false), 150)}
-                    >
-                      <span>
-                        {statusOptions.find((s) => s === status) === undefined || status === ""
-                          ? "None"
-                          : status}
+            {/* Status section - Only show and allow editing for posting accounts */}
+            {isPostingAccount && (
+              <div className="mb-4">
+                {editMode ? (
+                  <div className="flex flex-col items-center">
+                    <label className="block text-green-800 font-semibold mb-2">
+                      Status
+                    </label>
+                    <div className="relative w-[260px]">
+                      <button
+                        type="button"
+                        className="w-full flex justify-between items-center px-4 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-400 text-gray-800 bg-white"
+                        onClick={() => setStatusDropdownOpen((o) => !o)}
+                        onBlur={() => setTimeout(() => setStatusDropdownOpen(false), 150)}
+                      >
+                        <span>
+                          {statusOptions.find((s) => s === status) === undefined || status === ""
+                            ? "None"
+                            : status}
+                        </span>
+                        <ChevronDown size={18} className="ml-2 text-green-700" />
+                      </button>
+                      {statusDropdownOpen && (
+                        <div className="absolute z-20 w-full mt-2 bg-white border border-green-200 rounded-lg shadow">
+                          {statusOptions.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              className={`block w-full text-left px-4 py-2 hover:bg-green-50 text-gray-800 ${
+                                status === option
+                                  ? "bg-green-100 font-semibold"
+                                  : ""
+                              }`}
+                              onClick={() => {
+                                setStatus(option);
+                                setStatusDropdownOpen(false);
+                              }}
+                            >
+                              {option === "" ? "None" : option}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {status && status.length > 32 && (
+                      <span className="text-red-500 text-sm">
+                        Status must be 32 characters or less.
                       </span>
-                      <ChevronDown size={18} className="ml-2 text-green-700" />
-                    </button>
-                    {statusDropdownOpen && (
-                      <div className="absolute z-20 w-full mt-2 bg-white border border-green-200 rounded-lg shadow">
-                        {statusOptions.map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            className={`block w-full text-left px-4 py-2 hover:bg-green-50 text-gray-800 ${
-                              status === option
-                                ? "bg-green-100 font-semibold"
-                                : ""
-                            }`}
-                            onClick={() => {
-                              setStatus(option);
-                              setStatusDropdownOpen(false);
-                            }}
-                          >
-                            {option === "" ? "None" : option}
-                          </button>
-                        ))}
-                      </div>
                     )}
                   </div>
-                  {status && status.length > 32 && (
-                    <span className="text-red-500 text-sm">
-                      Status must be 32 characters or less.
+                ) : (
+                  displayStatus && (
+                    <span className="inline-block px-4 py-1 bg-yellow-100 text-yellow-900 rounded-full font-semibold text-sm mb-2">
+                      {displayStatus}
                     </span>
-                  )}
-                </div>
-              ) : (
-                displayStatus && (
-                  <span className="inline-block px-4 py-1 bg-yellow-100 text-yellow-900 rounded-full font-semibold text-sm mb-2">
-                    {displayStatus}
-                  </span>
-                )
-              )}
-            </div>
+                  )
+                )}
+              </div>
+            )}
 
             <p className="text-gray-500 text-sm">
               Joined:{" "}
