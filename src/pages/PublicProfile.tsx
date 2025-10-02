@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Globe, Phone, Image as ImageIcon, MessageCircle } from "lucide-react";
+import ReviewSection from "./Review";
 
 interface NavigationData {
   recipientId?: string;
@@ -23,7 +24,7 @@ interface UserProfile {
   bio?: string;
   profilePic?: string;
   coverImage?: string;
-  status?: string; // <-- ADDED HERE
+  status?: string;
 }
 
 interface FeedUser {
@@ -167,7 +168,6 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
       });
   }, [page, userId]);
 
-  // --- Modal helpers ---
   let photoPressTimer: NodeJS.Timeout | null = null;
   const handlePhotoMouseDown = (photoUrl: string, alt: string) => {
     photoPressTimer = setTimeout(() => {
@@ -188,13 +188,9 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
   const closeModal = () => { setShowPhotoModal(false); setModalPhotoUrl(null); setModalPhotoAlt(""); };
   const getInitial = (name = "") => name.charAt(0).toUpperCase();
 
-  // --- Render ---
-  // compute avatar ring + badge based on status
   const displayStatus = profile?.status || "";
   const isOpenToWork = displayStatus.toLowerCase().includes("open to work") || displayStatus.includes("✅");
   const isNotAvailable = displayStatus.toLowerCase().includes("not available") || displayStatus.includes("🛑");
-  // Both green and red rings should blink, but the profile picture and badge must remain static.
-  // We'll render a dedicated absolute ring element (animated) behind the avatar image so only the ring blinks.
   const ringBaseClass = "absolute -inset-2 rounded-full pointer-events-none z-0";
   const greenRingClass = `${ringBaseClass} border-4 border-green-400 animate-pulse`;
   const redRingClass = `${ringBaseClass} border-4 border-red-400 animate-pulse`;
@@ -244,14 +240,13 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
             <div className={`flex flex-col items-center ${profile.serviceType === "posting" ? "-mt-20 sm:-mt-24" : "pt-8"} pb-8 px-6 sm:px-8`}>
               {/* Avatar */}
               <div className="relative mb-4">
-                {/* Animated ring element (behind the avatar). It blinks via animate-pulse while avatar image stays static */}
+                {/* Animated ring element */}
                 {isOpenToWork && <div className={greenRingClass} aria-hidden />}
                 {isNotAvailable && <div className={redRingClass} aria-hidden />}
 
-                {/* Avatar container (on top of ring) */}
+                {/* Avatar container */}
                 <div className="relative z-10 w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
                   {profile.profilePic ? (
-                    // ensure avatar image has no animation classes so it does not blink
                     <img src={profile.profilePic} alt="Profile" className="object-cover w-full h-full" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-green-400 to-emerald-400 flex items-center justify-center text-6xl font-bold text-white">
@@ -260,7 +255,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                   )}
                 </div>
 
-                {/* STATUS BADGE (small) - static, no blinking */}
+                {/* STATUS BADGE */}
                 {isOpenToWork && (
                   <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
                     <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-500 ring-2 ring-white" title="Open to work">
@@ -380,6 +375,10 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
           </>
         )}
       </div>
+
+      {/* REVIEWS SECTION */}
+      <ReviewSection userId={userId} />
+
       {/* FEEDS LIST */}
       <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-8">
         <h3 className="text-2xl font-bold text-green-700 mb-6 text-center">
@@ -499,7 +498,6 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
             </div>
           ))
         )}
-        {/* Loader Skeleton for infinite scroll */}
         {feedLoading && feeds.length > 0 && (
           [...Array(PAGE_SIZE)].map((_, i) => <FeedSkeleton key={`skel-${i}`} />)
         )}
