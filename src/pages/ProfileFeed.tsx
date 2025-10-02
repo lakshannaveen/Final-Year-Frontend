@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { useEffect, useState } from "react";
+import { Star } from "lucide-react";
 
 // --- Interfaces ---
 interface FeedUser {
@@ -23,6 +24,11 @@ interface FeedItem {
   websiteLink?: string;
   description?: string;
   createdAt: string;
+}
+
+interface ReviewStats {
+  averageRating: number;
+  totalReviews: number;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -121,6 +127,9 @@ export default function ProfileFeed() {
   // Success Modal State
   const [successModal, setSuccessModal] = useState<{ show: boolean, message: string }>({ show: false, message: "" });
 
+  // Review stats cache: userId -> stats
+  const [reviewStatsMap, setReviewStatsMap] = useState<Record<string, ReviewStats>>({});
+
   // Infinite scroll: fetch more when bottom comes into view
   useEffect(() => {
     const handleScroll = () => {
@@ -140,6 +149,28 @@ export default function ProfileFeed() {
   useEffect(() => {
     fetchMyFeeds(page);
   }, [page]);
+
+  // Fetch review stats for the user (owner) on this profile
+  useEffect(() => {
+    // Get all unique userIds for the current feeds (should be the same user, but future-proof)
+    const uniqueUserIds = new Set<string>();
+    feeds.forEach(feed => {
+      if (feed.user && feed.user._id && !(feed.user._id in reviewStatsMap)) {
+        uniqueUserIds.add(feed.user._id);
+      }
+    });
+    uniqueUserIds.forEach(async userId => {
+      const res = await fetch(`${API_URL}/api/reviews/user/${userId}`);
+      const data = await res.json();
+      setReviewStatsMap(prev => ({
+        ...prev,
+        [userId]: {
+          averageRating: typeof data.averageRating === "number" ? data.averageRating : 0,
+          totalReviews: typeof data.totalReviews === "number" ? data.totalReviews : 0,
+        },
+      }));
+    });
+  }, [feeds]);
 
   async function fetchMyFeeds(pageNum: number) {
     setLoading(true);
@@ -284,6 +315,7 @@ export default function ProfileFeed() {
         ) : (
           feeds.map(feed => {
             const ringClass = getRingClass(feed.user.status);
+            const stats = feed.user && feed.user._id ? reviewStatsMap[feed.user._id] : undefined;
             return (
             <div
               key={feed._id}
@@ -320,6 +352,20 @@ export default function ProfileFeed() {
                 </div>
                 <div className="text-green-700 font-bold text-base text-center">{feed.user.username}</div>
                 <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
+                {/* --- Overall Review Stats --- */}
+                <div className="mt-2 flex flex-col items-center">
+                  {stats && stats.totalReviews > 0 ? (
+                    <div className="flex items-center gap-1 text-yellow-500 text-sm font-semibold">
+                      <Star size={16} className="mr-1 text-yellow-400" fill="currentColor" />
+                      <span className="text-gray-800">{stats.averageRating.toFixed(1)}</span>
+                      <span className="text-gray-500">
+                        ({stats.totalReviews})
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-300 italic">No reviews</div>
+                  )}
+                </div>
                 <div className="mt-4 flex gap-3">
                   <button
                     className="text-blue-600 hover:underline text-sm font-medium"

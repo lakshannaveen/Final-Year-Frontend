@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Search from "../components/Search";
+import { Star } from "lucide-react";
 
 interface HomeProps {
   setCurrentView: (view: string) => void;
@@ -16,6 +17,11 @@ interface FeedUser {
   username: string;
   profilePic?: string;
   status?: string;
+}
+
+interface ReviewStats {
+  averageRating: number;
+  totalReviews: number;
 }
 
 interface FeedItem {
@@ -104,6 +110,32 @@ export default function Home({
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<FeedItem[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
+
+  // Review stats cache: userId -> stats
+  const [reviewStatsMap, setReviewStatsMap] = useState<Record<string, ReviewStats>>({});
+
+  // Fetch review stats for users in current feeds
+  useEffect(() => {
+    const usersToFetch = new Set<string>();
+    const displayFeeds = searchTerm ? (searchResults || []) : feeds;
+    displayFeeds.forEach(feed => {
+      if (feed.user && feed.user._id && !(feed.user._id in reviewStatsMap)) {
+        usersToFetch.add(feed.user._id);
+      }
+    });
+    if (usersToFetch.size === 0) return;
+    usersToFetch.forEach(async userId => {
+      const res = await fetch(`${API_URL}/api/reviews/user/${userId}`);
+      const data = await res.json();
+      setReviewStatsMap(prev => ({
+        ...prev,
+        [userId]: {
+          averageRating: typeof data.averageRating === "number" ? data.averageRating : 0,
+          totalReviews: typeof data.totalReviews === "number" ? data.totalReviews : 0,
+        }
+      }));
+    });
+  }, [feeds, searchResults, searchTerm]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -268,6 +300,7 @@ export default function Home({
           ) : (
             displayFeeds.map((feed) => {
               const ringClass = getRingClass(feed.user.status);
+              const stats = feed.user && feed.user._id ? reviewStatsMap[feed.user._id] : undefined;
               return (
                 <div
                   key={feed._id}
@@ -307,6 +340,20 @@ export default function Home({
                     </div>
                     <div className="text-green-700 font-semibold text-sm text-center">{feed.user.username}</div>
                     <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
+                    {/* --- Overall Review Stats --- */}
+                    <div className="mt-2 flex flex-col items-center">
+                      {stats && stats.totalReviews > 0 ? (
+                        <div className="flex items-center gap-1 text-yellow-500 text-sm font-semibold">
+                          <Star size={16} className="mr-1 text-yellow-400" fill="currentColor" />
+                          <span className="text-gray-800">{stats.averageRating.toFixed(1)}</span>
+                          <span className="text-gray-500">
+                            ({stats.totalReviews})
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-300 italic">No reviews</div>
+                      )}
+                    </div>
                   </div>
                   {/* Post details and media */}
                   <div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-8">
