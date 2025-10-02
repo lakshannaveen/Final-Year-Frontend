@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import { Star, Edit3, Trash2 } from "lucide-react";
 
@@ -25,25 +26,20 @@ interface ReviewProps {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const SHOW_LIMIT = 5;
 
-// --- Helpers ---
-function timeAgo(dateString: string): string {
-  const now = new Date();
-  const date = new Date(dateString);
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (seconds < 60) return "Just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 4) return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
-  const years = Math.floor(days / 365);
-  return `${years} year${years === 1 ? "" : "s"} ago`;
+// --- Skeleton Components ---
+function ReviewSectionSkeleton() {
+  return (
+    <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-8 mb-10 animate-pulse">
+      <div className="flex justify-between items-center mb-6">
+        <div className="w-24 h-8 bg-gray-200 rounded" />
+        <div className="w-48 h-8 bg-gray-200 rounded" />
+      </div>
+      <div className="w-full h-16 bg-gray-200 rounded-lg mb-6" />
+      {[...Array(3)].map((_, i) => (
+        <ReviewSkeleton key={i} />
+      ))}
+    </div>
+  );
 }
 
 function ReviewSkeleton() {
@@ -63,6 +59,27 @@ function ReviewSkeleton() {
       </div>
     </div>
   );
+}
+
+// --- Helpers ---
+function timeAgo(dateString: string): string {
+  const now = new Date();
+  const date = new Date(dateString);
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
 // Star Rating Component
@@ -372,6 +389,11 @@ export default function ReviewSection({ userId }: ReviewProps) {
     </div>
   );
 
+  // Show skeleton while loading
+  if (reviewsLoading) {
+    return <ReviewSectionSkeleton />;
+  }
+
   return (
     <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-8 mb-10">
       <div className="flex justify-between items-center mb-6">
@@ -442,9 +464,7 @@ export default function ReviewSection({ userId }: ReviewProps) {
       )}
 
       {/* Reviews List (first SHOW_LIMIT) */}
-      {reviewsLoading ? (
-        [...Array(3)].map((_, i) => <ReviewSkeleton key={i} />)
-      ) : reviews.length === 0 ? (
+      {reviews.length === 0 ? (
         <div className="text-center text-gray-500 py-8">No reviews yet. Be the first to review!</div>
       ) : (
         <>
