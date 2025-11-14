@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 interface User {
   username: string;
   email: string;
+  serviceType?: string; // <-- added this to fix Post.tsx error
 }
 
 interface AuthContextProps {
@@ -31,14 +32,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkAuth = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/me`, {
-        method: "GET",
-        credentials: "include",
-      });
-      
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/me`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user);
+        setUser(data.user); // <-- user can now include serviceType
       } else {
         setUser(null);
       }
@@ -59,10 +63,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/logout`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -71,7 +78,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, logout, checkAuth }}
+    >
       {children}
     </AuthContext.Provider>
   );
