@@ -296,215 +296,232 @@ if (video) {
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md z-10">
+        <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-5xl z-10">
           <h2 className="text-2xl font-bold mb-6 text-green-700 text-center">
             Post a Service
           </h2>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {/* Service Name */}
-            <div>
-              <label className="block text-green-700 font-semibold mb-1">
-                Service Name <span className="text-xs text-green-600">(max 50 words)</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Enter service name"
-                value={serviceName}
-                onChange={e => setServiceName(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                required
-                style={{ color: "black" }}
-              />
-            </div>
-            {/* Location */}
-            <div>
-              <label className="block text-green-700 font-semibold mb-1">
-                Location (City/Area)
-              </label>
-              <div className="flex gap-2 items-center">
+
+          {/* Form: single card but two columns - left has the fields you listed, right has the rest */}
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* LEFT SIDE (matches the fields the user listed) */}
+            <div className="flex flex-col gap-4">
+              {/* Service Name */}
+              <div>
+                <label className="block text-green-700 font-semibold mb-1">
+                  Service Name <span className="text-xs text-green-600">(max 50 words)</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="Enter location or use current location"
-                  value={location}
-                  onChange={e => setLocation(e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
+                  placeholder="Enter service name"
+                  value={serviceName}
+                  onChange={e => setServiceName(e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                   required
                   style={{ color: "black" }}
                 />
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="block text-green-700 font-semibold mb-1">
+                  Location (City/Area)
+                </label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    placeholder="Enter location or use current location"
+                    value={location}
+                    onChange={e => setLocation(e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
+                    required
+                    style={{ color: "black" }}
+                  />
+                  <button
+                    type="button"
+                    className="px-3 py-2 bg-green-700 text-white rounded hover:bg-green-800 transition font-semibold flex items-center justify-center min-w-[44px] min-h-[44px]"
+                    onClick={handleGetCurrentLocation}
+                    title="Use current location"
+                    disabled={locationLoading}
+                    style={{ position: "relative" }}
+                  >
+                    {/* Spinner when loading, else icon */}
+                    {locationLoading ? (
+                      <span className="inline-block w-5 h-5 border-2 border-green-200 border-t-green-700 rounded-full animate-spin"></span>
+                    ) : (
+                      <span role="img" aria-label="location">📍</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Contact Number */}
+              <div>
+                <label className="block text-green-700 font-semibold mb-1">
+                  Contact Number
+                </label>
+                <input
+                  type="tel"
+                  placeholder="Enter contact number"
+                  value={contactNumber}
+                  onChange={e => setContactNumber(e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
+                  required
+                  style={{ color: "black" }}
+                  maxLength={16}
+                />
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-green-700 font-semibold mb-1">
+                  Price (LKR)
+                </label>
+                <input
+                  type="number"
+                  placeholder="Enter price in LKR"
+                  value={price}
+                  onChange={e => setPrice(e.target.value)}
+                  min={0}
+                  step={0.01}
+                  required
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
+                  style={{ color: "black" }}
+                />
+              </div>
+
+              {/* Price Type */}
+              <div>
+                <span className="block text-green-700 font-semibold mb-2">
+                  Price Type
+                </span>
+                <div className="flex gap-4">
+                  <label
+                    className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all cursor-pointer text-center ${
+                      priceType === "hourly"
+                        ? "bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-md"
+                        : "bg-white text-green-700 border border-green-700 hover:bg-green-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="priceType"
+                      value="hourly"
+                      checked={priceType === "hourly"}
+                      onChange={() => setPriceType("hourly")}
+                      className="hidden"
+                      required
+                    />
+                    Hourly
+                  </label>
+                  <label
+                    className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all cursor-pointer text-center ${
+                      priceType === "task"
+                        ? "bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-md"
+                        : "bg-white text-green-700 border border-green-700 hover:bg-green-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="priceType"
+                      value="task"
+                      checked={priceType === "task"}
+                      onChange={() => setPriceType("task")}
+                      className="hidden"
+                      required
+                    />
+                    Specific Task
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT SIDE (rest of the fields) */}
+            <div className="flex flex-col gap-4">
+              {/* Photo Upload */}
+              <div>
+                <label className="block text-green-700 font-semibold mb-1">
+                  Photo of Your Work <span className="text-xs text-green-600">(max 5MB)</span>
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
+                  style={{ color: "black" }}
+                  title="Select photo (max 5MB)"
+                />
+                {photo && (
+                  <span className="text-green-700 text-sm mt-1 block">
+                    Selected: {photo.name}
+                  </span>
+                )}
+              </div>
+
+              {/* Video Upload */}
+              <div>
+                <label className="block text-green-700 font-semibold mb-1">
+                  Video of Your Work (optional) <span className="text-xs text-green-600">(min 2s, max 20MB)</span>
+                </label>
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleVideoChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
+                  style={{ color: "black" }}
+                  title="Select video (min 2s, max 20MB)"
+                />
+                {video && (
+                  <span className="text-green-700 text-sm mt-1 block">
+                    Selected: {video.name}
+                  </span>
+                )}
+              </div>
+
+              {/* Website Link */}
+              <div>
+                <label className="block text-green-700 font-semibold mb-1">
+                  Website Link (optional)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://yourwebsite.com"
+                  value={websiteLink}
+                  onChange={e => setWebsiteLink(e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
+                  style={{ color: "black" }}
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-green-700 font-semibold mb-1">
+                  Description (optional, max 20 words)
+                </label>
+                <textarea
+                  placeholder="Describe your service in max 20 words"
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
+                  style={{ color: "black" }}
+                  rows={4}
+                  maxLength={200}
+                />
+                <span className="text-xs text-gray-500">
+                  {description.split(" ").filter(Boolean).length}/20 words
+                </span>
+              </div>
+
+              {/* Submit */}
+              <div>
                 <button
-                  type="button"
-                  className="px-3 py-2 bg-green-700 text-white rounded hover:bg-green-800 transition font-semibold flex items-center justify-center min-w-[40px] min-h-[40px]"
-                  onClick={handleGetCurrentLocation}
-                  title="Use current location"
-                  disabled={locationLoading}
-                  style={{ position: "relative" }}
+                  type="submit"
+                  className="w-full py-3 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition disabled:opacity-70"
+                  disabled={loading}
                 >
-                  {/* Spinner when loading, else icon */}
-                  {locationLoading ? (
-                    <span className="inline-block w-5 h-5 border-2 border-green-200 border-t-green-700 rounded-full animate-spin"></span>
-                  ) : (
-                    <span role="img" aria-label="location">📍</span>
-                  )}
+                  {loading ? "Posting..." : "Post Service"}
                 </button>
               </div>
             </div>
-            {/* Contact Number */}
-            <div>
-              <label className="block text-green-700 font-semibold mb-1">
-                Contact Number
-              </label>
-              <input
-                type="tel"
-                placeholder="Enter contact number"
-                value={contactNumber}
-                onChange={e => setContactNumber(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                required
-                style={{ color: "black" }}
-                maxLength={16}
-              />
-            </div>
-            {/* Price */}
-            <div>
-              <label className="block text-green-700 font-semibold mb-1">
-                Price (LKR)
-              </label>
-              <input
-                type="number"
-                placeholder="Enter price in LKR"
-                value={price}
-                onChange={e => setPrice(e.target.value)}
-                min={0}
-                step={0.01}
-                required
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                style={{ color: "black" }}
-              />
-            </div>
-            {/* Price Type */}
-            <div>
-              <span className="block text-green-700 font-semibold mb-1">
-                Price Type
-              </span>
-              <div className="flex gap-4">
-                <label
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all cursor-pointer ${
-                    priceType === "hourly"
-                      ? "bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-md"
-                      : "bg-white text-green-700 border border-green-700 hover:bg-green-50"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="priceType"
-                    value="hourly"
-                    checked={priceType === "hourly"}
-                    onChange={() => setPriceType("hourly")}
-                    className="mr-1 hidden"
-                    required
-                  />
-                  Hourly
-                </label>
-                <label
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all cursor-pointer ${
-                    priceType === "task"
-                      ? "bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-md"
-                      : "bg-white text-green-700 border border-green-700 hover:bg-green-50"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="priceType"
-                    value="task"
-                    checked={priceType === "task"}
-                    onChange={() => setPriceType("task")}
-                    className="mr-1 hidden"
-                    required
-                  />
-                  Specific Task
-                </label>
-              </div>
-            </div>
-            {/* Photo Upload */}
-            <div>
-              <label className="block text-green-700 font-semibold mb-1">
-                Photo of Your Work <span className="text-xs text-green-600">(max 5MB)</span>
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                style={{ color: "black" }}
-                title="Select photo (max 5MB)"
-                placeholder="Select photo"
-              />
-              {photo && (
-                <span className="text-green-700 text-sm mt-1 block">
-                  Selected: {photo.name}
-                </span>
-              )}
-            </div>
-            {/* Video Upload */}
-            <div>
-              <label className="block text-green-700 font-semibold mb-1">
-                Video of Your Work (optional) <span className="text-xs text-green-600">(min 2s, max 20MB)</span>
-              </label>
-              <input
-                type="file"
-                accept="video/*"
-                onChange={handleVideoChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                style={{ color: "black" }}
-                title="Select video (min 2s, max 20MB)"
-                placeholder="Select video"
-              />
-              {video && (
-                <span className="text-green-700 text-sm mt-1 block">
-                  Selected: {video.name}
-                </span>
-              )}
-            </div>
-            {/* Website Link */}
-            <div>
-              <label className="block text-green-700 font-semibold mb-1">
-                Website Link (optional)
-              </label>
-              <input
-                type="url"
-                placeholder="https://yourwebsite.com"
-                value={websiteLink}
-                onChange={e => setWebsiteLink(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                style={{ color: "black" }}
-              />
-            </div>
-            {/* Description */}
-            <div>
-              <label className="block text-green-700 font-semibold mb-1">
-                Description (optional, max 20 words)
-              </label>
-              <textarea
-                placeholder="Describe your service in max 20 words"
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                style={{ color: "black" }}
-                rows={2}
-                maxLength={200}
-              />
-              <span className="text-xs text-gray-500">
-                {description.split(" ").filter(Boolean).length}/20 words
-              </span>
-            </div>
-            {/* Submit */}
-            <button
-              type="submit"
-              className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition disabled:opacity-70"
-              disabled={loading}
-            >
-              {loading ? "Posting..." : "Post Service"}
-            </button>
           </form>
         </div>
       </div>
