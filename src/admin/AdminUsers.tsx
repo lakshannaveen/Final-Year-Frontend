@@ -371,7 +371,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Service Posters</p>
+                  <p className="text-sm font-medium text-gray-600">Service Providers</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.postingCount}</p>
                 </div>
               </div>
@@ -421,7 +421,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
               >
                 <option value="">All Types</option>
                 <option value="serviceSeeker">Service Seekers</option>
-                <option value="posting">Service Posters</option>
+                <option value="posting">Service Providers</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -532,7 +532,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
                                 : "bg-green-100 text-green-800"
                             }`}
                           >
-                            {user.serviceType === "posting" ? "Service Poster" : "Service Seeker"}
+                            {user.serviceType === "posting" ? "Service Provider" : "Service Seeker"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -628,7 +628,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">Edit User</h3>
                   <p className="text-sm text-gray-500">ID: <span className="font-mono">{selectedUser._id}</span></p>
-                  <p className="text-sm text-gray-500">Type: <span className="font-medium">{selectedUser.serviceType === "posting" ? "Service Poster" : "Service Seeker"}</span></p>
+                  <p className="text-sm text-gray-500">Type: <span className="font-medium">{selectedUser.serviceType === "posting" ? "Service Provider" : "Service Seeker"}</span></p>
                   {selectedUser.googleId && <p className="text-sm text-blue-600">Signed in with Google</p>}
                 </div>
                 <div>
