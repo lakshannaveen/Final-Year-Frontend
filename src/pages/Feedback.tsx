@@ -6,11 +6,14 @@ interface FeedbackProps {
   setCurrentView: (view: string) => void;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function Feedback({ setCurrentView }: FeedbackProps) {
   const [message, setMessage] = useState("");
   const [rating, setRating] = useState(0);
   const [errors, setErrors] = useState({ message: "", rating: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
     let valid = true;
@@ -37,14 +40,45 @@ export default function Feedback({ setCurrentView }: FeedbackProps) {
     return valid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
-    console.log("Feedback submitted:", { message, rating });
-    setSubmitted(true);
-    setMessage("");
-    setRating(0);
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/feedback/submit`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message, rating }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit feedback");
+      }
+
+      setSubmitted(true);
+      setMessage("");
+      setRating(0);
+      setErrors({ message: "", rating: "" });
+      
+      // Reset submitted status after 3 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Feedback submission error:", error);
+      setErrors({
+        ...errors,
+        message: error instanceof Error ? error.message : "Failed to submit feedback",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,7 +107,7 @@ export default function Feedback({ setCurrentView }: FeedbackProps) {
           {/* Message */}
           <div className="mb-4">
             <label className="block text-green-700 font-semibold mb-1">
-              Message
+              Message <span className="text-sm text-gray-600">(2-50 words)</span>
             </label>
             <textarea
               value={message}
@@ -85,11 +119,15 @@ export default function Feedback({ setCurrentView }: FeedbackProps) {
                 errors.message ? "border-red-500 focus:ring-red-300" : "border-green-300"
               }`}
               rows={5}
-              placeholder="Write your feedback..."
+              placeholder="Write your feedback (2-50 words)..."
+              disabled={loading}
             />
             {errors.message && (
               <p className="text-red-500 text-sm mt-1">{errors.message}</p>
             )}
+            <div className="text-right text-sm text-gray-500 mt-1">
+              {message.trim().split(/\s+/).filter(word => word.length > 0).length}/50 words
+            </div>
           </div>
 
           {/* Star Rating */}
@@ -103,12 +141,13 @@ export default function Feedback({ setCurrentView }: FeedbackProps) {
                   key={star}
                   type="button"
                   onClick={() => setRating(star)}
-                  className="focus:outline-none"
+                  disabled={loading}
+                  className="focus:outline-none transition-transform hover:scale-110"
                 >
                   <Star
                     size={28}
                     className={`${
-                      star <= rating ? "text-yellow-400" : "text-gray-300"
+                      star <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
                     }`}
                   />
                 </button>
@@ -122,14 +161,15 @@ export default function Feedback({ setCurrentView }: FeedbackProps) {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition"
+            disabled={loading}
+            className="w-full py-3 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Submit Feedback
+            {loading ? "Submitting..." : "Submit Feedback"}
           </button>
 
           {submitted && (
             <p className="text-green-700 text-center mt-4 font-medium">
-              Thank you for your feedback!
+              Thank you for your feedback! We appreciate your input.
             </p>
           )}
         </form>

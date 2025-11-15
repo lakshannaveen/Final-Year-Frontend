@@ -1,26 +1,403 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, Star, Filter, Search, RefreshCw, Trash2, Eye, EyeOff, CheckCircle, Clock } from "lucide-react";
 
-type Props = {
+interface Feedback {
+  _id: string;
+  message: string;
+  rating: number;
+  status: 'pending' | 'reviewed' | 'resolved';
+  createdAt: string;
+  user: {
+    username: string;
+    profilePic: string;
+    email: string;
+  };
+}
+
+interface FeedbackStats {
+  total: number;
+  averageRating: number;
+  pending: number;
+  reviewed: number;
+  resolved: number;
+}
+
+interface Props {
   setCurrentView: (view: string) => void;
-};
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function AdminFeedback({ setCurrentView }: Props) {
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [stats, setStats] = useState<FeedbackStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [filters, setFilters] = useState({
+    status: '' as '' | 'pending' | 'reviewed' | 'resolved',
+    search: '',
+    page: 1
+  });
+
+  const fetchFeedbacks = async () => {
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams();
+      if (filters.status) queryParams.append('status', filters.status);
+      if (filters.search) queryParams.append('search', filters.search);
+      queryParams.append('page', filters.page.toString());
+      queryParams.append('limit', '10');
+
+      const response = await fetch(`${API_URL}/api/feedback/admin/feedbacks?${queryParams}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch feedbacks');
+      }
+
+      const data = await response.json();
+      setFeedbacks(data.feedbacks);
+    } catch (error) {
+      console.error('Error fetching feedbacks:', error);
+      alert('Failed to load feedbacks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/feedback/admin/stats`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch stats');
+      }
+
+      const data = await response.json();
+      setStats(data);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeedbacks();
+    fetchStats();
+  }, [filters.status, filters.page]);
+
+  const updateStatus = async (feedbackId: string, status: 'pending' | 'reviewed' | 'resolved') => {
+    try {
+      setUpdating(feedbackId);
+      const response = await fetch(`${API_URL}/api/feedback/admin/${feedbackId}/status`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      // Update local state
+      setFeedbacks(prev => 
+        prev.map(fb => 
+          fb._id === feedbackId ? { ...fb, status } : fb
+        )
+      );
+      
+      // Refresh stats
+      fetchStats();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Failed to update status');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const deleteFeedback = async (feedbackId: string) => {
+    if (!confirm('Are you sure you want to delete this feedback?')) {
+      return;
+    }
+
+    try {
+      setDeleting(feedbackId);
+      const response = await fetch(`${API_URL}/api/feedback/admin/${feedbackId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete feedback');
+      }
+
+      // Remove from local state
+      setFeedbacks(prev => prev.filter(fb => fb._id !== feedbackId));
+      
+      // Refresh stats
+      fetchStats();
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      alert('Failed to delete feedback');
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'reviewed': return 'bg-blue-100 text-blue-800';
+      case 'resolved': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending': return <Clock size={16} />;
+      case 'reviewed': return <Eye size={16} />;
+      case 'resolved': return <CheckCircle size={16} />;
+      default: return <EyeOff size={16} />;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-blue-50 p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-blue-900">Admin - Feedbacks</h1>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setCurrentView("admindashboard")}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <ArrowLeft size={20} />
+              Back to Dashboard
+            </button>
+            <h1 className="text-2xl font-semibold text-blue-900">Admin - Feedbacks</h1>
+          </div>
           <button
-            onClick={() => setCurrentView("admindashboard")}
-            className="px-3 py-1 bg-blue-600 text-white rounded"
+            onClick={() => {
+              fetchFeedbacks();
+              fetchStats();
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            disabled={loading}
           >
-            Back to Dashboard
+            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+            Refresh
           </button>
         </header>
-        <div className="p-6 bg-white rounded shadow">
-          <p className="text-lg font-medium text-gray-800">Welcome to Admin Feedbacks</p>
+
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+              <div className="text-sm text-gray-600">Total</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 text-center">
+              <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+              <div className="text-sm text-gray-600">Pending</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">{stats.reviewed}</div>
+              <div className="text-sm text-gray-600">Reviewed</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
+              <div className="text-sm text-gray-600">Resolved</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                {stats.averageRating.toFixed(1)}
+              </div>
+              <div className="text-sm text-gray-600">Avg Rating</div>
+            </div>
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search feedbacks..."
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value as any, page: 1 })}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
+          </div>
         </div>
+
+        {/* Feedbacks List */}
+        <div className="bg-white rounded-lg shadow">
+          {loading ? (
+            <div className="flex justify-center items-center p-8">
+              <RefreshCw size={32} className="animate-spin text-blue-600" />
+            </div>
+          ) : feedbacks.length === 0 ? (
+            <div className="text-center p-8 text-gray-500">
+              No feedbacks found.
+            </div>
+          ) : (
+            <div className="divide-y">
+              {feedbacks.map((feedback) => (
+                <div key={feedback._id} className="p-6 hover:bg-gray-50 transition">
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                    {/* User Info */}
+                    <div className="flex items-start gap-3 flex-1">
+                      <img
+                        src={feedback.user.profilePic || '/default-avatar.png'}
+                        alt={feedback.user.username}
+                        className="w-12 h-12 rounded-full"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-gray-900">
+                            {feedback.user.username}
+                          </h3>
+                          <span className="text-sm text-gray-500">
+                            {feedback.user.email}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 mb-2">{feedback.message}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                size={16}
+                                className={i < feedback.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
+                              />
+                            ))}
+                          </div>
+                          <span>{formatDate(feedback.createdAt)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      {/* Status Badge and Controls */}
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(feedback.status)}`}>
+                          {getStatusIcon(feedback.status)}
+                          {feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
+                        </span>
+                        
+                        {/* Status Buttons */}
+                        <div className="flex gap-1">
+                          {feedback.status !== 'pending' && (
+                            <button
+                              onClick={() => updateStatus(feedback._id, 'pending')}
+                              disabled={updating === feedback._id}
+                              className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded text-sm hover:bg-yellow-200 transition disabled:opacity-50"
+                            >
+                              {updating === feedback._id ? '...' : 'Pending'}
+                            </button>
+                          )}
+                          {feedback.status !== 'reviewed' && (
+                            <button
+                              onClick={() => updateStatus(feedback._id, 'reviewed')}
+                              disabled={updating === feedback._id}
+                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition disabled:opacity-50"
+                            >
+                              {updating === feedback._id ? '...' : 'Review'}
+                            </button>
+                          )}
+                          {feedback.status !== 'resolved' && (
+                            <button
+                              onClick={() => updateStatus(feedback._id, 'resolved')}
+                              disabled={updating === feedback._id}
+                              className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200 transition disabled:opacity-50"
+                            >
+                              {updating === feedback._id ? '...' : 'Resolve'}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => deleteFeedback(feedback._id)}
+                          disabled={deleting === feedback._id}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded transition disabled:opacity-50"
+                          title="Delete feedback"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {feedbacks.length > 0 && (
+          <div className="flex justify-center items-center gap-4 mt-6">
+            <button
+              onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
+              disabled={filters.page === 1}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-600">
+              Page {filters.page}
+            </span>
+            <button
+              onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
