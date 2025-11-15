@@ -620,8 +620,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
 
       {/* Edit User Modal */}
       {showEditModal && selectedUser && (
-        // Overlay: blue tinted and slightly blurred (user requested blue background for edit modal)
-        <div className="fixed inset-0 bg-blue-600 bg-opacity-25 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        // Overlay: transparent background per request
+        <div className="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-start justify-between">
@@ -653,10 +653,6 @@ export default function AdminUsers({ setCurrentView }: Props) {
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
                       required
                     />
-                    <div className="flex flex-col gap-1">
-                      <button type="button" onClick={() => handleCopyField("username")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
-                      <button type="button" onClick={() => handleCutField("username")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
-                    </div>
                   </div>
                 </div>
 
@@ -670,10 +666,6 @@ export default function AdminUsers({ setCurrentView }: Props) {
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
                       required
                     />
-                    <div className="flex flex-col gap-1">
-                      <button type="button" onClick={() => handleCopyField("email")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
-                      <button type="button" onClick={() => handleCutField("email")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
-                    </div>
                   </div>
                 </div>
 
@@ -686,10 +678,6 @@ export default function AdminUsers({ setCurrentView }: Props) {
                       onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
                     />
-                    <div className="flex flex-col gap-1">
-                      <button type="button" onClick={() => handleCopyField("phone")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
-                      <button type="button" onClick={() => handleCutField("phone")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
-                    </div>
                   </div>
                 </div>
 
@@ -702,10 +690,6 @@ export default function AdminUsers({ setCurrentView }: Props) {
                       onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
                     />
-                    <div className="flex flex-col gap-1">
-                      <button type="button" onClick={() => handleCopyField("website")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
-                      <button type="button" onClick={() => handleCutField("website")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
-                    </div>
                   </div>
                 </div>
 
@@ -718,10 +702,6 @@ export default function AdminUsers({ setCurrentView }: Props) {
                       rows={3}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
                     />
-                    <div className="flex flex-col gap-1">
-                      <button type="button" onClick={() => handleCopyField("bio")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
-                      <button type="button" onClick={() => handleCutField("bio")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
-                    </div>
                   </div>
                 </div>
 
@@ -735,10 +715,6 @@ export default function AdminUsers({ setCurrentView }: Props) {
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
                       maxLength={32}
                     />
-                    <div className="flex flex-col gap-1">
-                      <button type="button" onClick={() => handleCopyField("status")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
-                      <button type="button" onClick={() => handleCutField("status")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
-                    </div>
                   </div>
                 </div>
 
