@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { ArrowLeft, Star, Filter, Search, RefreshCw, Trash2, Eye, EyeOff, CheckCircle, Clock } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+import { ArrowLeft, Star, Search, RefreshCw, Trash2, Eye, EyeOff, CheckCircle, Clock } from "lucide-react";
 
 interface Feedback {
   _id: string;
@@ -27,6 +28,12 @@ interface Props {
   setCurrentView: (view: string) => void;
 }
 
+type Filters = {
+  status: '' | 'pending' | 'reviewed' | 'resolved';
+  search: string;
+  page: number;
+};
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function AdminFeedback({ setCurrentView }: Props) {
@@ -35,8 +42,8 @@ export default function AdminFeedback({ setCurrentView }: Props) {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [filters, setFilters] = useState({
-    status: '' as '' | 'pending' | 'reviewed' | 'resolved',
+  const [filters, setFilters] = useState<Filters>({
+    status: '',
     search: '',
     page: 1
   });
@@ -44,7 +51,7 @@ export default function AdminFeedback({ setCurrentView }: Props) {
   // New state: shows the green "Back to Dashboard" text to the right under the Refresh button after a successful refresh
   const [showBackText, setShowBackText] = useState(false);
 
-  const fetchFeedbacks = async () => {
+  const fetchFeedbacks = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
@@ -69,9 +76,9 @@ export default function AdminFeedback({ setCurrentView }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.status, filters.page, filters.search]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/api/feedback/admin/stats`, {
         credentials: 'include',
@@ -86,12 +93,12 @@ export default function AdminFeedback({ setCurrentView }: Props) {
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchFeedbacks();
     fetchStats();
-  }, [filters.status, filters.page]);
+  }, [fetchFeedbacks, fetchStats]);
 
   const updateStatus = async (feedbackId: string, status: 'pending' | 'reviewed' | 'resolved') => {
     try {
@@ -199,6 +206,11 @@ export default function AdminFeedback({ setCurrentView }: Props) {
     }
   };
 
+  // Helper: consider external any URL starting with http(s) as external
+  const isExternalUrl = (url: string) => {
+    return url.startsWith('http://') || url.startsWith('https://');
+  };
+
   return (
     <div className="min-h-screen bg-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -282,7 +294,7 @@ export default function AdminFeedback({ setCurrentView }: Props) {
                   placeholder="Search feedbacks..."
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-700"
                 />
               </div>
             </div>
@@ -292,8 +304,11 @@ export default function AdminFeedback({ setCurrentView }: Props) {
               </label>
               <select
                 value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value as any, page: 1 })}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                  const val = e.target.value as Filters['status'];
+                  setFilters({ ...filters, status: val, page: 1 });
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
               >
                 <option value="">All Status</option>
                 <option value="pending">Pending</option>
@@ -321,11 +336,32 @@ export default function AdminFeedback({ setCurrentView }: Props) {
                   <div className="flex flex-col lg:flex-row lg:items-start gap-4">
                     {/* User Info */}
                     <div className="flex items-start gap-3 flex-1">
-                      <img
-                        src={feedback.user.profilePic || '/default-avatar.png'}
-                        alt={feedback.user.username}
-                        className="w-12 h-12 rounded-full"
-                      />
+                      <div className="w-12 h-12 relative rounded-full overflow-hidden">
+                        {(() => {
+                          const src = feedback.user.profilePic || '/default-avatar.png';
+                          if (isExternalUrl(src)) {
+                            // External host: use plain <img> to avoid next/image hostname config runtime error.
+                            // eslint-disable-next-line @next/next/no-img-element
+                            return (
+                              <img
+                                src={src}
+                                alt={feedback.user.username}
+                                className="w-12 h-12 rounded-full object-cover"
+                              />
+                            );
+                          }
+                          // Local/internal path: use next/image for optimization
+                          return (
+                            <Image
+                              src={src}
+                              alt={feedback.user.username}
+                              width={48}
+                              height={48}
+                              className="rounded-full object-cover"
+                            />
+                          );
+                        })()}
+                      </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-gray-900">
