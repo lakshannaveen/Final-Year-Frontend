@@ -39,18 +39,7 @@ export default function Footer({ setCurrentView }: FooterProps) {
               >
                 Terms & Conditions
               </button>
-              <button
-                onClick={() => setCurrentView("contact")}
-                className="hover:text-green-200 transition-colors cursor-pointer"
-              >
-                Contact Us
-              </button>
-              <button
-                onClick={() => setCurrentView("feedback")}
-                className="hover:text-green-200 transition-colors cursor-pointer"
-              >
-                Feedback
-              </button>
+              {/* Removed Contact and Feedback from footer as requested */}
             </div>
           </div>
 

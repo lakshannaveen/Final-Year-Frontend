@@ -250,6 +250,20 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                   </span>
                 )}
               </button>
+
+              {/* Added: Contact and Feedback links in navbar (desktop) */}
+              <button
+                onClick={() => handleNavClick("contact")}
+                className={currentView === "contact" ? activeLink : inactiveLink}
+              >
+                Contact Us
+              </button>
+              <button
+                onClick={() => handleNavClick("feedback")}
+                className={currentView === "feedback" ? activeLink : inactiveLink}
+              >
+                Feedback
+              </button>
             </div>
 
             {/* Right: Desktop - Profile + AI Chat */}
@@ -441,6 +455,21 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
+                </button>
+
+                {/* Added mobile items: Contact & Feedback */}
+                <button
+                  onClick={() => { handleNavClick("contact"); setMenuOpen(false); }}
+                  className={`w-full text-center py-3 rounded-lg ${currentView === "contact" ? activeLink : inactiveLink}`}
+                >
+                  Contact Us
+                </button>
+
+                <button
+                  onClick={() => { handleNavClick("feedback"); setMenuOpen(false); }}
+                  className={`w-full text-center py-3 rounded-lg ${currentView === "feedback" ? activeLink : inactiveLink}`}
+                >
+                  Feedback
                 </button>
 
                 {/* Additional Auth options in mobile menu for consistency */}
