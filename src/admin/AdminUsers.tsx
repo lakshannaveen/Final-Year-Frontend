@@ -101,38 +101,37 @@ export default function AdminUsers({ setCurrentView }: Props) {
         const response = await fetch(`${API_BASE}/api/admin/users?${params}`);
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            (errorData && (errorData as any).error) ||
-              `HTTP error! status: ${response.status}`
-          );
+          const errorData = (await response.json().catch(() => ({} as { error?: string }))) || {};
+          throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
         }
 
         const data: { users: Partial<User>[]; pagination: PaginationInfo } =
           await response.json();
 
         // Ensure all users have required fields and set defaults
-        const safeUsers: User[] = (data.users || []).map((u) => ({
-          _id: (u && (u as any)._id) || "",
-          username: (u && u.username) || "",
-          email: (u && u.email) || "",
-          phone: (u && u.phone) || "",
-          website: (u && u.website) || "",
-          bio: (u && u.bio) || "",
-          status: (u && u.status) || "",
-          serviceType: (u && (u.serviceType as User["serviceType"])) || "serviceSeeker",
-          createdAt: (u && u.createdAt) || new Date().toISOString(),
-          profilePic: (u && u.profilePic) || "",
-          coverImage: (u && u.coverImage) || "",
-          googleId: (u && u.googleId) || undefined
-        }));
+        const safeUsers: User[] = (data.users || []).map((u) => {
+          const uu = u as Partial<User>;
+          return {
+            _id: uu._id || "",
+            username: uu.username || "",
+            email: uu.email || "",
+            phone: uu.phone || "",
+            website: uu.website || "",
+            bio: uu.bio || "",
+            status: uu.status || "",
+            serviceType: (uu.serviceType as User["serviceType"]) || "serviceSeeker",
+            createdAt: uu.createdAt || new Date().toISOString(),
+            profilePic: uu.profilePic || "",
+            coverImage: uu.coverImage || "",
+            googleId: uu.googleId
+          };
+        });
 
         setUsers(safeUsers);
         setPagination(data.pagination);
-      } catch (error) {
-        // ensure we use the variable so ESLint doesn't complain
-        console.error("Fetch users error:", error);
-        setError(error instanceof Error ? error.message : "Failed to fetch users");
+      } catch (err) {
+        console.error("Fetch users error:", err);
+        setError(err instanceof Error ? err.message : "Failed to fetch users");
       } finally {
         setLoading(false);
       }
@@ -150,8 +149,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
       } else {
         console.error("Stats fetch failed with status:", response.status);
       }
-    } catch (error) {
-      console.error("Failed to fetch stats:", error);
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
     }
   }, [API_BASE]);
 
@@ -201,32 +200,6 @@ export default function AdminUsers({ setCurrentView }: Props) {
     setShowEditModal(true);
   };
 
-  // Clipboard helpers (cut & copy)
-  const handleCopyField = async (field: keyof typeof editForm) => {
-    try {
-      await navigator.clipboard.writeText(editForm[field] || "");
-      setSuccess("Copied to clipboard");
-      setTimeout(() => setSuccess(""), 2000);
-    } catch (error) {
-      console.error("copy error:", error);
-      setError("Failed to copy");
-      setTimeout(() => setError(""), 3000);
-    }
-  };
-
-  const handleCutField = async (field: keyof typeof editForm) => {
-    try {
-      await navigator.clipboard.writeText(editForm[field] || "");
-      setEditForm((prev) => ({ ...prev, [field]: "" }));
-      setSuccess("Cut to clipboard");
-      setTimeout(() => setSuccess(""), 2000);
-    } catch (error) {
-      console.error("cut error:", error);
-      setError("Failed to cut");
-      setTimeout(() => setError(""), 3000);
-    }
-  };
-
   // Handle update user
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,8 +216,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData && (errorData as any).error) || "Failed to update user");
+        const errorData = (await response.json().catch(() => ({} as { error?: string }))) || {};
+        throw new Error(errorData?.error || "Failed to update user");
       }
 
       const data = await response.json();
@@ -255,9 +228,9 @@ export default function AdminUsers({ setCurrentView }: Props) {
       setShowUpdateSuccessModal(true);
       setSuccess("User updated successfully");
       setTimeout(() => setSuccess(""), 3000);
-    } catch (error) {
-      console.error("Update user error:", error);
-      setError(error instanceof Error ? error.message : "Failed to update user");
+    } catch (err) {
+      console.error("Update user error:", err);
+      setError(err instanceof Error ? err.message : "Failed to update user");
     }
   };
 
@@ -270,8 +243,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData && (errorData as any).error) || "Failed to delete user");
+        const errorData = (await response.json().catch(() => ({} as { error?: string }))) || {};
+        throw new Error(errorData?.error || "Failed to delete user");
       }
 
       const deletedUser = users.find((u) => u._id === userId);
@@ -288,9 +261,9 @@ export default function AdminUsers({ setCurrentView }: Props) {
 
       fetchStats();
       fetchUsers(pagination.currentPage);
-    } catch (error) {
-      console.error("Delete user error:", error);
-      setError(error instanceof Error ? error.message : "Failed to delete user");
+    } catch (err) {
+      console.error("Delete user error:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete user");
     }
   };
 
@@ -429,15 +402,22 @@ export default function AdminUsers({ setCurrentView }: Props) {
               </div>
             </form>
 
-            <select
-              value={serviceTypeFilter}
-              onChange={(e) => setServiceTypeFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
-            >
-              <option value="">All Types</option>
-              <option value="serviceSeeker">Service Seekers</option>
-              <option value="posting">Service Posters</option>
-            </select>
+            {/* Improved dropdown UI */}
+            <div className="relative">
+              <select
+                value={serviceTypeFilter}
+                onChange={(e) => setServiceTypeFilter(e.target.value)}
+                className="appearance-none px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 bg-white"
+                aria-label="Filter by user type"
+              >
+                <option value="">All Types</option>
+                <option value="serviceSeeker">Service Seekers</option>
+                <option value="posting">Service Posters</option>
+              </select>
+              <svg className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
 
             <button
               onClick={clearFilters}
@@ -620,8 +600,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
 
       {/* Edit User Modal */}
       {showEditModal && selectedUser && (
-        // Overlay: transparent background per request
-        <div className="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
+        // Overlay: blurred translucent background per request
+        <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-start justify-between">
