@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 type Props = {
   setCurrentView: (view: string) => void;
@@ -72,6 +72,12 @@ export default function AdminUsers({ setCurrentView }: Props) {
   // API base URL
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+  // Refs for modal overlays to support click-outside-to-close
+  const editOverlayRef = useRef<HTMLDivElement | null>(null);
+  const deleteOverlayRef = useRef<HTMLDivElement | null>(null);
+  const deleteSuccessOverlayRef = useRef<HTMLDivElement | null>(null);
+  const updateSuccessOverlayRef = useRef<HTMLDivElement | null>(null);
+
   // Safe username getter
   const getUsernameInitial = (user: User) => {
     if (!user.username || user.username.trim() === "") {
@@ -101,7 +107,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
         const response = await fetch(`${API_BASE}/api/admin/users?${params}`);
 
         if (!response.ok) {
-          const errorData = (await response.json().catch(() => ({} as { error?: string }))) || {};
+          const errorData =
+            (await response.json().catch(() => ({} as { error?: string }))) || {};
           throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
         }
 
@@ -216,7 +223,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
       });
 
       if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({} as { error?: string }))) || {};
+        const errorData =
+          (await response.json().catch(() => ({} as { error?: string }))) || {};
         throw new Error(errorData?.error || "Failed to update user");
       }
 
@@ -243,7 +251,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
       });
 
       if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({} as { error?: string }))) || {};
+        const errorData =
+          (await response.json().catch(() => ({} as { error?: string }))) || {};
         throw new Error(errorData?.error || "Failed to delete user");
       }
 
@@ -402,21 +411,23 @@ export default function AdminUsers({ setCurrentView }: Props) {
               </div>
             </form>
 
-            {/* Improved dropdown UI */}
-            <div className="relative">
+            {/* Modern dropdown UI */}
+            <div className="relative w-64">
               <select
                 value={serviceTypeFilter}
                 onChange={(e) => setServiceTypeFilter(e.target.value)}
-                className="appearance-none px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 bg-white"
+                className="w-full appearance-none rounded-lg border border-gray-200 bg-white px-4 py-2 pr-10 text-gray-700 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                 aria-label="Filter by user type"
               >
                 <option value="">All Types</option>
                 <option value="serviceSeeker">Service Seekers</option>
                 <option value="posting">Service Posters</option>
               </select>
-              <svg className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
 
             <button
@@ -600,8 +611,17 @@ export default function AdminUsers({ setCurrentView }: Props) {
 
       {/* Edit User Modal */}
       {showEditModal && selectedUser && (
-        // Overlay: blurred translucent background per request
-        <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        // Overlay: transparent + subtle backdrop blur. Clicking outside closes modal.
+        <div
+          ref={editOverlayRef}
+          className="fixed inset-0 bg-transparent backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onMouseDown={(e) => {
+            if (e.target === editOverlayRef.current) {
+              setShowEditModal(false);
+              setSelectedUser(null);
+            }
+          }}
+        >
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-start justify-between">
@@ -721,7 +741,15 @@ export default function AdminUsers({ setCurrentView }: Props) {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div
+          ref={deleteOverlayRef}
+          className="fixed inset-0 bg-transparent backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onMouseDown={(e) => {
+            if (e.target === deleteOverlayRef.current) {
+              setDeleteConfirm(null);
+            }
+          }}
+        >
           <div className="bg-white rounded-xl shadow-lg max-w-sm w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Delete</h3>
             <p className="text-gray-600 mb-4">Are you sure you want to delete this user? This action cannot be undone.</p>
@@ -745,7 +773,15 @@ export default function AdminUsers({ setCurrentView }: Props) {
 
       {/* Delete Success Modal */}
       {showDeleteSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div
+          ref={deleteSuccessOverlayRef}
+          className="fixed inset-0 bg-transparent backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onMouseDown={(e) => {
+            if (e.target === deleteSuccessOverlayRef.current) {
+              setShowDeleteSuccessModal(false);
+            }
+          }}
+        >
           <div className="bg-white rounded-xl shadow-lg max-w-sm w-full p-6 text-center">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">User Deleted</h3>
             <p className="text-gray-600 mb-4">{deleteSuccessMessage}</p>
@@ -763,7 +799,15 @@ export default function AdminUsers({ setCurrentView }: Props) {
 
       {/* Update Success Modal */}
       {showUpdateSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div
+          ref={updateSuccessOverlayRef}
+          className="fixed inset-0 bg-transparent backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onMouseDown={(e) => {
+            if (e.target === updateSuccessOverlayRef.current) {
+              setShowUpdateSuccessModal(false);
+            }
+          }}
+        >
           <div className="bg-white rounded-xl shadow-lg max-w-sm w-full p-6 text-center">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Update Successful</h3>
             <p className="text-gray-600 mb-4">{updateSuccessMessage}</p>
