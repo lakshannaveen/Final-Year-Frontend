@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 type Props = {
   setCurrentView: (view: string) => void;
@@ -7,16 +7,16 @@ type Props = {
 
 type User = {
   _id: string;
-  username?: string; // Made optional to handle undefined cases
+  username?: string;
   email: string;
   phone?: string;
   website?: string;
-  serviceType: 'serviceSeeker' | 'posting';
+  serviceType: "serviceSeeker" | "posting";
   bio: string;
   status: string;
   createdAt: string;
-  profilePic: string;
-  coverImage: string;
+  profilePic?: string;
+  coverImage?: string;
   googleId?: string;
 };
 
@@ -63,82 +63,117 @@ export default function AdminUsers({ setCurrentView }: Props) {
   });
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+  // New states for success modals
+  const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
+  const [deleteSuccessMessage, setDeleteSuccessMessage] = useState("");
+  const [showUpdateSuccessModal, setShowUpdateSuccessModal] = useState(false);
+  const [updateSuccessMessage, setUpdateSuccessMessage] = useState("");
+
   // API base URL
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   // Safe username getter
   const getUsernameInitial = (user: User) => {
-    if (!user.username || user.username.trim() === '') {
-      return user.email?.charAt(0)?.toUpperCase() || 'U';
+    if (!user.username || user.username.trim() === "") {
+      return user.email?.charAt(0)?.toUpperCase() || "U";
     }
     return user.username.charAt(0).toUpperCase();
   };
 
   // Safe username display
   const getDisplayUsername = (user: User) => {
-    return user.username || user.email || 'Unknown User';
+    return user.username || user.email || "Unknown User";
   };
 
-  // Fetch users
-  const fetchUsers = async (page = 1) => {
-    try {
-      setLoading(true);
-      setError("");
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "10",
-        ...(searchTerm && { search: searchTerm }),
-        ...(serviceTypeFilter && { serviceType: serviceTypeFilter })
-      });
+  // Fetch users (useCallback to satisfy ESLint react-hooks/exhaustive-deps)
+  const fetchUsers = useCallback(
+    async (page = 1) => {
+      try {
+        setLoading(true);
+        setError("");
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: "10",
+          ...(searchTerm && { search: searchTerm }),
+          ...(serviceTypeFilter && { serviceType: serviceTypeFilter })
+        });
 
-      const response = await fetch(`${API_BASE}/api/admin/users?${params}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        const response = await fetch(`${API_BASE}/api/admin/users?${params}`);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            (errorData && (errorData as any).error) ||
+              `HTTP error! status: ${response.status}`
+          );
+        }
+
+        const data: { users: Partial<User>[]; pagination: PaginationInfo } =
+          await response.json();
+
+        // Ensure all users have required fields and set defaults
+        const safeUsers: User[] = (data.users || []).map((u) => ({
+          _id: (u && (u as any)._id) || "",
+          username: (u && u.username) || "",
+          email: (u && u.email) || "",
+          phone: (u && u.phone) || "",
+          website: (u && u.website) || "",
+          bio: (u && u.bio) || "",
+          status: (u && u.status) || "",
+          serviceType: (u && (u.serviceType as User["serviceType"])) || "serviceSeeker",
+          createdAt: (u && u.createdAt) || new Date().toISOString(),
+          profilePic: (u && u.profilePic) || "",
+          coverImage: (u && u.coverImage) || "",
+          googleId: (u && u.googleId) || undefined
+        }));
+
+        setUsers(safeUsers);
+        setPagination(data.pagination);
+      } catch (error) {
+        // ensure we use the variable so ESLint doesn't complain
+        console.error("Fetch users error:", error);
+        setError(error instanceof Error ? error.message : "Failed to fetch users");
+      } finally {
+        setLoading(false);
       }
-      
-      const data = await response.json();
-      
-      // Ensure all users have required fields
-      const safeUsers = data.users.map((user: any) => ({
-        ...user,
-        username: user.username || '', // Ensure username is at least empty string
-        email: user.email || '',
-        bio: user.bio || '',
-        status: user.status || '',
-        serviceType: user.serviceType || 'serviceSeeker'
-      }));
-      
-      setUsers(safeUsers);
-      setPagination(data.pagination);
-    } catch (err) {
-      console.error('Fetch users error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch users');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [API_BASE, searchTerm, serviceTypeFilter]
+  );
 
   // Fetch statistics
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/admin/users/stats`);
       if (response.ok) {
-        const data = await response.json();
+        const data: UserStats = await response.json();
         setStats(data);
       } else {
-        console.error('Stats fetch failed with status:', response.status);
+        console.error("Stats fetch failed with status:", response.status);
       }
-    } catch (err) {
-      console.error('Failed to fetch stats:', err);
+    } catch (error) {
+      console.error("Failed to fetch stats:", error);
     }
-  };
+  }, [API_BASE]);
 
+  // initial load
   useEffect(() => {
     fetchUsers(1);
     fetchStats();
-  }, []);
+  }, [fetchUsers, fetchStats]);
+
+  // Ensure edit form shows current selected user data
+  useEffect(() => {
+    if (selectedUser) {
+      setEditForm({
+        username: selectedUser.username || "",
+        email: selectedUser.email || "",
+        phone: selectedUser.phone || "",
+        website: selectedUser.website || "",
+        bio: selectedUser.bio || "",
+        status: selectedUser.status || ""
+      });
+    }
+  }, [selectedUser]);
 
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
@@ -148,6 +183,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.totalPages) return;
     fetchUsers(newPage);
   };
 
@@ -165,6 +201,32 @@ export default function AdminUsers({ setCurrentView }: Props) {
     setShowEditModal(true);
   };
 
+  // Clipboard helpers (cut & copy)
+  const handleCopyField = async (field: keyof typeof editForm) => {
+    try {
+      await navigator.clipboard.writeText(editForm[field] || "");
+      setSuccess("Copied to clipboard");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (error) {
+      console.error("copy error:", error);
+      setError("Failed to copy");
+      setTimeout(() => setError(""), 3000);
+    }
+  };
+
+  const handleCutField = async (field: keyof typeof editForm) => {
+    try {
+      await navigator.clipboard.writeText(editForm[field] || "");
+      setEditForm((prev) => ({ ...prev, [field]: "" }));
+      setSuccess("Cut to clipboard");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (error) {
+      console.error("cut error:", error);
+      setError("Failed to cut");
+      setTimeout(() => setError(""), 3000);
+    }
+  };
+
   // Handle update user
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,28 +235,29 @@ export default function AdminUsers({ setCurrentView }: Props) {
     try {
       setError("");
       const response = await fetch(`${API_BASE}/api/admin/users/${selectedUser._id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json"
         },
         body: JSON.stringify(editForm)
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update user');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error((errorData && (errorData as any).error) || "Failed to update user");
       }
-      
+
       const data = await response.json();
-      setUsers(users.map(user => 
-        user._id === selectedUser._id ? data.user : user
-      ));
+      setUsers((prev) => prev.map((user) => (user._id === selectedUser._id ? data.user : user)));
       setShowEditModal(false);
       setSelectedUser(null);
-      setSuccess('User updated successfully');
+      setUpdateSuccessMessage("User updated successfully");
+      setShowUpdateSuccessModal(true);
+      setSuccess("User updated successfully");
       setTimeout(() => setSuccess(""), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update user');
+    } catch (error) {
+      console.error("Update user error:", error);
+      setError(error instanceof Error ? error.message : "Failed to update user");
     }
   };
 
@@ -203,35 +266,44 @@ export default function AdminUsers({ setCurrentView }: Props) {
     try {
       setError("");
       const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
-        method: 'DELETE'
+        method: "DELETE"
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete user');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error((errorData && (errorData as any).error) || "Failed to delete user");
       }
-      
-      setUsers(users.filter(user => user._id !== userId));
+
+      const deletedUser = users.find((u) => u._id === userId);
+      setUsers((prev) => prev.filter((user) => user._id !== userId));
       setDeleteConfirm(null);
-      setSuccess('User deleted successfully');
+
+      setDeleteSuccessMessage(
+        `${deletedUser ? getDisplayUsername(deletedUser) : "User"} deleted successfully`
+      );
+      setShowDeleteSuccessModal(true);
+
+      setSuccess("User deleted successfully");
       setTimeout(() => setSuccess(""), 3000);
+
       fetchStats();
       fetchUsers(pagination.currentPage);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete user');
+    } catch (error) {
+      console.error("Delete user error:", error);
+      setError(error instanceof Error ? error.message : "Failed to delete user");
     }
   };
 
   // Format date
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
       });
     } catch {
-      return 'Invalid Date';
+      return "Invalid Date";
     }
   };
 
@@ -246,7 +318,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
   const refreshData = () => {
     fetchUsers(pagination.currentPage);
     fetchStats();
-    setSuccess('Data refreshed successfully');
+    setSuccess("Data refreshed successfully");
     setTimeout(() => setSuccess(""), 2000);
   };
 
@@ -349,7 +421,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
                   placeholder="Search by username or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
                 />
                 <svg className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -360,7 +432,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
             <select
               value={serviceTypeFilter}
               onChange={(e) => setServiceTypeFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
             >
               <option value="">All Types</option>
               <option value="serviceSeeker">Service Seekers</option>
@@ -462,17 +534,19 @@ export default function AdminUsers({ setCurrentView }: Props) {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            user.serviceType === 'posting' 
-                              ? 'bg-purple-100 text-purple-800' 
-                              : 'bg-green-100 text-green-800'
-                          }`}>
-                            {user.serviceType === 'posting' ? 'Service Poster' : 'Service Seeker'}
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              user.serviceType === "posting"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
+                            {user.serviceType === "posting" ? "Service Poster" : "Service Seeker"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900 max-w-xs truncate" title={user.status}>
-                            {user.status || 'No status'}
+                            {user.status || "No status"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -505,10 +579,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
                 <div className="px-6 py-4 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-700">
-                      Showing <span className="font-medium">{(pagination.currentPage - 1) * 10 + 1}</span> to{' '}
-                      <span className="font-medium">
-                        {Math.min(pagination.currentPage * 10, pagination.totalUsers)}
-                      </span>{' '}
+                      Showing <span className="font-medium">{(pagination.currentPage - 1) * 10 + 1}</span> to{" "}
+                      <span className="font-medium">{Math.min(pagination.currentPage * 10, pagination.totalUsers)}</span>{" "}
                       of <span className="font-medium">{pagination.totalUsers}</span> users
                     </div>
                     <div className="flex space-x-2">
@@ -517,8 +589,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
                         disabled={!pagination.hasPrev}
                         className={`px-3 py-1 rounded border ${
                           pagination.hasPrev
-                            ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                            : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                            ? "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                            : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                         }`}
                       >
                         Previous
@@ -531,8 +603,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
                         disabled={!pagination.hasNext}
                         className={`px-3 py-1 rounded border ${
                           pagination.hasNext
-                            ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                            : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                            ? "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                            : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                         }`}
                       >
                         Next
@@ -548,73 +620,126 @@ export default function AdminUsers({ setCurrentView }: Props) {
 
       {/* Edit User Modal */}
       {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        // Overlay: blue tinted and slightly blurred (user requested blue background for edit modal)
+        <div className="fixed inset-0 bg-blue-600 bg-opacity-25 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit User</h3>
-              
-              <form onSubmit={handleUpdate} className="space-y-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Edit User</h3>
+                  <p className="text-sm text-gray-500">ID: <span className="font-mono">{selectedUser._id}</span></p>
+                  <p className="text-sm text-gray-500">Type: <span className="font-medium">{selectedUser.serviceType === "posting" ? "Service Poster" : "Service Seeker"}</span></p>
+                  {selectedUser.googleId && <p className="text-sm text-blue-600">Signed in with Google</p>}
+                </div>
+                <div>
+                  <button
+                    onClick={() => { setShowEditModal(false); setSelectedUser(null); }}
+                    className="text-gray-400 hover:text-gray-600"
+                    aria-label="Close edit modal"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <form onSubmit={handleUpdate} className="space-y-4 mt-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                  <input
-                    type="text"
-                    value={editForm.username}
-                    onChange={(e) => setEditForm({...editForm, username: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editForm.username}
+                      onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
+                      required
+                    />
+                    <div className="flex flex-col gap-1">
+                      <button type="button" onClick={() => handleCopyField("username")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
+                      <button type="button" onClick={() => handleCutField("username")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={editForm.email}
-                    onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
+                      required
+                    />
+                    <div className="flex flex-col gap-1">
+                      <button type="button" onClick={() => handleCopyField("email")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
+                      <button type="button" onClick={() => handleCutField("email")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                  <input
-                    type="text"
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
+                    />
+                    <div className="flex flex-col gap-1">
+                      <button type="button" onClick={() => handleCopyField("phone")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
+                      <button type="button" onClick={() => handleCutField("phone")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                  <input
-                    type="url"
-                    value={editForm.website}
-                    onChange={(e) => setEditForm({...editForm, website: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={editForm.website}
+                      onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
+                    />
+                    <div className="flex flex-col gap-1">
+                      <button type="button" onClick={() => handleCopyField("website")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
+                      <button type="button" onClick={() => handleCutField("website")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-                  <textarea
-                    value={editForm.bio}
-                    onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  <div className="flex gap-2">
+                    <textarea
+                      value={editForm.bio}
+                      onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                      rows={3}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
+                    />
+                    <div className="flex flex-col gap-1">
+                      <button type="button" onClick={() => handleCopyField("bio")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
+                      <button type="button" onClick={() => handleCutField("bio")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <input
-                    type="text"
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({...editForm, status: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    maxLength={32}
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
+                      maxLength={32}
+                    />
+                    <div className="flex flex-col gap-1">
+                      <button type="button" onClick={() => handleCopyField("status")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Copy</button>
+                      <button type="button" onClick={() => handleCutField("status")} className="px-2 py-1 bg-gray-100 text-sm rounded hover:bg-gray-200">Cut</button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex space-x-3 pt-4">
@@ -626,7 +751,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowEditModal(false)}
+                    onClick={() => { setShowEditModal(false); setSelectedUser(null); }}
                     className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
                   >
                     Cancel
@@ -656,6 +781,42 @@ export default function AdminUsers({ setCurrentView }: Props) {
                 className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Success Modal */}
+      {showDeleteSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-sm w-full p-6 text-center">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">User Deleted</h3>
+            <p className="text-gray-600 mb-4">{deleteSuccessMessage}</p>
+            <div className="flex justify-center">
+              <button
+                onClick={() => setShowDeleteSuccessModal(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Success Modal */}
+      {showUpdateSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-sm w-full p-6 text-center">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Update Successful</h3>
+            <p className="text-gray-600 mb-4">{updateSuccessMessage}</p>
+            <div className="flex justify-center">
+              <button
+                onClick={() => setShowUpdateSuccessModal(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                OK
               </button>
             </div>
           </div>
