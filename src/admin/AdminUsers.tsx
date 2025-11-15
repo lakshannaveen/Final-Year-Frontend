@@ -749,7 +749,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
                       onChange={(e) => setEditForm({ ...editForm, profilePic: e.target.value })}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
                     />
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
                       {editForm.profilePic ? (
                         // preview image
                         // Note: if the URL is invalid, the browser will handle showing broken image; keep lightweight
@@ -761,7 +761,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
                       )}
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Paste a URL to an image to set the user's profile picture.</p>
+                  <p className="text-xs text-gray-500 mt-1">Paste a URL to an image to set the user&apos;s profile picture.</p>
                 </div>
 
                 <div>
