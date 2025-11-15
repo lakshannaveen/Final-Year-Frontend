@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { ArrowLeft, Star, Search, RefreshCw, Trash2, Eye, EyeOff, CheckCircle, Clock } from "lucide-react";
 
@@ -211,6 +211,27 @@ export default function AdminFeedback({ setCurrentView }: Props) {
     return url.startsWith('http://') || url.startsWith('https://');
   };
 
+  // Modern dropdown state/refs for Status filter
+  const [statusOpen, setStatusOpen] = useState(false);
+  const statusRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) {
+        setStatusOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const statusLabel = filters.status === '' ? 'All Status' : filters.status.charAt(0).toUpperCase() + filters.status.slice(1);
+
+  const setStatusFilter = (val: Filters['status']) => {
+    setFilters({ ...filters, status: val, page: 1 });
+    setStatusOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -298,23 +319,52 @@ export default function AdminFeedback({ setCurrentView }: Props) {
                 />
               </div>
             </div>
-            <div>
+
+            {/* Modern dropdown replacing the <select>. Kept placement and behavior (sets filters.status and resets page). */}
+            <div ref={statusRef} className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Status
               </label>
-              <select
-                value={filters.status}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                  const val = e.target.value as Filters['status'];
-                  setFilters({ ...filters, status: val, page: 1 });
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+
+              <button
+                type="button"
+                onClick={() => setStatusOpen(v => !v)}
+                className="w-48 flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+                aria-haspopup="true"
+                aria-expanded={statusOpen}
               >
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="reviewed">Reviewed</option>
-                <option value="resolved">Resolved</option>
-              </select>
+                <span className="truncate">{statusLabel}</span>
+                <span className="ml-2 text-gray-400 select-none">▾</span>
+              </button>
+
+              {statusOpen && (
+                <ul className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                  <li
+                    onClick={() => setStatusFilter('')}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${filters.status === '' ? 'bg-blue-50 font-medium text-blue-700' : 'text-gray-700'}`}
+                  >
+                    All Status
+                  </li>
+                  <li
+                    onClick={() => setStatusFilter('pending')}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${filters.status === 'pending' ? 'bg-blue-50 font-medium text-blue-700' : 'text-gray-700'}`}
+                  >
+                    Pending
+                  </li>
+                  <li
+                    onClick={() => setStatusFilter('reviewed')}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${filters.status === 'reviewed' ? 'bg-blue-50 font-medium text-blue-700' : 'text-gray-700'}`}
+                  >
+                    Reviewed
+                  </li>
+                  <li
+                    onClick={() => setStatusFilter('resolved')}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${filters.status === 'resolved' ? 'bg-blue-50 font-medium text-blue-700' : 'text-gray-700'}`}
+                  >
+                    Resolved
+                  </li>
+                </ul>
+              )}
             </div>
           </div>
         </div>
