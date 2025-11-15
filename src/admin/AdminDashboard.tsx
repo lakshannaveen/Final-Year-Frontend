@@ -70,7 +70,7 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
 
           {/* User Management */}
           <button
-            onClick={() => alert("User Management")}
+            onClick={() => setCurrentView("adminusers")}
             className="flex items-center gap-3 p-5 bg-blue-600 text-white rounded-xl text-lg font-medium shadow hover:bg-blue-700"
           >
             <UserGroupIcon className="h-7 w-7 text-white" />
@@ -79,7 +79,7 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
 
           {/* Services Management */}
           <button
-            onClick={() => alert("Services Management")}
+            onClick={() => setCurrentView("adminservices")}
             className="flex items-center gap-3 p-5 bg-blue-600 text-white rounded-xl text-lg font-medium shadow hover:bg-blue-700"
           >
             <WrenchScrewdriverIcon className="h-7 w-7 text-white" />
@@ -88,7 +88,7 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
 
           {/* Feedbacks */}
           <button
-            onClick={() => alert("Feedbacks")}
+            onClick={() => setCurrentView("adminfeedback")}
             className="flex items-center gap-3 p-5 bg-blue-600 text-white rounded-xl text-lg font-medium shadow hover:bg-blue-700"
           >
             <ChatBubbleBottomCenterTextIcon className="h-7 w-7 text-white" />
@@ -97,7 +97,7 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
 
           {/* Contact Inquiries */}
           <button
-            onClick={() => alert("Contact Inquiries")}
+            onClick={() => setCurrentView("admincontact")}
             className="flex items-center gap-3 p-5 bg-blue-600 text-white rounded-xl text-lg font-medium shadow hover:bg-blue-700"
           >
             <EnvelopeIcon className="h-7 w-7 text-white" />
@@ -106,7 +106,7 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
 
           {/* ID Verifications */}
           <button
-            onClick={() => alert("ID Verifications")}
+            onClick={() => setCurrentView("adminidverifications")}
             className="flex items-center gap-3 p-5 bg-blue-600 text-white rounded-xl text-lg font-medium shadow hover:bg-blue-700"
           >
             <IdentificationIcon className="h-7 w-7 text-white" />
@@ -115,7 +115,7 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
 
           {/* Reports */}
           <button
-            onClick={() => alert("Reports")}
+            onClick={() => setCurrentView("adminreport")}
             className="flex items-center gap-3 p-5 bg-blue-600 text-white rounded-xl text-lg font-medium shadow hover:bg-blue-700"
           >
             <ChartBarIcon className="h-7 w-7 text-white" />

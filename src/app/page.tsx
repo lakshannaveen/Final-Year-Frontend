@@ -16,6 +16,14 @@ import Inbox from "../pages/Inbox";
 import AdminLogin from "../admin/AdminLogin"; // Admin login component you added
 import AdminDashboard from "../admin/AdminDashboard"; // Admin dashboard component
 
+// New admin pages
+import AdminReport from "../admin/AdminReport";
+import AdminFeedback from "../admin/AdminFeedback";
+import AdminUsers from "../admin/AdminUsers";
+import AdminServices from "../admin/AdminServices";
+import AdminContact from "../admin/AdminContact";
+import AdminIDVerifications from "../admin/AdminIDVerifications";
+
 // FIX: Remove onShowMessage from Home props if not used in Home.tsx
 
 export default function Page() {
@@ -156,6 +164,19 @@ export default function Page() {
         return <AdminLogin setCurrentView={setCurrentView} />;
       case "admindashboard":
         return <AdminDashboard setCurrentView={setCurrentView} />;
+      // new admin pages:
+      case "adminreport":
+        return <AdminReport setCurrentView={setCurrentView} />;
+      case "adminfeedback":
+        return <AdminFeedback setCurrentView={setCurrentView} />;
+      case "adminusers":
+        return <AdminUsers setCurrentView={setCurrentView} />;
+      case "adminservices":
+        return <AdminServices setCurrentView={setCurrentView} />;
+      case "admincontact":
+        return <AdminContact setCurrentView={setCurrentView} />;
+      case "adminidverifications":
+        return <AdminIDVerifications setCurrentView={setCurrentView} />;
       default:
         setCurrentView("home");
         return null;
