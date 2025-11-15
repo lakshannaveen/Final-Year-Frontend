@@ -243,7 +243,7 @@ export default function AdminFeedback({ setCurrentView }: Props) {
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
             >
               <ArrowLeft size={20} />
-              Back to Dashboard
+              
             </button>
             <h1 className="text-2xl font-semibold text-blue-900">Admin - Feedbacks</h1>
           </div>

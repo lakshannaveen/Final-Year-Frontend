@@ -69,6 +69,9 @@ export default function AdminUsers({ setCurrentView }: Props) {
   const [showUpdateSuccessModal, setShowUpdateSuccessModal] = useState(false);
   const [updateSuccessMessage, setUpdateSuccessMessage] = useState("");
 
+  // New state: shows the green "Back to Dashboard" text to the right under the Refresh button after a successful refresh
+  const [showBackText, setShowBackText] = useState(false);
+
   // API base URL
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -296,39 +299,68 @@ export default function AdminUsers({ setCurrentView }: Props) {
     fetchUsers(1);
   };
 
-  // Refresh data
-  const refreshData = () => {
-    fetchUsers(pagination.currentPage);
-    fetchStats();
-    setSuccess("Data refreshed successfully");
-    setTimeout(() => setSuccess(""), 2000);
+  // Refresh data - updated to show green "Back to Dashboard" text
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([fetchUsers(pagination.currentPage), fetchStats()]);
+      // Show green "Back to Dashboard" text on the right under the refresh button
+      setShowBackText(true);
+      // Hide after 5 seconds
+      setTimeout(() => setShowBackText(false), 5000);
+      setSuccess("Data refreshed successfully");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err) {
+      console.error("Refresh failed", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-            <p className="text-gray-600 mt-1">Manage all users in the system</p>
+        <header className="flex items-start justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setCurrentView("admindashboard")}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+            </div>
           </div>
-          <div className="flex gap-3">
+
+          {/* Right side: Refresh button and the conditional green Back to Dashboard text under it */}
+          <div className="flex flex-col items-end">
             <button
               onClick={refreshData}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+              disabled={loading}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               Refresh
             </button>
-            <button
-              onClick={() => setCurrentView("admindashboard")}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Back to Dashboard
-            </button>
+
+            {/* This green text appears only after a successful refresh and is placed below the Refresh button on the right side.
+                It is clickable and will navigate back to the dashboard when clicked. It will auto-hide after a short time. */}
+            {showBackText && (
+              <button
+                onClick={() => setCurrentView("admindashboard")}
+                className="mt-2 text-green-700 hover:text-green-800 text-sm font-semibold bg-green-50 px-2 py-1 rounded transition cursor-pointer"
+                title="Back to Dashboard"
+              >
+                Back to Dashboard
+              </button>
+            )}
           </div>
         </header>
 
