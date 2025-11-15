@@ -13,13 +13,21 @@ import PostService from "../pages/Post";
 import PublicProfile from "../pages/PublicProfile";
 import Message from "../pages/Message";
 import Inbox from "../pages/Inbox";
+import AdminLogin from "../admin/AdminLogin"; // Admin login component you added
 
 // FIX: Remove onShowMessage from Home props if not used in Home.tsx
 
 export default function Page() {
   const [currentView, setCurrentView] = useState("home");
   const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
-  const [chatRecipient, setChatRecipient] = useState<{ recipientId: string, recipientUsername: string, recipientProfilePic?: string } | null>(null);
+
+  // FIX: Remove 'any'
+  interface ChatRecipient {
+    recipientId: string;
+    recipientUsername: string;
+    recipientProfilePic?: string;
+  }
+  const [chatRecipient, setChatRecipient] = useState<ChatRecipient | null>(null);
 
   // --- SCROLL RESTORATION ---
   const [feedScrollPos, setFeedScrollPos] = useState(0);
@@ -31,6 +39,22 @@ export default function Page() {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [currentView]);
 
+  // Only navigate IF user manually types the hidden URL
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const adminParam = params.get("admin");
+      const PUBLIC_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY ?? "";
+
+      if (adminParam && PUBLIC_KEY && adminParam === PUBLIC_KEY) {
+        setCurrentView("adminlogin");
+      }
+
+    } catch {
+      // ignore URL parsing errors
+    }
+  }, []); // run only once on mount
+
   // Show public profile handler
   const handleShowPublicProfile = (userId: string) => {
     setPublicProfileId(userId);
@@ -38,7 +62,11 @@ export default function Page() {
   };
 
   // Show message handler (used in Inbox, PublicProfile)
-  const handleShowMessage = (recipientId: string, recipientUsername: string, recipientProfilePic?: string) => {
+  const handleShowMessage = (
+    recipientId: string,
+    recipientUsername: string,
+    recipientProfilePic?: string
+  ) => {
     setChatRecipient({
       recipientId,
       recipientUsername,
@@ -114,9 +142,11 @@ export default function Page() {
           <Inbox
             setCurrentView={setCurrentView}
             onOpenChat={handleShowMessage}
-            currentView={currentView}
+            currentView={currentView} // FIX missing prop
           />
         );
+      case "adminlogin":
+        return <AdminLogin setCurrentView={setCurrentView} />;
       default:
         setCurrentView("home");
         return null;
