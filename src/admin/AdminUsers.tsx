@@ -81,6 +81,10 @@ export default function AdminUsers({ setCurrentView }: Props) {
   const deleteSuccessOverlayRef = useRef<HTMLDivElement | null>(null);
   const updateSuccessOverlayRef = useRef<HTMLDivElement | null>(null);
 
+  // Ref + state for modern service-type dropdown
+  const serviceRef = useRef<HTMLDivElement | null>(null);
+  const [serviceOpen, setServiceOpen] = useState(false);
+
   // Safe username getter
   const getUsernameInitial = (user: User) => {
     if (!user.username || user.username.trim() === "") {
@@ -183,6 +187,17 @@ export default function AdminUsers({ setCurrentView }: Props) {
       });
     }
   }, [selectedUser]);
+
+  // Close service dropdown on outside click
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (serviceRef.current && !serviceRef.current.contains(e.target as Node)) {
+        setServiceOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
@@ -317,6 +332,13 @@ export default function AdminUsers({ setCurrentView }: Props) {
     }
   };
 
+  const serviceTypeLabel =
+    serviceTypeFilter === ""
+      ? "All Types"
+      : serviceTypeFilter === "serviceSeeker"
+      ? "Service Seekers"
+      : "Service Providers";
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -443,23 +465,42 @@ export default function AdminUsers({ setCurrentView }: Props) {
               </div>
             </form>
 
-            {/* Modern dropdown UI */}
-            <div className="relative w-64">
-              <select
-                value={serviceTypeFilter}
-                onChange={(e) => setServiceTypeFilter(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-gray-200 bg-white px-4 py-2 pr-10 text-gray-700 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                aria-label="Filter by user type"
+            {/* Modern dropdown UI for service type (replaces the previous <select>) */}
+            <div ref={serviceRef} className="relative w-64">
+              <label className="sr-only">Filter by user type</label>
+              <button
+                type="button"
+                onClick={() => setServiceOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-2 border border-gray-200 rounded-lg bg-white text-gray-700 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                aria-haspopup="true"
+                aria-expanded={serviceOpen}
               >
-                <option value="">All Types</option>
-                <option value="serviceSeeker">Service Seekers</option>
-                <option value="posting">Service Providers</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+                <span className="truncate">{serviceTypeLabel}</span>
+                <span className="ml-2 text-gray-400 select-none">▾</span>
+              </button>
+
+              {serviceOpen && (
+                <ul className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                  <li
+                    onClick={() => { setServiceTypeFilter(""); setServiceOpen(false); }}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${serviceTypeFilter === "" ? "bg-blue-50 font-medium text-blue-700" : "text-gray-700"}`}
+                  >
+                    All Types
+                  </li>
+                  <li
+                    onClick={() => { setServiceTypeFilter("serviceSeeker"); setServiceOpen(false); }}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${serviceTypeFilter === "serviceSeeker" ? "bg-blue-50 font-medium text-blue-700" : "text-gray-700"}`}
+                  >
+                    Service Seekers
+                  </li>
+                  <li
+                    onClick={() => { setServiceTypeFilter("posting"); setServiceOpen(false); }}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${serviceTypeFilter === "posting" ? "bg-blue-50 font-medium text-blue-700" : "text-gray-700"}`}
+                  >
+                    Service Providers
+                  </li>
+                </ul>
+              )}
             </div>
 
             <button
