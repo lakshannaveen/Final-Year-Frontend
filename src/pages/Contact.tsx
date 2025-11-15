@@ -7,13 +7,24 @@ interface ContactProps {
 }
 
 export default function Contact({ setCurrentView }: ContactProps) {
-  const [formData, setFormData] = useState({ name: "", message: "" });
-  const [errors, setErrors] = useState({ name: "", message: "" });
+  const [formData, setFormData] = useState({ 
+    name: "", 
+    email: "", 
+    message: "", 
+    phone: "" 
+  });
+  const [errors, setErrors] = useState({ 
+    name: "", 
+    email: "", 
+    message: "", 
+    phone: "" 
+  });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
     let valid = true;
-    const newErrors = { name: "", message: "" };
+    const newErrors = { name: "", email: "", message: "", phone: "" };
 
     // Name validation
     if (!formData.name.trim()) {
@@ -24,6 +35,16 @@ export default function Contact({ setCurrentView }: ContactProps) {
       valid = false;
     } else if (formData.name.trim().length > 30) {
       newErrors.name = "Name must not exceed 30 characters";
+      valid = false;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+      valid = false;
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
       valid = false;
     }
 
@@ -40,17 +61,48 @@ export default function Contact({ setCurrentView }: ContactProps) {
       valid = false;
     }
 
+    // Phone validation (optional)
+    if (formData.phone && !/^[\+]?[0-9\s\-\(\)]{10,}$/.test(formData.phone)) {
+      newErrors.phone = "Please enter a valid phone number";
+      valid = false;
+    }
+
     setErrors(newErrors);
     return valid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
-    console.log("Contact submitted:", formData);
-    setSubmitted(true);
-    setFormData({ name: "", message: "" });
+    setLoading(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      
+      const response = await fetch(`${API_URL}/api/contact/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit contact form");
+      }
+
+      const data = await response.json();
+      console.log("Contact submitted:", data);
+      
+      setSubmitted(true);
+      setFormData({ name: "", email: "", message: "", phone: "" });
+    } catch (err) {
+      console.error("Submit error:", err);
+      setErrors(prev => ({ ...prev, submit: err.message }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,7 +124,7 @@ export default function Contact({ setCurrentView }: ContactProps) {
         <div className="md:w-1/2 bg-gradient-to-r from-green-700 to-emerald-700 text-white p-8 rounded-2xl flex flex-col justify-center items-center shadow-lg">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Get in Touch</h2>
           <p className="text-lg md:text-xl text-center max-w-sm mb-4">
-            Have questions or need assistance? Reach out to us and we’ll respond promptly.
+            Have questions or need assistance? Reach out to us and we'll respond promptly.
           </p>
           <div className="flex flex-col gap-2 text-center">
             <p className="font-semibold">Email: support@example.com</p>
@@ -90,7 +142,7 @@ export default function Contact({ setCurrentView }: ContactProps) {
             {/* Name */}
             <div className="mb-4">
               <label className="block text-green-700 font-semibold mb-1">
-                Name
+                Name *
               </label>
               <input
                 type="text"
@@ -111,10 +163,58 @@ export default function Contact({ setCurrentView }: ContactProps) {
               )}
             </div>
 
+            {/* Email */}
+            <div className="mb-4">
+              <label className="block text-green-700 font-semibold mb-1">
+                Email *
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value });
+                  setErrors({ ...errors, email: "" });
+                }}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                  errors.email
+                    ? "border-red-500 focus:ring-red-300"
+                    : "border-green-300 focus:ring-green-300"
+                } text-gray-800 placeholder-gray-400`}
+                placeholder="your.email@example.com"
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              )}
+            </div>
+
+            {/* Phone (Optional) */}
+            <div className="mb-4">
+              <label className="block text-green-700 font-semibold mb-1">
+                Phone (Optional)
+              </label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => {
+                  setFormData({ ...formData, phone: e.target.value });
+                  setErrors({ ...errors, phone: "" });
+                }}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                  errors.phone
+                    ? "border-red-500 focus:ring-red-300"
+                    : "border-green-300 focus:ring-green-300"
+                } text-gray-800 placeholder-gray-400`}
+                placeholder="+94 123 456 789"
+              />
+              {errors.phone && (
+                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+              )}
+            </div>
+
             {/* Message */}
             <div className="mb-6">
               <label className="block text-green-700 font-semibold mb-1">
-                Message
+                Message *
               </label>
               <textarea
                 value={formData.message}
@@ -138,14 +238,21 @@ export default function Contact({ setCurrentView }: ContactProps) {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition"
+              disabled={loading}
+              className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Send Message
+              {loading ? "Sending..." : "Send Message"}
             </button>
+
+            {errors.submit && (
+              <p className="text-red-500 text-center mt-4 font-medium">
+                {errors.submit}
+              </p>
+            )}
 
             {submitted && (
               <p className="text-green-700 text-center mt-4 font-medium">
-                Your message has been sent!
+                Your message has been sent successfully!
               </p>
             )}
           </form>
