@@ -59,7 +59,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
     phone: "",
     website: "",
     bio: "",
-    status: ""
+    status: "",
+    profilePic: ""
   });
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -183,7 +184,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
         phone: selectedUser.phone || "",
         website: selectedUser.website || "",
         bio: selectedUser.bio || "",
-        status: selectedUser.status || ""
+        status: selectedUser.status || "",
+        profilePic: selectedUser.profilePic || ""
       });
     }
   }, [selectedUser]);
@@ -220,7 +222,8 @@ export default function AdminUsers({ setCurrentView }: Props) {
       phone: user.phone || "",
       website: user.website || "",
       bio: user.bio || "",
-      status: user.status || ""
+      status: user.status || "",
+      profilePic: user.profilePic || ""
     });
     setShowEditModal(true);
   };
@@ -247,6 +250,7 @@ export default function AdminUsers({ setCurrentView }: Props) {
       }
 
       const data = await response.json();
+      // data.user expected
       setUsers((prev) => prev.map((user) => (user._id === selectedUser._id ? data.user : user)));
       setShowEditModal(false);
       setSelectedUser(null);
@@ -574,10 +578,30 @@ export default function AdminUsers({ setCurrentView }: Props) {
                       <tr key={user._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                              <span className="text-blue-600 font-medium text-sm">
-                                {getUsernameInitial(user)}
-                              </span>
+                            <div className="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center overflow-hidden bg-blue-100">
+                              {user.profilePic ? (
+                                <img
+                                  src={user.profilePic}
+                                  alt={getDisplayUsername(user)}
+                                  className="h-10 w-10 object-cover"
+                                  onError={(e) => {
+                                    // fallback to initials if image fails to load
+                                    const el = e.currentTarget as HTMLImageElement;
+                                    el.style.display = "none";
+                                    const parent = el.parentElement;
+                                    if (parent) {
+                                      const span = document.createElement("span");
+                                      span.className = "text-blue-600 font-medium text-sm";
+                                      span.textContent = getUsernameInitial(user);
+                                      parent.appendChild(span);
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <span className="text-blue-600 font-medium text-sm">
+                                  {getUsernameInitial(user)}
+                                </span>
+                              )}
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">
@@ -716,6 +740,30 @@ export default function AdminUsers({ setCurrentView }: Props) {
               </div>
 
               <form onSubmit={handleUpdate} className="space-y-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture URL</label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="url"
+                      value={editForm.profilePic}
+                      onChange={(e) => setEditForm({ ...editForm, profilePic: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500 text-gray-700"
+                    />
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                      {editForm.profilePic ? (
+                        // preview image
+                        // Note: if the URL is invalid, the browser will handle showing broken image; keep lightweight
+                        <img src={editForm.profilePic} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <span className="text-gray-500 text-sm">No</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Paste a URL to an image to set the user's profile picture.</p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
                   <div className="flex gap-2">
