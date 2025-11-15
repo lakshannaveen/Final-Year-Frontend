@@ -14,6 +14,7 @@ import PublicProfile from "../pages/PublicProfile";
 import Message from "../pages/Message";
 import Inbox from "../pages/Inbox";
 import AdminLogin from "../admin/AdminLogin"; // Admin login component you added
+import AdminDashboard from "../admin/AdminDashboard"; // Admin dashboard component
 
 // FIX: Remove onShowMessage from Home props if not used in Home.tsx
 
@@ -42,14 +43,20 @@ export default function Page() {
   // Only navigate IF user manually types the hidden URL
   useEffect(() => {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const adminParam = params.get("admin");
+    
       const PUBLIC_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY ?? "";
+      const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME ?? "";
 
-      if (adminParam && PUBLIC_KEY && adminParam === PUBLIC_KEY) {
+      // Require the exact query string to match one of the two canonical orders:
+      // ?admin=<PUBLIC_KEY>&user=<ADMIN_USERNAME>
+      // or ?user=<ADMIN_USERNAME>&admin=<PUBLIC_KEY>
+      const exactA = `?admin=${encodeURIComponent(PUBLIC_KEY)}&user=${encodeURIComponent(ADMIN_USERNAME)}`;
+      const exactB = `?user=${encodeURIComponent(ADMIN_USERNAME)}&admin=${encodeURIComponent(PUBLIC_KEY)}`;
+
+      if (window.location.search === exactA || window.location.search === exactB) {
+        // Only set admin view when both params exactly match the env values.
         setCurrentView("adminlogin");
       }
-
     } catch {
       // ignore URL parsing errors
     }
@@ -147,6 +154,8 @@ export default function Page() {
         );
       case "adminlogin":
         return <AdminLogin setCurrentView={setCurrentView} />;
+      case "admindashboard":
+        return <AdminDashboard setCurrentView={setCurrentView} />;
       default:
         setCurrentView("home");
         return null;

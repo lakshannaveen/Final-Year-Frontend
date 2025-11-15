@@ -55,12 +55,13 @@ export default function AdminLogin({ setCurrentView }: AdminLoginProps) {
         return;
       }
 
+      // Exact match required for both username and password (case-sensitive)
       if (username === ADMIN_USERNAME && password === PUBLIC_KEY) {
         sessionStorage.setItem("isAdmin", "1");
         setSuccess("Login successful!");
 
         setTimeout(() => {
-          setCurrentView("home");
+          setCurrentView("admindashboard");
         }, 600);
       } else {
         setError("Invalid username or password.");
