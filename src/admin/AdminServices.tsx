@@ -273,7 +273,6 @@ export default function AdminServices({ setCurrentView }: Props) {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              <span className="font-medium">Back</span>
             </button>
             <h1 className="text-2xl font-semibold text-blue-900">Admin - Manage Services</h1>
           </div>
