@@ -6,25 +6,34 @@ interface ContactProps {
   setCurrentView: (view: string) => void;
 }
 
+interface Errors {
+  name: string;
+  email: string;
+  message: string;
+  phone: string;
+  submit: string;
+}
+
 export default function Contact({ setCurrentView }: ContactProps) {
-  const [formData, setFormData] = useState({ 
-    name: "", 
-    email: "", 
-    message: "", 
-    phone: "" 
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+    phone: ""
   });
-  const [errors, setErrors] = useState({ 
-    name: "", 
-    email: "", 
-    message: "", 
-    phone: "" 
+  const [errors, setErrors] = useState<Errors>({
+    name: "",
+    email: "",
+    message: "",
+    phone: "",
+    submit: ""
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
     let valid = true;
-    const newErrors = { name: "", email: "", message: "", phone: "" };
+    const newErrors: Errors = { name: "", email: "", message: "", phone: "", submit: "" };
 
     // Name validation
     if (!formData.name.trim()) {
@@ -49,8 +58,9 @@ export default function Contact({ setCurrentView }: ContactProps) {
     }
 
     // Message validation
-    const wordCount = formData.message.trim().split(/\s+/).length;
-    if (!formData.message.trim()) {
+    const trimmed = formData.message.trim();
+    const wordCount = trimmed ? trimmed.split(/\s+/).length : 0;
+    if (!trimmed) {
       newErrors.message = "Message is required";
       valid = false;
     } else if (wordCount < 2) {
@@ -73,36 +83,47 @@ export default function Contact({ setCurrentView }: ContactProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // clear previous submit error
+    setErrors(prev => ({ ...prev, submit: "" }));
+
     if (!validate()) return;
 
     setLoading(true);
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-      
+
       const response = await fetch(`${API_URL}/api/contact/submit`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to submit contact form");
+        // try to parse server error
+        const errorData = await response.json().catch(() => ({} as { error?: string }));
+        throw new Error(errorData?.error || "Failed to submit contact form");
       }
 
       const data = await response.json();
       console.log("Contact submitted:", data);
-      
+
       setSubmitted(true);
       setFormData({ name: "", email: "", message: "", phone: "" });
-    } catch (err) {
+      // clear field-level errors
+      setErrors({ name: "", email: "", message: "", phone: "", submit: "" });
+    } catch (err: unknown) {
       console.error("Submit error:", err);
-      setErrors(prev => ({ ...prev, submit: err.message }));
+      const message = err instanceof Error ? err.message : String(err);
+      setErrors(prev => ({ ...prev, submit: message }));
     } finally {
       setLoading(false);
     }
+  };
+
+  const closeModal = () => {
+    setSubmitted(false);
   };
 
   return (
@@ -124,7 +145,7 @@ export default function Contact({ setCurrentView }: ContactProps) {
         <div className="md:w-1/2 bg-gradient-to-r from-green-700 to-emerald-700 text-white p-8 rounded-2xl flex flex-col justify-center items-center shadow-lg">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Get in Touch</h2>
           <p className="text-lg md:text-xl text-center max-w-sm mb-4">
-            Have questions or need assistance? Reach out to us and we'll respond promptly.
+            Have questions or need assistance? Reach out to us and we&apos;ll respond promptly.
           </p>
           <div className="flex flex-col gap-2 text-center">
             <p className="font-semibold">Email: support@example.com</p>
@@ -149,7 +170,7 @@ export default function Contact({ setCurrentView }: ContactProps) {
                 value={formData.name}
                 onChange={(e) => {
                   setFormData({ ...formData, name: e.target.value });
-                  setErrors({ ...errors, name: "" });
+                  setErrors(prev => ({ ...prev, name: "" }));
                 }}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                   errors.name
@@ -173,7 +194,7 @@ export default function Contact({ setCurrentView }: ContactProps) {
                 value={formData.email}
                 onChange={(e) => {
                   setFormData({ ...formData, email: e.target.value });
-                  setErrors({ ...errors, email: "" });
+                  setErrors(prev => ({ ...prev, email: "" }));
                 }}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                   errors.email
@@ -197,7 +218,7 @@ export default function Contact({ setCurrentView }: ContactProps) {
                 value={formData.phone}
                 onChange={(e) => {
                   setFormData({ ...formData, phone: e.target.value });
-                  setErrors({ ...errors, phone: "" });
+                  setErrors(prev => ({ ...prev, phone: "" }));
                 }}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                   errors.phone
@@ -220,7 +241,7 @@ export default function Contact({ setCurrentView }: ContactProps) {
                 value={formData.message}
                 onChange={(e) => {
                   setFormData({ ...formData, message: e.target.value });
-                  setErrors({ ...errors, message: "" });
+                  setErrors(prev => ({ ...prev, message: "" }));
                 }}
                 rows={5}
                 placeholder="Write your message..."
@@ -249,15 +270,25 @@ export default function Contact({ setCurrentView }: ContactProps) {
                 {errors.submit}
               </p>
             )}
-
-            {submitted && (
-              <p className="text-green-700 text-center mt-4 font-medium">
-                Your message has been sent successfully!
-              </p>
-            )}
           </form>
         </div>
       </div>
+
+      {/* Success Modal (similar to Feedback component) */}
+      {submitted && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-lg text-center relative">
+            <h3 className="font-bold text-lg mb-2 text-green-600">Success</h3>
+            <p className="text-black mb-4">Your message has been sent successfully! We will get back to you shortly.</p>
+            <button
+              className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 font-semibold"
+              onClick={closeModal}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
