@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { ArrowLeft, RefreshCw, Trash2 } from "lucide-react";
+import { RefreshCw, Trash2 } from "lucide-react";
 
 type Props = {
   setCurrentView: (view: string) => void;
@@ -8,7 +8,7 @@ type Props = {
 
 interface FeedUser {
   _id: string;
-  username: string;
+  username?: string;
   profilePic?: string;
   status?: string;
   serviceType?: string;
@@ -168,15 +168,16 @@ export default function AdminServices({ setCurrentView }: Props) {
   return (
     <div className="min-h-screen bg-blue-50 p-6">
       <div className="max-w-5xl mx-auto">
-        <header className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+        <header className="flex items-start justify-between mb-6">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setCurrentView("admindashboard")}
-              aria-label="Go back"
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-blue-200 hover:bg-blue-50 transition"
-              title="Back"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
             >
-              <ArrowLeft size={20} color="#0ea5e9" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+             
             </button>
             <h1 className="text-2xl font-semibold text-blue-900">Admin - Manage Services</h1>
           </div>
