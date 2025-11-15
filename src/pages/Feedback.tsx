@@ -65,11 +65,6 @@ export default function Feedback({ setCurrentView }: FeedbackProps) {
       setMessage("");
       setRating(0);
       setErrors({ message: "", rating: "" });
-      
-      // Reset submitted status after 3 seconds
-      setTimeout(() => {
-        setSubmitted(false);
-      }, 3000);
     } catch (error) {
       console.error("Feedback submission error:", error);
       setErrors({
@@ -79,6 +74,10 @@ export default function Feedback({ setCurrentView }: FeedbackProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const closeModal = () => {
+    setSubmitted(false);
   };
 
   return (
@@ -166,14 +165,24 @@ export default function Feedback({ setCurrentView }: FeedbackProps) {
           >
             {loading ? "Submitting..." : "Submit Feedback"}
           </button>
-
-          {submitted && (
-            <p className="text-green-700 text-center mt-4 font-medium">
-              Thank you for your feedback! We appreciate your input.
-            </p>
-          )}
         </form>
       </div>
+
+      {/* Success Modal */}
+      {submitted && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-lg text-center relative">
+            <h3 className="font-bold text-lg mb-2 text-green-600">Success</h3>
+            <p className="text-black mb-4">Thank you for your feedback! We appreciate your input.</p>
+            <button
+              className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 font-semibold"
+              onClick={closeModal}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

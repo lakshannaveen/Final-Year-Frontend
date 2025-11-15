@@ -41,6 +41,9 @@ export default function AdminFeedback({ setCurrentView }: Props) {
     page: 1
   });
 
+  // New state: shows the green "Back to Dashboard" text to the right under the Refresh button after a successful refresh
+  const [showBackText, setShowBackText] = useState(false);
+
   const fetchFeedbacks = async () => {
     try {
       setLoading(true);
@@ -180,11 +183,27 @@ export default function AdminFeedback({ setCurrentView }: Props) {
     });
   };
 
+  // New handler to refresh feedbacks and stats, and show the green "Back to Dashboard" text on success
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([fetchFeedbacks(), fetchStats()]);
+      // Show green "Back to Dashboard" text on the right under the refresh button
+      setShowBackText(true);
+      // Hide after 5 seconds
+      setTimeout(() => setShowBackText(false), 5000);
+    } catch (err) {
+      console.error('Refresh failed', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="flex items-center justify-between mb-6">
+        <header className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setCurrentView("admindashboard")}
@@ -195,17 +214,30 @@ export default function AdminFeedback({ setCurrentView }: Props) {
             </button>
             <h1 className="text-2xl font-semibold text-blue-900">Admin - Feedbacks</h1>
           </div>
-          <button
-            onClick={() => {
-              fetchFeedbacks();
-              fetchStats();
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-            disabled={loading}
-          >
-            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-            Refresh
-          </button>
+
+          {/* Right side: Refresh button and the conditional green Back to Dashboard text under it */}
+          <div className="flex flex-col items-end">
+            <button
+              onClick={handleRefresh}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+              disabled={loading}
+            >
+              <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+
+            {/* This green text appears only after a successful refresh and is placed below the Refresh button on the right side.
+                It is clickable and will navigate back to the dashboard when clicked. It will auto-hide after a short time. */}
+            {showBackText && (
+              <button
+                onClick={() => setCurrentView("admindashboard")}
+                className="mt-2 text-green-700 hover:text-green-800 text-sm font-semibold bg-green-50 px-2 py-1 rounded transition cursor-pointer"
+                title="Back to Dashboard"
+              >
+                Back to Dashboard
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Stats Cards */}
@@ -383,16 +415,16 @@ export default function AdminFeedback({ setCurrentView }: Props) {
             <button
               onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
               disabled={filters.page === 1}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-green-50 disabled:opacity-80 disabled:cursor-not-allowed text-blue-700"
             >
               Previous
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm font-medium text-blue-700">
               Page {filters.page}
             </span>
             <button
               onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 text-blue-700"
             >
               Next
             </button>
