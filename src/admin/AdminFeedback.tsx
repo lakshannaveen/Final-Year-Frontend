@@ -391,7 +391,7 @@ export default function AdminFeedback({ setCurrentView }: Props) {
                           const src = feedback.user.profilePic || '/default-avatar.png';
                           if (isExternalUrl(src)) {
                             // External host: use plain <img> to avoid next/image hostname config runtime error.
-                            // eslint-disable-next-line @next/next/no-img-element
+                          
                             return (
                               <img
                                 src={src}
