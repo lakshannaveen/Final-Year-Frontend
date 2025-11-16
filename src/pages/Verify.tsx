@@ -195,10 +195,17 @@ export default function Verify({ setCurrentView }: VerifyProps) {
 
         <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-8">
           <h1 className="text-2xl font-bold text-green-800 mb-2">Verify Your Account</h1>
-          <p className="text-gray-700 mb-6">
-            Choose one primary identity document (NIC or Driving License). For the selected document you must upload clear front and back images or PDFs.
-            You must also upload a Business Registration Certificate (single image/PDF). Files are reviewed manually.
-          </p>
+
+          {/* Note block (moved paragraph into a note) */}
+          <div role="note" className="mb-6">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+              <p className="font-semibold text-yellow-700 mb-1">Note</p>
+              <p className="text-sm text-gray-700">
+                Choose one primary identity document (NIC or Driving License). For the selected document you must upload clear front and back images or PDFs.
+                You must also upload a Business Registration Certificate (single image/PDF). Files are reviewed manually.
+              </p>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Document selector with helpful text */}
