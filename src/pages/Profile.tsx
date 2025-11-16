@@ -712,7 +712,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             </div>
           )}
 
-          {isPostingAccount && !editMode && (profile.phone || profile.website) && (
+          {isPostingAccount && !editMode && (
             <div className="w-full max-w-lg mb-6 bg-green-50 p-4 rounded-lg border border-green-100">
               <h3 className="text-green-800 font-semibold mb-3">Contact Information</h3>
               <div className="space-y-2">
@@ -737,14 +737,33 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 )}
               </div>
 
-              {/* Verify account option for service providers */}
-              <div className="mt-4">
-                <button
-                  onClick={() => setCurrentView("verify")}
-                  className="px-4 py-2 bg-yellow-400 text-yellow-900 rounded-lg font-semibold hover:bg-yellow-500 transition"
-                >
-                  Verify Account
-                </button>
+              {/* Verify account option for service providers - single, prominent UI */}
+              <div className="mt-4 border-t pt-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-800">
+                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l.7 2.16a1 1 0 00.95.69h2.28c.969 0 1.371 1.24.588 1.81l-1.846 1.34a1 1 0 00-.364 1.118l.7 2.16c.3.921-.755 1.688-1.54 1.118L10 12.347l-1.9 1.416c-.785.57-1.84-.197-1.54-1.118l.7-2.16a1 1 0 00-.364-1.118L5.05 6.587c-.783-.57-.38-1.81.588-1.81h2.28a1 1 0 00.95-.69l.7-2.16z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-700 mb-2">
+                      Verify your account to gain trust from customers. Verification will allow you to
+                      submit documents and get a verified badge on your profile. This helps increase
+                      visibility and user confidence.
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setCurrentView("verify")}
+                        className="px-4 py-2 bg-yellow-400 text-yellow-900 rounded-lg font-semibold hover:bg-yellow-500 transition"
+                      >
+                        Start Verification
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -765,15 +784,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                     Edit
                   </button>
                 )}
-                {/* Also show Verify option near About header for posting accounts (if not already shown elsewhere) */}
-                {!editMode && isPostingAccount && (
-                  <button
-                    onClick={() => setCurrentView("verify")}
-                    className="text-yellow-700 hover:text-yellow-900 flex items-center text-sm"
-                  >
-                    Verify Account
-                  </button>
-                )}
+                {/* NOTE: Verify button intentionally shown once above inside Contact Information card for posting accounts */}
               </div>
             </div>
 
