@@ -23,6 +23,7 @@ export default function Verify({ setCurrentView }: VerifyProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const nicFrontRef = useRef<string | null>(null);
   const nicBackRef = useRef<string | null>(null);
@@ -94,6 +95,7 @@ export default function Verify({ setCurrentView }: VerifyProps) {
     setSubmitting(true);
     setError("");
     setSuccess("");
+    setShowSuccessModal(false);
 
     try {
       const formData = new FormData();
@@ -123,7 +125,8 @@ export default function Verify({ setCurrentView }: VerifyProps) {
       
       if (res.ok) {
         setSuccess("Verification request submitted successfully! We'll review your documents and notify you.");
-        
+        setShowSuccessModal(true);
+
         // Clear all inputs and revoke previews
         if (nicFrontRef.current) {
           URL.revokeObjectURL(nicFrontRef.current);
@@ -159,6 +162,7 @@ export default function Verify({ setCurrentView }: VerifyProps) {
         setBusinessCert(null);
         setBusinessCertPreview("");
 
+        // keep the inline success message for a short time but let the user close the modal
         setTimeout(() => setSuccess(""), 8000);
       } else {
         console.error('Verification submission failed:', data);
@@ -174,6 +178,10 @@ export default function Verify({ setCurrentView }: VerifyProps) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const closeSuccessModal = () => {
+    setShowSuccessModal(false);
   };
 
   return (
@@ -397,6 +405,29 @@ export default function Verify({ setCurrentView }: VerifyProps) {
           </form>
         </div>
       </div>
+
+      {/* Success Modal (similar to Feedback modal) */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-lg text-center relative">
+            <h3 className="font-bold text-lg mb-2 text-green-600">Verification Submitted</h3>
+            <p className="text-black mb-3">
+              Thank you — your verification request has been received.
+            </p>
+            <p className="text-sm text-gray-700 mb-4">
+              We&apos;ll review your documents within 24 hours and will notify you with an update about the outcome. Please keep an eye on your notifications or email.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 font-semibold"
+                onClick={closeSuccessModal}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
