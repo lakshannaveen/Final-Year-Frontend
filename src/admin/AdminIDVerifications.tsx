@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, Search, CheckCircle, XCircle, Clock, Eye, User, Download, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { Search, CheckCircle, XCircle, Clock, Eye, User, Download, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
 type Props = {
   setCurrentView: (view: string) => void;
