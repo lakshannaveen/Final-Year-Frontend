@@ -13,9 +13,12 @@ import {
   Link as LinkIcon,
   LogOut,
   ChevronDown,
+  CheckCircle,
+  Clock,
+  XCircle,
 } from "lucide-react";
 import { useAuth } from "../components/AuthContext";
-import ProfileFeed from "./ProfileFeed"; // Import ProfileFeed at the bottom
+import ProfileFeed from "./ProfileFeed";
 
 interface UserProfile {
   _id: string;
@@ -29,6 +32,15 @@ interface UserProfile {
   profilePic?: string;
   coverImage?: string;
   status?: string;
+  isVerified?: boolean;
+}
+
+interface VerificationStatus {
+  _id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  docType: 'nic' | 'dl';
+  submittedAt: string;
+  reviewedAt?: string;
 }
 
 interface ProfileProps {
@@ -45,7 +57,9 @@ function Skeleton({ className = "" }: { className?: string }) {
 
 export default function Profile({ setCurrentView }: ProfileProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [verification, setVerification] = useState<VerificationStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [verificationLoading, setVerificationLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
   const [username, setUsername] = useState("");
@@ -83,6 +97,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
   const getInitial = (name = "") => name.charAt(0).toUpperCase();
 
+  // Fetch profile and verification status
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
@@ -109,7 +124,27 @@ export default function Profile({ setCurrentView }: ProfileProps) {
       }
       setLoading(false);
     };
+
+    const fetchVerificationStatus = async () => {
+      setVerificationLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/verify/status`, {
+          method: "GET",
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setVerification(data.verification);
+        }
+        // If 404, no verification exists - that's fine
+      } catch (error) {
+        console.error("Error fetching verification status:", error);
+      }
+      setVerificationLoading(false);
+    };
+
     fetchProfile();
+    fetchVerificationStatus();
 
     return () => {
       revokeObjectUrl(objectUrlRef);
@@ -321,6 +356,66 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     "✅ Open to work",
     "🛑 Not available",
   ];
+
+  // Get verification status display
+  const getVerificationStatusDisplay = () => {
+    if (verificationLoading) {
+      return <div className="text-sm text-gray-600">Loading verification status...</div>;
+    }
+
+    if (profile?.isVerified) {
+      return (
+        <div className="flex items-center gap-2 text-green-600 font-semibold">
+          <CheckCircle size={16} />
+          <span>Verified Account</span>
+        </div>
+      );
+    }
+
+    if (verification) {
+      switch (verification.status) {
+        case 'pending':
+          return (
+            <div className="flex items-center gap-2 text-yellow-600 font-semibold">
+              <Clock size={16} />
+              <span>Verification Pending</span>
+            </div>
+          );
+        case 'approved':
+          return (
+            <div className="flex items-center gap-2 text-green-600 font-semibold">
+              <CheckCircle size={16} />
+              <span>Verified Account</span>
+            </div>
+          );
+        case 'rejected':
+          return (
+            <div className="flex items-center gap-2 text-red-600 font-semibold">
+              <XCircle size={16} />
+              <span>Verification Rejected</span>
+            </div>
+          );
+        default:
+          return null;
+      }
+    }
+
+    return null;
+  };
+
+  // Get verification badge for avatar
+  const getVerificationBadge = () => {
+    if (profile?.isVerified) {
+      return (
+        <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
+          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-500 ring-2 ring-white">
+            <CheckCircle size={12} className="text-white" />
+          </span>
+        </div>
+      );
+    }
+    return null;
+  };
 
   if (loading) {
     return (
@@ -540,6 +635,9 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               </div>
             )}
 
+            {/* Verification badge */}
+            {getVerificationBadge()}
+
             {editMode && (
               <button
                 className="absolute right-0 bottom-0 px-3 py-2 bg-white bg-opacity-90 text-green-700 rounded-full shadow text-sm font-semibold hover:bg-green-100 transition flex items-center z-30"
@@ -581,7 +679,10 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
             <p className="text-gray-600 text-lg break-all mb-4">{profile.email}</p>
 
-            <div className="flex justify-center flex-wrap gap-3 mb-4">
+            {/* Verification Status Display */}
+            {getVerificationStatusDisplay()}
+
+            <div className="flex justify-center flex-wrap gap-3 mb-4 mt-2">
               <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">
                 {isPostingAccount ? "💼 Service Provider" : "🔍 Looking for Services"}
               </span>
@@ -737,7 +838,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 )}
               </div>
 
-              {/* Verify account option for service providers - single, prominent UI */}
+              {/* Verification section */}
               <div className="mt-4 border-t pt-4">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
@@ -749,19 +850,46 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                   </div>
 
                   <div className="flex-1">
-                    <p className="text-sm text-gray-700 mb-2">
-                      Verify your account to gain trust from customers. Verification will allow you to
-                      submit documents and get a verified badge on your profile. This helps increase
-                      visibility and user confidence.
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setCurrentView("verify")}
-                        className="px-4 py-2 bg-yellow-400 text-yellow-900 rounded-lg font-semibold hover:bg-yellow-500 transition"
-                      >
-                        Start Verification
-                      </button>
-                    </div>
+                    {verification ? (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-semibold text-gray-800">Verification Status</h4>
+                          {getVerificationStatusDisplay()}
+                        </div>
+                        <p className="text-sm text-gray-700 mb-2">
+                          {verification.status === 'pending' && 
+                            "Your verification request is under review. This usually takes 24-48 hours."}
+                          {verification.status === 'approved' && 
+                            "Your account has been verified! You now have a verified badge on your profile."}
+                          {verification.status === 'rejected' && 
+                            "Your verification was rejected. Please check your documents and submit again."}
+                        </p>
+                        {verification.status === 'rejected' && (
+                          <button
+                            onClick={() => setCurrentView("verify")}
+                            className="px-4 py-2 bg-yellow-400 text-yellow-900 rounded-lg font-semibold hover:bg-yellow-500 transition"
+                          >
+                            Submit Again
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-sm text-gray-700 mb-2">
+                          Verify your account to gain trust from customers. Verification will allow you to
+                          submit documents and get a verified badge on your profile. This helps increase
+                          visibility and user confidence.
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => setCurrentView("verify")}
+                            className="px-4 py-2 bg-yellow-400 text-yellow-900 rounded-lg font-semibold hover:bg-yellow-500 transition"
+                          >
+                            Start Verification
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -784,7 +912,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                     Edit
                   </button>
                 )}
-                {/* NOTE: Verify button intentionally shown once above inside Contact Information card for posting accounts */}
               </div>
             </div>
 
