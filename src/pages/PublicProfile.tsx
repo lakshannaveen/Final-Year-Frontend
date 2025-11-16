@@ -224,19 +224,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
   const greenRingClass = `${ringBaseClass} border-4 border-green-400 animate-pulse`;
   const redRingClass = `${ringBaseClass} border-4 border-red-400 animate-pulse`;
 
-  // Verification badge helper - show when user is a service provider and isVerified is true
-  const getVerificationBadge = () => {
-    if (profile?.serviceType === "posting" && profile?.isVerified) {
-      return (
-        <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
-          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-500 ring-2 ring-white">
-            <CheckCircle size={12} className="text-white" />
-          </span>
-        </div>
-      );
-    }
-    return null;
-  };
+  // NOTE: Verification badge is now rendered inline next to the username in the heading (see below).
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-2">
@@ -296,9 +284,6 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                 )}
               </div>
 
-              {/* Verification badge (only for posting accounts with verified status) */}
-              {getVerificationBadge()}
-
               {/* STATUS BADGE */}
               {isOpenToWork && (
                 <div className="absolute right-12 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
@@ -321,8 +306,18 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
             </div>
             {/* Info */}
             <div className="w-full text-center mb-6">
-              <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">
-                {profile.username}
+              <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2 inline-flex items-center justify-center">
+                <span>{profile.username}</span>
+                {/* Verification badge placed near the username */}
+                {profile.serviceType === "posting" && profile.isVerified && (
+                  <span
+                    className="ml-3 inline-flex items-center justify-center h-7 w-7 rounded-full bg-blue-500 text-white shadow-sm"
+                    title="Verified account"
+                    aria-label="Verified account"
+                  >
+                    <CheckCircle size={14} className="text-white" />
+                  </span>
+                )}
               </h1>
               <div className="flex justify-center flex-wrap gap-3 mb-4">
                 <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">

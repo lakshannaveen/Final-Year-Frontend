@@ -635,9 +635,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               </div>
             )}
 
-            {/* Verification badge */}
-            {getVerificationBadge()}
-
             {editMode && (
               <button
                 className="absolute right-0 bottom-0 px-3 py-2 bg-white bg-opacity-90 text-green-700 rounded-full shadow text-sm font-semibold hover:bg-green-100 transition flex items-center z-30"
@@ -674,7 +671,18 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 )}
               </div>
             ) : (
-              <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">{profile.username}</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2 inline-flex items-center justify-center">
+                <span>{profile.username}</span>
+                {isPostingAccount && profile.isVerified && (
+                  <span
+                    className="ml-3 inline-flex items-center justify-center h-7 w-7 rounded-full bg-blue-500 text-white shadow-sm"
+                    title="Verified account"
+                    aria-label="Verified account"
+                  >
+                    <CheckCircle size={14} className="text-white" />
+                  </span>
+                )}
+              </h1>
             )}
 
             <p className="text-gray-600 text-lg break-all mb-4">{profile.email}</p>
