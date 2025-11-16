@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Globe, Phone, Image as ImageIcon, MessageCircle } from "lucide-react";
+import { ArrowLeft, Globe, Phone, Image as ImageIcon, MessageCircle, CheckCircle } from "lucide-react";
 import ReviewSection from "./Review";
 
 interface NavigationData {
@@ -25,6 +25,7 @@ interface UserProfile {
   profilePic?: string;
   coverImage?: string;
   status?: string;
+  isVerified?: boolean;
 }
 
 interface FeedUser {
@@ -223,6 +224,20 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
   const greenRingClass = `${ringBaseClass} border-4 border-green-400 animate-pulse`;
   const redRingClass = `${ringBaseClass} border-4 border-red-400 animate-pulse`;
 
+  // Verification badge helper - show when user is a service provider and isVerified is true
+  const getVerificationBadge = () => {
+    if (profile?.serviceType === "posting" && profile?.isVerified) {
+      return (
+        <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
+          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-500 ring-2 ring-white">
+            <CheckCircle size={12} className="text-white" />
+          </span>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-2">
       {/* Back Button */}
@@ -281,9 +296,12 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                 )}
               </div>
 
+              {/* Verification badge (only for posting accounts with verified status) */}
+              {getVerificationBadge()}
+
               {/* STATUS BADGE */}
               {isOpenToWork && (
-                <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
+                <div className="absolute right-12 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
                   <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-500 ring-2 ring-white" title="Open to work">
                     <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -292,7 +310,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                 </div>
               )}
               {isNotAvailable && (
-                <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
+                <div className="absolute right-12 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
                   <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 ring-2 ring-white" title="Not available">
                     <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-9V6a1 1 0 112 0v3a1 1 0 11-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z" clipRule="evenodd" />
@@ -303,7 +321,9 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
             </div>
             {/* Info */}
             <div className="w-full text-center mb-6">
-              <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">{profile.username}</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold text-green-800 break-words mb-2">
+                {profile.username}
+              </h1>
               <div className="flex justify-center flex-wrap gap-3 mb-4">
                 <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">
                   {profile.serviceType === "posting" ? "💼 Service Provider" : "🔍 Looking for Services"}
@@ -384,6 +404,21 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                     </div>
                   )}
                 </div>
+
+                {/* If service provider and verified, show a short verification message */}
+                {profile.serviceType === "posting" && profile.isVerified && (
+                  <div className="mt-4 p-3 bg-white border border-green-100 rounded-lg flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
+                        <CheckCircle size={16} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-800">Verified Account</div>
+                      <div className="text-sm text-gray-600">This service provider has been identity verified.</div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {/* Bio only if exists */}
