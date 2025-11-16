@@ -679,9 +679,6 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
             <p className="text-gray-600 text-lg break-all mb-4">{profile.email}</p>
 
-            {/* Verification Status Display */}
-            {getVerificationStatusDisplay()}
-
             <div className="flex justify-center flex-wrap gap-3 mb-4 mt-2">
               <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-sm">
                 {isPostingAccount ? "💼 Service Provider" : "🔍 Looking for Services"}
