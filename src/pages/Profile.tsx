@@ -736,24 +736,45 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                   </div>
                 )}
               </div>
+
+              {/* Verify account option for service providers */}
+              <div className="mt-4">
+                <button
+                  onClick={() => setCurrentView("verify")}
+                  className="px-4 py-2 bg-yellow-400 text-yellow-900 rounded-lg font-semibold hover:bg-yellow-500 transition"
+                >
+                  Verify Account
+                </button>
+              </div>
             </div>
           )}
 
           <div className="w-full max-w-lg mb-8">
             <div className="flex items-center justify-between mb-3">
               <label className="block text-green-800 font-semibold text-lg">About Me</label>
-              {!editMode && (
-                <button
-                  onClick={() => {
-                    setEditMode(true);
-                    setShowShareOptions(false);
-                  }}
-                  className="text-green-700 hover:text-green-900 flex items-center text-sm"
-                >
-                  <Edit3 size={16} className="mr-1" />
-                  Edit
-                </button>
-              )}
+              <div className="flex items-center gap-3">
+                {!editMode && (
+                  <button
+                    onClick={() => {
+                      setEditMode(true);
+                      setShowShareOptions(false);
+                    }}
+                    className="text-green-700 hover:text-green-900 flex items-center text-sm"
+                  >
+                    <Edit3 size={16} className="mr-1" />
+                    Edit
+                  </button>
+                )}
+                {/* Also show Verify option near About header for posting accounts (if not already shown elsewhere) */}
+                {!editMode && isPostingAccount && (
+                  <button
+                    onClick={() => setCurrentView("verify")}
+                    className="text-yellow-700 hover:text-yellow-900 flex items-center text-sm"
+                  >
+                    Verify Account
+                  </button>
+                )}
+              </div>
             </div>
 
             {editMode ? (
