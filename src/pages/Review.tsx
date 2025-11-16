@@ -4,11 +4,11 @@ import { Star, Edit3, Trash2 } from "lucide-react";
 
 interface Review {
   _id: string;
-  reviewerId: {
-    _id: string;
-    username: string;
-    profilePic?: string;
-  };
+  reviewerId?: {
+    _id?: string;
+    username?: string;
+    profilePic?: string | null;
+  } | null;
   rating: number;
   message: string;
   createdAt: string;
@@ -201,8 +201,8 @@ export default function ReviewSection({ userId }: ReviewProps) {
         if (data.reviews) {
           setReviews(data.reviews);
           setReviewStats({
-            averageRating: data.averageRating,
-            totalReviews: data.totalReviews,
+            averageRating: data.averageRating ?? 0,
+            totalReviews: data.totalReviews ?? data.reviews.length ?? 0,
           });
         } else {
           setReviews([]);
@@ -222,7 +222,7 @@ export default function ReviewSection({ userId }: ReviewProps) {
     })
       .then((res) => res.json())
       .then((data) => {
-        setUserHasReviewed(data.hasReviewed);
+        setUserHasReviewed(Boolean(data.hasReviewed));
         if (data.review) {
           setEditingReview(data.review);
         } else {
@@ -291,7 +291,7 @@ export default function ReviewSection({ userId }: ReviewProps) {
         }, 0);
 
         setReviewStats((prev) => ({
-          averageRating: newTotal / prev.totalReviews,
+          averageRating: newTotal / (prev.totalReviews || 1),
           totalReviews: prev.totalReviews,
         }));
 
@@ -359,31 +359,35 @@ export default function ReviewSection({ userId }: ReviewProps) {
         {reviews.length === 0 ? (
           <div className="text-center text-gray-500 py-8">No reviews available.</div>
         ) : (
-          reviews.map((review) => (
-            <div key={review._id} className="bg-white rounded-2xl shadow border border-gray-200 p-6 mb-4">
-              <div className="flex items-center mb-4">
-                {review.reviewerId.profilePic ? (
-                  <img
-                    src={review.reviewerId.profilePic}
-                    alt={review.reviewerId.username}
-                    className="w-12 h-12 rounded-full object-cover border border-gray-300 mr-4"
-                  />
-                ) : (
-                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-lg border border-gray-300 mr-4">
-                    {getInitial(review.reviewerId.username)}
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-800">{review.reviewerId.username}</h4>
-                  <div className="flex items-center gap-2">
-                    <StarRating rating={review.rating} />
-                    <span className="text-sm text-gray-500">{timeAgo(review.createdAt)}</span>
+          reviews.map((review) => {
+            const reviewerName = review.reviewerId?.username || "Anonymous";
+            const profilePic = review.reviewerId?.profilePic;
+            return (
+              <div key={review._id} className="bg-white rounded-2xl shadow border border-gray-200 p-6 mb-4">
+                <div className="flex items-center mb-4">
+                  {profilePic ? (
+                    <img
+                      src={profilePic}
+                      alt={reviewerName}
+                      className="w-12 h-12 rounded-full object-cover border border-gray-300 mr-4"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-lg border border-gray-300 mr-4">
+                      {getInitial(reviewerName)}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-800">{reviewerName}</h4>
+                    <div className="flex items-center gap-2">
+                      <StarRating rating={review.rating} />
+                      <span className="text-sm text-gray-500">{timeAgo(review.createdAt)}</span>
+                    </div>
                   </div>
                 </div>
+                <p className="text-black leading-relaxed">{review.message}</p>
               </div>
-              <p className="text-black leading-relaxed">{review.message}</p>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
@@ -468,31 +472,35 @@ export default function ReviewSection({ userId }: ReviewProps) {
         <div className="text-center text-gray-500 py-8">No reviews yet. Be the first to review!</div>
       ) : (
         <>
-          {reviews.slice(0, SHOW_LIMIT).map((review) => (
-            <div key={review._id} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-4">
-              <div className="flex items-center mb-4">
-                {review.reviewerId.profilePic ? (
-                  <img
-                    src={review.reviewerId.profilePic}
-                    alt={review.reviewerId.username}
-                    className="w-12 h-12 rounded-full object-cover border border-gray-300 mr-4"
-                  />
-                ) : (
-                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-lg border border-gray-300 mr-4">
-                    {getInitial(review.reviewerId.username)}
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-800">{review.reviewerId.username}</h4>
-                  <div className="flex items-center gap-2">
-                    <StarRating rating={review.rating} />
-                    <span className="text-sm text-gray-500">{timeAgo(review.createdAt)}</span>
+          {reviews.slice(0, SHOW_LIMIT).map((review) => {
+            const reviewerName = review.reviewerId?.username || "Anonymous";
+            const profilePic = review.reviewerId?.profilePic;
+            return (
+              <div key={review._id} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-4">
+                <div className="flex items-center mb-4">
+                  {profilePic ? (
+                    <img
+                      src={profilePic}
+                      alt={reviewerName}
+                      className="w-12 h-12 rounded-full object-cover border border-gray-300 mr-4"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-lg border border-gray-300 mr-4">
+                      {getInitial(reviewerName)}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-800">{reviewerName}</h4>
+                    <div className="flex items-center gap-2">
+                      <StarRating rating={review.rating} />
+                      <span className="text-sm text-gray-500">{timeAgo(review.createdAt)}</span>
+                    </div>
                   </div>
                 </div>
+                <p className="text-black leading-relaxed">{review.message}</p>
               </div>
-              <p className="text-black leading-relaxed">{review.message}</p>
-            </div>
-          ))}
+            );
+          })}
           {reviews.length > SHOW_LIMIT && (
             <button
               className="w-full px-4 py-3 bg-green-100 text-green-800 rounded-lg font-semibold hover:bg-green-200 transition mb-2"
