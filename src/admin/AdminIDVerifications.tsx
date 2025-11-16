@@ -302,7 +302,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                   placeholder="Search by username or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 placeholder-gray-400 bg-white"
                 />
               </div>
             </div>
@@ -310,7 +310,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
               <select
                 value={statusFilter}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'pending' | 'approved' | 'rejected')}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 bg-white"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -329,7 +329,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-gray-700">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -451,7 +451,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
         {/* Verification Details Modal */}
         {showModal && selectedVerification && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] overflow-y-auto">
+            <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] overflow-y-auto text-gray-900">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold text-gray-900">
@@ -471,15 +471,15 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <label className="text-sm text-gray-600 block">Username</label>
-                      <p className="font-medium">{selectedVerification.user.username}</p>
+                      <p className="font-medium text-gray-800">{selectedVerification.user.username}</p>
                     </div>
                     <div>
                       <label className="text-sm text-gray-600 block">Email</label>
-                      <p className="font-medium">{selectedVerification.user.email}</p>
+                      <p className="font-medium text-gray-800">{selectedVerification.user.email}</p>
                     </div>
                     <div>
                       <label className="text-sm text-gray-600 block">Service Type</label>
-                      <p className="font-medium capitalize">{selectedVerification.user.serviceType}</p>
+                      <p className="font-medium text-gray-800 capitalize">{selectedVerification.user.serviceType}</p>
                     </div>
                     <div>
                       <label className="text-sm text-gray-600 block">Status</label>
@@ -494,12 +494,12 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                   <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm text-gray-600 block">Submitted</label>
-                      <p className="text-sm">{formatDate(selectedVerification.submittedAt)}</p>
+                      <p className="text-sm text-gray-800">{formatDate(selectedVerification.submittedAt)}</p>
                     </div>
                     {selectedVerification.reviewedAt && (
                       <div>
                         <label className="text-sm text-gray-600 block">Reviewed</label>
-                        <p className="text-sm">{formatDate(selectedVerification.reviewedAt)}</p>
+                        <p className="text-sm text-gray-800">{formatDate(selectedVerification.reviewedAt)}</p>
                       </div>
                     )}
                   </div>
@@ -552,24 +552,28 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                             <button
                               onClick={() => zoomImage(selectedVerification.docType + 'Front', 'out')}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                              title="Zoom Out"
                             >
                               <ZoomOut size={16} />
                             </button>
                             <button
                               onClick={() => zoomImage(selectedVerification.docType + 'Front', 'in')}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                              title="Zoom In"
                             >
                               <ZoomIn size={16} />
                             </button>
                             <button
                               onClick={() => rotateImage(selectedVerification.docType + 'Front')}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                              title="Rotate"
                             >
                               <RotateCcw size={16} />
                             </button>
                             <button
                               onClick={() => resetImage(selectedVerification.docType + 'Front')}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                              title="Reset"
                             >
                               Reset
                             </button>
@@ -614,24 +618,28 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                             <button
                               onClick={() => zoomImage(selectedVerification.docType + 'Back', 'out')}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                              title="Zoom Out"
                             >
                               <ZoomOut size={16} />
                             </button>
                             <button
                               onClick={() => zoomImage(selectedVerification.docType + 'Back', 'in')}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                              title="Zoom In"
                             >
                               <ZoomIn size={16} />
                             </button>
                             <button
                               onClick={() => rotateImage(selectedVerification.docType + 'Back')}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                              title="Rotate"
                             >
                               <RotateCcw size={16} />
                             </button>
                             <button
                               onClick={() => resetImage(selectedVerification.docType + 'Back')}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                              title="Reset"
                             >
                               Reset
                             </button>
@@ -678,24 +686,28 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                         <button
                           onClick={() => zoomImage('businessCert', 'out')}
                           className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                          title="Zoom Out"
                         >
                           <ZoomOut size={16} />
                         </button>
                         <button
                           onClick={() => zoomImage('businessCert', 'in')}
                           className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                          title="Zoom In"
                         >
                           <ZoomIn size={16} />
                         </button>
                         <button
                           onClick={() => rotateImage('businessCert')}
                           className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                          title="Rotate"
                         >
                           <RotateCcw size={16} />
                         </button>
                         <button
                           onClick={() => resetImage('businessCert')}
                           className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                          title="Reset"
                         >
                           Reset
                         </button>
