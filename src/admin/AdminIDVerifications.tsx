@@ -1,6 +1,19 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { Search, CheckCircle, XCircle, Clock, Eye, User, Download, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Search,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Eye,
+  User,
+  Download,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  ArrowLeft,
+  RefreshCw,
+} from "lucide-react";
 
 type Props = {
   setCurrentView: (view: string) => void;
@@ -15,8 +28,8 @@ interface Verification {
     serviceType: string;
     profilePic?: string;
   };
-  docType: 'nic' | 'dl';
-  status: 'pending' | 'approved' | 'rejected';
+  docType: "nic" | "dl";
+  status: "pending" | "approved" | "rejected";
   nicFront: string;
   nicBack: string;
   dlFront: string;
@@ -33,42 +46,70 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  const [selectedVerification, setSelectedVerification] = useState<Verification | null>(null);
+  // statusFilter now mirrors the "modern dropdown" pattern: '' means all
+  const [statusFilter, setStatusFilter] = useState<
+    "" | "pending" | "approved" | "rejected"
+  >("");
+  const [selectedVerification, setSelectedVerification] =
+    useState<Verification | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>({});
+  const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>(
+    {}
+  );
   const [imageZoom, setImageZoom] = useState<{ [key: string]: number }>({});
-  const [imageRotation, setImageRotation] = useState<{ [key: string]: number }>({});
+  const [imageRotation, setImageRotation] = useState<{ [key: string]: number }>(
+    {}
+  );
+
+  // UI states similar to AdminContact
+  const [showBackText, setShowBackText] = useState(false);
+  const statusRef = useRef<HTMLDivElement | null>(null);
+  const [statusOpen, setStatusOpen] = useState(false);
 
   useEffect(() => {
     fetchVerifications();
   }, []);
 
+  // Close status dropdown when clicking outside
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) {
+        setStatusOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
+
   const fetchVerifications = async () => {
     try {
+      setLoading(true);
       const res = await fetch(`${API_URL}/api/verify/all`);
       const data = await res.json();
       if (res.ok) {
         setVerifications(data.verifications || []);
       } else {
-        console.error('Failed to fetch verifications:', data);
-        alert('Failed to load verification requests');
+        console.error("Failed to fetch verifications:", data);
+        alert("Failed to load verification requests");
       }
     } catch (error) {
-      console.error('Error fetching verifications:', error);
-      alert('Error loading verification requests');
+      console.error("Error fetching verifications:", error);
+      alert("Error loading verification requests");
     } finally {
       setLoading(false);
     }
   };
 
-  const updateVerificationStatus = async (verificationId: string, status: 'approved' | 'rejected') => {
+  const updateVerificationStatus = async (
+    verificationId: string,
+    status: "approved" | "rejected"
+  ) => {
     setUpdating(verificationId);
     try {
       const res = await fetch(`${API_URL}/api/verify/${verificationId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ status }),
       });
@@ -76,24 +117,26 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
       const data = await res.json();
       if (res.ok) {
         // Update local state
-        setVerifications(prev => 
-          prev.map(v => 
-            v._id === verificationId 
+        setVerifications((prev) =>
+          prev.map((v) =>
+            v._id === verificationId
               ? { ...v, status, reviewedAt: new Date().toISOString() }
               : v
           )
         );
         if (selectedVerification?._id === verificationId) {
-          setSelectedVerification(prev => prev ? { ...prev, status, reviewedAt: new Date().toISOString() } : null);
+          setSelectedVerification((prev) =>
+            prev ? { ...prev, status, reviewedAt: new Date().toISOString() } : null
+          );
         }
         alert(`Verification ${status} successfully!`);
       } else {
-        console.error('Failed to update verification:', data);
-        alert('Failed to update verification status');
+        console.error("Failed to update verification:", data);
+        alert("Failed to update verification status");
       }
     } catch (error) {
-      console.error('Error updating verification:', error);
-      alert('Error updating verification status');
+      console.error("Error updating verification:", error);
+      alert("Error updating verification status");
     } finally {
       setUpdating(null);
     }
@@ -107,24 +150,30 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
       if (res.ok) {
         setSelectedVerification(data.verification);
         setShowModal(true);
-        
+
         // Initialize zoom and rotation for all images
-        const imageKeys = ['nicFront', 'nicBack', 'dlFront', 'dlBack', 'businessCert'];
+        const imageKeys = [
+          "nicFront",
+          "nicBack",
+          "dlFront",
+          "dlBack",
+          "businessCert",
+        ];
         const initialZoom: { [key: string]: number } = {};
         const initialRotation: { [key: string]: number } = {};
-        imageKeys.forEach(key => {
+        imageKeys.forEach((key) => {
           initialZoom[key] = 1;
           initialRotation[key] = 0;
         });
         setImageZoom(initialZoom);
         setImageRotation(initialRotation);
       } else {
-        console.error('Failed to fetch verification details:', data);
-        alert('Failed to load verification details');
+        console.error("Failed to fetch verification details:", data);
+        alert("Failed to load verification details");
       }
     } catch (error) {
-      console.error('Error fetching verification details:', error);
-      alert('Error loading verification details');
+      console.error("Error fetching verification details:", error);
+      alert("Error loading verification details");
     }
   };
 
@@ -136,33 +185,34 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
   };
 
   const handleImageLoad = (imageKey: string) => {
-    setImageLoading(prev => ({ ...prev, [imageKey]: false }));
+    setImageLoading((prev) => ({ ...prev, [imageKey]: false }));
   };
 
   const handleImageError = (imageKey: string) => {
-    setImageLoading(prev => ({ ...prev, [imageKey]: false }));
+    setImageLoading((prev) => ({ ...prev, [imageKey]: false }));
     console.error(`Failed to load image: ${imageKey}`);
   };
 
-  const zoomImage = (imageKey: string, direction: 'in' | 'out') => {
-    setImageZoom(prev => ({
+  const zoomImage = (imageKey: string, direction: "in" | "out") => {
+    setImageZoom((prev) => ({
       ...prev,
-      [imageKey]: direction === 'in' 
-        ? Math.min((prev[imageKey] || 1) + 0.5, 3)
-        : Math.max((prev[imageKey] || 1) - 0.5, 0.5)
+      [imageKey]:
+        direction === "in"
+          ? Math.min((prev[imageKey] || 1) + 0.5, 3)
+          : Math.max((prev[imageKey] || 1) - 0.5, 0.5),
     }));
   };
 
   const rotateImage = (imageKey: string) => {
-    setImageRotation(prev => ({
+    setImageRotation((prev) => ({
       ...prev,
-      [imageKey]: ((prev[imageKey] || 0) + 90) % 360
+      [imageKey]: ((prev[imageKey] || 0) + 90) % 360,
     }));
   };
 
   const resetImage = (imageKey: string) => {
-    setImageZoom(prev => ({ ...prev, [imageKey]: 1 }));
-    setImageRotation(prev => ({ ...prev, [imageKey]: 0 }));
+    setImageZoom((prev) => ({ ...prev, [imageKey]: 1 }));
+    setImageRotation((prev) => ({ ...prev, [imageKey]: 0 }));
   };
 
   const downloadImage = async (url: string, filename: string) => {
@@ -170,7 +220,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
       const response = await fetch(url);
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = filename;
       document.body.appendChild(link);
@@ -178,26 +228,30 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.error('Error downloading image:', error);
-      alert('Error downloading image');
+      console.error("Error downloading image:", error);
+      alert("Error downloading image");
     }
   };
 
   // Filter verifications based on search and status
-  const filteredVerifications = verifications.filter(verification => {
-    const matchesSearch = verification.user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         verification.user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || verification.status === statusFilter;
+  const filteredVerifications = verifications.filter((verification) => {
+    const matchesSearch =
+      verification.user.username
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      verification.user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "" || verification.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'approved':
+      case "approved":
         return <CheckCircle className="text-green-500" size={16} />;
-      case 'rejected':
+      case "rejected":
         return <XCircle className="text-red-500" size={16} />;
-      case 'pending':
+      case "pending":
         return <Clock className="text-yellow-500" size={16} />;
       default:
         return null;
@@ -206,11 +260,11 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'approved':
+      case "approved":
         return "bg-green-100 text-green-800";
-      case 'rejected':
+      case "rejected":
         return "bg-red-100 text-red-800";
-      case 'pending':
+      case "pending":
         return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -218,17 +272,39 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
   };
 
   const getDocTypeDisplay = (docType: string) => {
-    return docType === 'nic' ? 'National ID (NIC)' : 'Driving License';
+    return docType === "nic" ? "National ID (NIC)" : "Driving License";
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
+  };
+
+  // Handler to refresh verifications and show the green "Back to Dashboard" text on success
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+      await fetchVerifications();
+      setShowBackText(true);
+      setTimeout(() => setShowBackText(false), 5000);
+    } catch (err) {
+      console.error("Refresh failed", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statusLabel =
+    statusFilter === "" ? "All Status" : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1);
+
+  const setStatusFilterHandler = (val: "" | "pending" | "approved" | "rejected") => {
+    setStatusFilter(val);
+    setStatusOpen(false);
   };
 
   if (loading) {
@@ -236,13 +312,35 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
       <div className="min-h-screen bg-blue-50 p-6">
         <div className="max-w-6xl mx-auto">
           <header className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-semibold text-blue-900">Admin - ID Verifications</h1>
-            <button
-              onClick={() => setCurrentView("admindashboard")}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              Back to Dashboard
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setCurrentView("admindashboard")}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h1 className="text-2xl font-semibold text-blue-900">Admin - ID Verifications</h1>
+            </div>
+
+            <div className="flex flex-col items-end">
+              <button
+                onClick={handleRefresh}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+                disabled={loading}
+              >
+                <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                Refresh
+              </button>
+              {showBackText && (
+                <button
+                  onClick={() => setCurrentView("admindashboard")}
+                  className="mt-2 text-green-700 hover:text-green-800 text-sm font-semibold bg-green-50 px-2 py-1 rounded transition cursor-pointer"
+                  title="Back to Dashboard"
+                >
+                  Back to Dashboard
+                </button>
+              )}
+            </div>
           </header>
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -255,14 +353,36 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
   return (
     <div className="min-h-screen bg-blue-50 p-6">
       <div className="max-w-6xl mx-auto">
-        <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-blue-900">Admin - ID Verifications</h1>
-          <button
-            onClick={() => setCurrentView("admindashboard")}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Back to Dashboard
-          </button>
+        <header className="flex items-start justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setCurrentView("admindashboard")}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h1 className="text-2xl font-semibold text-blue-900">Admin - ID Verifications</h1>
+          </div>
+
+          <div className="flex flex-col items-end">
+            <button
+              onClick={handleRefresh}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+              disabled={loading}
+            >
+              <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+              Refresh
+            </button>
+            {showBackText && (
+              <button
+                onClick={() => setCurrentView("admindashboard")}
+                className="mt-2 text-green-700 hover:text-green-800 text-sm font-semibold bg-green-50 px-2 py-1 rounded transition cursor-pointer"
+                title="Back to Dashboard"
+              >
+                Back to Dashboard
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Stats Summary */}
@@ -273,19 +393,19 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <div className="text-2xl font-bold text-yellow-600">
-              {verifications.filter(v => v.status === 'pending').length}
+              {verifications.filter((v) => v.status === "pending").length}
             </div>
             <div className="text-sm text-gray-600">Pending</div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <div className="text-2xl font-bold text-green-600">
-              {verifications.filter(v => v.status === 'approved').length}
+              {verifications.filter((v) => v.status === "approved").length}
             </div>
             <div className="text-sm text-gray-600">Approved</div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <div className="text-2xl font-bold text-red-600">
-              {verifications.filter(v => v.status === 'rejected').length}
+              {verifications.filter((v) => v.status === "rejected").length}
             </div>
             <div className="text-sm text-gray-600">Rejected</div>
           </div>
@@ -306,17 +426,48 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                 />
               </div>
             </div>
-            <div className="flex gap-2">
-              <select
-                value={statusFilter}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'pending' | 'approved' | 'rejected')}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 bg-white"
+
+            {/* Modern dropdown replacing the <select>. Kept placement and behavior (sets statusFilter). */}
+            <div ref={statusRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setStatusOpen((v) => !v)}
+                className="w-48 flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+                aria-haspopup="true"
+                aria-expanded={statusOpen}
               >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
+                <span className="truncate">{statusLabel}</span>
+                <span className="ml-2 text-gray-400 select-none">▾</span>
+              </button>
+
+              {statusOpen && (
+                <ul className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                  <li
+                    onClick={() => setStatusFilterHandler("")}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${statusFilter === "" ? "bg-blue-50 font-medium text-blue-700" : "text-gray-700"}`}
+                  >
+                    All Status
+                  </li>
+                  <li
+                    onClick={() => setStatusFilterHandler("pending")}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${statusFilter === "pending" ? "bg-blue-50 font-medium text-blue-700" : "text-gray-700"}`}
+                  >
+                    Pending
+                  </li>
+                  <li
+                    onClick={() => setStatusFilterHandler("approved")}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${statusFilter === "approved" ? "bg-blue-50 font-medium text-blue-700" : "text-gray-700"}`}
+                  >
+                    Approved
+                  </li>
+                  <li
+                    onClick={() => setStatusFilterHandler("rejected")}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${statusFilter === "rejected" ? "bg-blue-50 font-medium text-blue-700" : "text-gray-700"}`}
+                  >
+                    Rejected
+                  </li>
+                </ul>
+              )}
             </div>
           </div>
         </div>
@@ -375,7 +526,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                               {verification.user.email}
                             </div>
                             <div className="text-xs text-gray-400">
-                              {verification.user.serviceType === 'posting' ? 'Service Provider' : 'Service Seeker'}
+                              {verification.user.serviceType === "posting" ? "Service Provider" : "Service Seeker"}
                             </div>
                           </div>
                         </div>
@@ -410,10 +561,10 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                             <Eye size={14} />
                             View Docs
                           </button>
-                          {verification.status === 'pending' && (
+                          {verification.status === "pending" && (
                             <>
                               <button
-                                onClick={() => updateVerificationStatus(verification._id, 'approved')}
+                                onClick={() => updateVerificationStatus(verification._id, "approved")}
                                 disabled={updating === verification._id}
                                 className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition disabled:opacity-50"
                               >
@@ -425,7 +576,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                                 Approve
                               </button>
                               <button
-                                onClick={() => updateVerificationStatus(verification._id, 'rejected')}
+                                onClick={() => updateVerificationStatus(verification._id, "rejected")}
                                 disabled={updating === verification._id}
                                 className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition disabled:opacity-50"
                               >
@@ -511,7 +662,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                   <div>
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="font-semibold text-gray-900">
-                        {selectedVerification.docType === 'nic' ? 'National ID (NIC)' : 'Driving License'}
+                        {selectedVerification.docType === "nic" ? "National ID (NIC)" : "Driving License"}
                       </h3>
                     </div>
                     <div className="space-y-6">
@@ -521,7 +672,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                           <label className="block text-sm font-medium text-gray-700">Front Side</label>
                           <button
                             onClick={() => downloadImage(
-                              selectedVerification.docType === 'nic' ? selectedVerification.nicFront : selectedVerification.dlFront,
+                              selectedVerification.docType === "nic" ? selectedVerification.nicFront : selectedVerification.dlFront,
                               `${selectedVerification.user.username}_front.jpg`
                             )}
                             className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
@@ -531,47 +682,47 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                           </button>
                         </div>
                         <div className="border rounded-lg overflow-hidden bg-gray-100 relative">
-                          {imageLoading[selectedVerification.docType + 'Front'] !== false && (
+                          {imageLoading[selectedVerification.docType + "Front"] !== false && (
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                             </div>
                           )}
                           <img
-                            src={selectedVerification.docType === 'nic' ? selectedVerification.nicFront : selectedVerification.dlFront}
+                            src={selectedVerification.docType === "nic" ? selectedVerification.nicFront : selectedVerification.dlFront}
                             alt="Document Front"
                             className={`w-full h-64 object-contain transition-transform duration-200 ${
-                              imageLoading[selectedVerification.docType + 'Front'] !== false ? 'opacity-0' : 'opacity-100'
+                              imageLoading[selectedVerification.docType + "Front"] !== false ? "opacity-0" : "opacity-100"
                             }`}
                             style={{
-                              transform: `scale(${imageZoom[selectedVerification.docType + 'Front'] || 1}) rotate(${imageRotation[selectedVerification.docType + 'Front'] || 0}deg)`
+                              transform: `scale(${imageZoom[selectedVerification.docType + "Front"] || 1}) rotate(${imageRotation[selectedVerification.docType + "Front"] || 0}deg)`
                             }}
-                            onLoad={() => handleImageLoad(selectedVerification.docType + 'Front')}
-                            onError={() => handleImageError(selectedVerification.docType + 'Front')}
+                            onLoad={() => handleImageLoad(selectedVerification.docType + "Front")}
+                            onError={() => handleImageError(selectedVerification.docType + "Front")}
                           />
                           <div className="absolute bottom-2 right-2 flex gap-1">
                             <button
-                              onClick={() => zoomImage(selectedVerification.docType + 'Front', 'out')}
+                              onClick={() => zoomImage(selectedVerification.docType + "Front", "out")}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                               title="Zoom Out"
                             >
                               <ZoomOut size={16} />
                             </button>
                             <button
-                              onClick={() => zoomImage(selectedVerification.docType + 'Front', 'in')}
+                              onClick={() => zoomImage(selectedVerification.docType + "Front", "in")}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                               title="Zoom In"
                             >
                               <ZoomIn size={16} />
                             </button>
                             <button
-                              onClick={() => rotateImage(selectedVerification.docType + 'Front')}
+                              onClick={() => rotateImage(selectedVerification.docType + "Front")}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                               title="Rotate"
                             >
                               <RotateCcw size={16} />
                             </button>
                             <button
-                              onClick={() => resetImage(selectedVerification.docType + 'Front')}
+                              onClick={() => resetImage(selectedVerification.docType + "Front")}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                               title="Reset"
                             >
@@ -587,7 +738,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                           <label className="block text-sm font-medium text-gray-700">Back Side</label>
                           <button
                             onClick={() => downloadImage(
-                              selectedVerification.docType === 'nic' ? selectedVerification.nicBack : selectedVerification.dlBack,
+                              selectedVerification.docType === "nic" ? selectedVerification.nicBack : selectedVerification.dlBack,
                               `${selectedVerification.user.username}_back.jpg`
                             )}
                             className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
@@ -597,47 +748,47 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                           </button>
                         </div>
                         <div className="border rounded-lg overflow-hidden bg-gray-100 relative">
-                          {imageLoading[selectedVerification.docType + 'Back'] !== false && (
+                          {imageLoading[selectedVerification.docType + "Back"] !== false && (
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                             </div>
                           )}
                           <img
-                            src={selectedVerification.docType === 'nic' ? selectedVerification.nicBack : selectedVerification.dlBack}
+                            src={selectedVerification.docType === "nic" ? selectedVerification.nicBack : selectedVerification.dlBack}
                             alt="Document Back"
                             className={`w-full h-64 object-contain transition-transform duration-200 ${
-                              imageLoading[selectedVerification.docType + 'Back'] !== false ? 'opacity-0' : 'opacity-100'
+                              imageLoading[selectedVerification.docType + "Back"] !== false ? "opacity-0" : "opacity-100"
                             }`}
                             style={{
-                              transform: `scale(${imageZoom[selectedVerification.docType + 'Back'] || 1}) rotate(${imageRotation[selectedVerification.docType + 'Back'] || 0}deg)`
+                              transform: `scale(${imageZoom[selectedVerification.docType + "Back"] || 1}) rotate(${imageRotation[selectedVerification.docType + "Back"] || 0}deg)`
                             }}
-                            onLoad={() => handleImageLoad(selectedVerification.docType + 'Back')}
-                            onError={() => handleImageError(selectedVerification.docType + 'Back')}
+                            onLoad={() => handleImageLoad(selectedVerification.docType + "Back")}
+                            onError={() => handleImageError(selectedVerification.docType + "Back")}
                           />
                           <div className="absolute bottom-2 right-2 flex gap-1">
                             <button
-                              onClick={() => zoomImage(selectedVerification.docType + 'Back', 'out')}
+                              onClick={() => zoomImage(selectedVerification.docType + "Back", "out")}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                               title="Zoom Out"
                             >
                               <ZoomOut size={16} />
                             </button>
                             <button
-                              onClick={() => zoomImage(selectedVerification.docType + 'Back', 'in')}
+                              onClick={() => zoomImage(selectedVerification.docType + "Back", "in")}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                               title="Zoom In"
                             >
                               <ZoomIn size={16} />
                             </button>
                             <button
-                              onClick={() => rotateImage(selectedVerification.docType + 'Back')}
+                              onClick={() => rotateImage(selectedVerification.docType + "Back")}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                               title="Rotate"
                             >
                               <RotateCcw size={16} />
                             </button>
                             <button
-                              onClick={() => resetImage(selectedVerification.docType + 'Back')}
+                              onClick={() => resetImage(selectedVerification.docType + "Back")}
                               className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                               title="Reset"
                             >
@@ -674,38 +825,38 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                         src={selectedVerification.businessCert}
                         alt="Business Certificate"
                         className={`w-full h-[512px] object-contain transition-transform duration-200 ${
-                          imageLoading.businessCert !== false ? 'opacity-0' : 'opacity-100'
+                          imageLoading.businessCert !== false ? "opacity-0" : "opacity-100"
                         }`}
                         style={{
                           transform: `scale(${imageZoom.businessCert || 1}) rotate(${imageRotation.businessCert || 0}deg)`
                         }}
-                        onLoad={() => handleImageLoad('businessCert')}
-                        onError={() => handleImageError('businessCert')}
+                        onLoad={() => handleImageLoad("businessCert")}
+                        onError={() => handleImageError("businessCert")}
                       />
                       <div className="absolute bottom-2 right-2 flex gap-1">
                         <button
-                          onClick={() => zoomImage('businessCert', 'out')}
+                          onClick={() => zoomImage("businessCert", "out")}
                           className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                           title="Zoom Out"
                         >
                           <ZoomOut size={16} />
                         </button>
                         <button
-                          onClick={() => zoomImage('businessCert', 'in')}
+                          onClick={() => zoomImage("businessCert", "in")}
                           className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                           title="Zoom In"
                         >
                           <ZoomIn size={16} />
                         </button>
                         <button
-                          onClick={() => rotateImage('businessCert')}
+                          onClick={() => rotateImage("businessCert")}
                           className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                           title="Rotate"
                         >
                           <RotateCcw size={16} />
                         </button>
                         <button
-                          onClick={() => resetImage('businessCert')}
+                          onClick={() => resetImage("businessCert")}
                           className="p-1 bg-white rounded shadow hover:bg-gray-100 transition"
                           title="Reset"
                         >
@@ -717,10 +868,10 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                 </div>
 
                 {/* Action Buttons */}
-                {selectedVerification.status === 'pending' && (
+                {selectedVerification.status === "pending" && (
                   <div className="flex justify-end gap-3 pt-6 border-t">
                     <button
-                      onClick={() => updateVerificationStatus(selectedVerification._id, 'rejected')}
+                      onClick={() => updateVerificationStatus(selectedVerification._id, "rejected")}
                       disabled={updating === selectedVerification._id}
                       className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 flex items-center gap-2"
                     >
@@ -732,7 +883,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                       Reject Verification
                     </button>
                     <button
-                      onClick={() => updateVerificationStatus(selectedVerification._id, 'approved')}
+                      onClick={() => updateVerificationStatus(selectedVerification._id, "approved")}
                       disabled={updating === selectedVerification._id}
                       className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 flex items-center gap-2"
                     >
