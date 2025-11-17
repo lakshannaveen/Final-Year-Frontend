@@ -284,21 +284,14 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                 )}
               </div>
 
-              {/* STATUS BADGE */}
+              {/* STATUS BADGE - removed circular dot for Not available as requested.
+                  (Open-to-work green badge kept; red visual ring remains around avatar when not available.)
+              */}
               {isOpenToWork && (
                 <div className="absolute right-12 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
                   <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-500 ring-2 ring-white" title="Open to work">
                     <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                </div>
-              )}
-              {isNotAvailable && (
-                <div className="absolute right-12 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
-                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 ring-2 ring-white" title="Not available">
-                    <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-9V6a1 1 0 112 0v3a1 1 0 11-2 0zm0 4a1 1 0 112 0 1 1 0 01-2 0z" clipRule="evenodd" />
                     </svg>
                   </span>
                 </div>
