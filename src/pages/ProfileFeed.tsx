@@ -1,7 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import { useEffect, useState } from "react";
-import { Star } from "lucide-react";
+import { Star, CheckCircle } from "lucide-react";
 
 // --- Interfaces ---
 interface FeedUser {
@@ -9,6 +8,7 @@ interface FeedUser {
   username: string;
   profilePic?: string;
   status?: string; // <-- Add status for blinking ring
+  isVerified?: boolean; // verification flag (may not be populated from backend)
 }
 interface FeedItem {
   _id: string;
@@ -130,6 +130,10 @@ export default function ProfileFeed() {
   // Review stats cache: userId -> stats
   const [reviewStatsMap, setReviewStatsMap] = useState<Record<string, ReviewStats>>({});
 
+  // Current user's profile info (to determine verified badge)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserIsVerified, setCurrentUserIsVerified] = useState(false);
+
   // Infinite scroll: fetch more when bottom comes into view
   useEffect(() => {
     const handleScroll = () => {
@@ -146,6 +150,26 @@ export default function ProfileFeed() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loading, hasMore]);
 
+  // Fetch current user profile to determine verification status (uses same API as profile.tsx)
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/profile`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (res.ok && data.user) {
+          setCurrentUserId(data.user._id || null);
+          setCurrentUserIsVerified(!!data.user.isVerified);
+        }
+      } catch (err) {
+        // ignore - not critical
+        console.error("Failed to fetch current profile for verification status", err);
+      }
+    };
+    fetchProfile();
+  }, []);
+
   useEffect(() => {
     fetchMyFeeds(page);
   }, [page]);
@@ -160,15 +184,20 @@ export default function ProfileFeed() {
       }
     });
     uniqueUserIds.forEach(async userId => {
-      const res = await fetch(`${API_URL}/api/reviews/user/${userId}`);
-      const data = await res.json();
-      setReviewStatsMap(prev => ({
-        ...prev,
-        [userId]: {
-          averageRating: typeof data.averageRating === "number" ? data.averageRating : 0,
-          totalReviews: typeof data.totalReviews === "number" ? data.totalReviews : 0,
-        },
-      }));
+      try {
+        const res = await fetch(`${API_URL}/api/reviews/user/${userId}`);
+        const data = await res.json();
+        setReviewStatsMap(prev => ({
+          ...prev,
+          [userId]: {
+            averageRating: typeof data.averageRating === "number" ? data.averageRating : 0,
+            totalReviews: typeof data.totalReviews === "number" ? data.totalReviews : 0,
+          },
+        }));
+      } catch (err) {
+        // ignore individual failures
+        console.error("Failed to fetch review stats for user", userId, err);
+      }
     });
   }, [feeds]);
 
@@ -316,6 +345,12 @@ export default function ProfileFeed() {
           feeds.map(feed => {
             const ringClass = getRingClass(feed.user.status);
             const stats = feed.user && feed.user._id ? reviewStatsMap[feed.user._id] : undefined;
+
+            // Determine verified badge: prefer populated isVerified if present,
+            // otherwise if this feed belongs to the current user use currentUserIsVerified
+            const showVerified =
+              !!feed.user.isVerified || (currentUserId !== null && feed.user._id === currentUserId && currentUserIsVerified);
+
             return (
             <div
               key={feed._id}
@@ -350,7 +385,20 @@ export default function ProfileFeed() {
                     </div>
                   )}
                 </div>
-                <div className="text-green-700 font-bold text-base text-center">{feed.user.username}</div>
+
+                <div className="flex items-center gap-2">
+                  <div className="text-green-700 font-bold text-base text-center">{feed.user.username}</div>
+                  {showVerified && (
+                    <span
+                      className="ml-1 inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-500 text-white shadow-sm"
+                      title="Verified account"
+                      aria-label="Verified account"
+                    >
+                      <CheckCircle size={12} className="text-white" />
+                    </span>
+                  )}
+                </div>
+
                 <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
                 {/* --- Overall Review Stats --- */}
                 <div className="mt-2 flex flex-col items-center">
