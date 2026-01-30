@@ -51,8 +51,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
   };
 
   // Only allow if user is provider/serviceType === 'posting'
-  // Cast to `any` for safety in case the `User` type doesn't declare `serviceType`.
-  if (!authLoading && (!user || (user as any).serviceType !== "posting")) {
+  if (!authLoading && (!user || user?.serviceType !== "posting")) {
     return (
       <>
         <Navbar currentView={currentView} setCurrentView={handleNavChange} />
