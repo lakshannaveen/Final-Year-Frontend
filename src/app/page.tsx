@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { AuthProvider } from "../components/AuthContext";
+import Sidebar from "../components/Sidebar";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
 import SignIn from "../pages/Signin";
@@ -50,6 +51,33 @@ export default function Page() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [currentView]);
+
+  // Sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Touch gesture state
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
+
+  // Touch gesture handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    
+    const distance = touchStartX - touchEndX;
+    const isLeftSwipe = distance > 50; // Minimum swipe distance
+    
+    if (isLeftSwipe && touchStartX < 50) { // Only trigger if started from left edge
+      setSidebarOpen(true);
+    }
+  };
 
   // Only navigate IF user manually types the hidden URL
   useEffect(() => {
@@ -102,6 +130,7 @@ export default function Page() {
             onShowPublicProfile={handleShowPublicProfile}
             saveScrollPosition={saveScrollPosition}
             getSavedScrollPosition={getSavedScrollPosition}
+            onToggleSidebar={() => setSidebarOpen(true)}
           />
         );
       case "register":
@@ -119,7 +148,7 @@ export default function Page() {
       case "profile":
         return <Profile setCurrentView={setCurrentView} />;
       case "post":
-        return <PostService setCurrentView={setCurrentView} />;
+        return <PostService setCurrentView={setCurrentView} onToggleSidebar={() => setSidebarOpen(true)} />;
       case "publicprofile":
         if (publicProfileId) {
           return (
@@ -160,7 +189,8 @@ export default function Page() {
           <Inbox
             setCurrentView={setCurrentView}
             onOpenChat={handleShowMessage}
-            currentView={currentView} // FIX missing prop
+            currentView={currentView}
+            onToggleSidebar={() => setSidebarOpen(true)}
           />
         );
       case "adminlogin":
@@ -190,7 +220,20 @@ export default function Page() {
 
   return (
     <AuthProvider>
-      {renderContent()}
+      <div 
+        className="min-h-screen"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {renderContent()}
+        
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          setCurrentView={setCurrentView}
+        />
+      </div>
     </AuthProvider>
   );
 }

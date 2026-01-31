@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 
 interface PostServiceFormProps {
   setCurrentView: (view: string) => void;
+  onToggleSidebar?: () => void;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -24,7 +25,7 @@ interface NominatimReverseResult {
   display_name: string;
 }
 
-export default function PostService({ setCurrentView }: PostServiceFormProps) {
+export default function PostService({ setCurrentView, onToggleSidebar }: PostServiceFormProps) {
   const { user, loading: authLoading } = useAuth();
   const [serviceName, setServiceName] = useState("");
   const [location, setLocation] = useState("");
@@ -54,7 +55,7 @@ export default function PostService({ setCurrentView }: PostServiceFormProps) {
   if (!authLoading && (!user || user?.serviceType !== "posting")) {
     return (
       <>
-        <Navbar currentView={currentView} setCurrentView={handleNavChange} />
+        <Navbar currentView={currentView} setCurrentView={handleNavChange} onToggleSidebar={onToggleSidebar} />
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
           <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md z-10 text-center">
             <h2 className="text-2xl font-bold mb-4 text-green-700">Post a Service</h2>
@@ -272,7 +273,7 @@ if (video) {
 
   return (
     <>
-      <Navbar currentView={currentView} setCurrentView={handleNavChange} />
+      <Navbar currentView={currentView} setCurrentView={handleNavChange} onToggleSidebar={onToggleSidebar} />
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
         {/* Modal */}
         {modal && (

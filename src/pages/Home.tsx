@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import Sidebar from "../components/Sidebar";
 import Search from "../components/Search";
 import { Star } from "lucide-react";
 
@@ -10,6 +10,7 @@ interface HomeProps {
   onShowPublicProfile: (userId: string) => void;
   saveScrollPosition: (pos: number) => void;
   getSavedScrollPosition: () => number;
+  onToggleSidebar?: () => void;
 }
 
 interface FeedUser {
@@ -97,6 +98,7 @@ export default function Home({
   onShowPublicProfile,
   saveScrollPosition,
   getSavedScrollPosition,
+  onToggleSidebar,
 }: HomeProps) {
   const [feeds, setFeeds] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -280,6 +282,7 @@ export default function Home({
         currentView="home"
         setCurrentView={setCurrentView}
         onShowPublicProfile={onShowPublicProfile}
+        onToggleSidebar={onToggleSidebar}
       />
 
       <div className="w-full max-w-3xl mx-auto mt-6 mb-4 px-2">
@@ -466,7 +469,6 @@ export default function Home({
           </div>
         )}
       </section>
-      <Footer setCurrentView={setCurrentView} />
     </div>
   );
 }

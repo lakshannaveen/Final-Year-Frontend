@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "./AuthContext";
-import { Menu, X, User, Mail, Bot } from "lucide-react";
+import { X, User, Mail, Bot, Menu } from "lucide-react";
 import Image from "next/image";
 import AIAssistant from "./AIAssistant";
 import io, { Socket } from "socket.io-client";
@@ -10,6 +10,7 @@ interface NavbarProps {
   currentView: string;
   setCurrentView: (view: string) => void;
   onShowPublicProfile?: (userId: string) => void;
+  onToggleSidebar?: () => void;
 }
 
 interface AppUser {
@@ -41,8 +42,7 @@ const activeLink =
 const inactiveLink =
   "font-medium text-white hover:text-green-100 hover:bg-emerald-800/30 transition duration-200 px-4 py-2 rounded-lg";
 
-export default function Navbar({ currentView, setCurrentView, onShowPublicProfile }: NavbarProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
+export default function Navbar({ currentView, setCurrentView, onShowPublicProfile, onToggleSidebar }: NavbarProps) {
   const { user, loading } = useAuth() as { user: AppUser | null; loading: boolean };
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -125,7 +125,6 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
 
   const handleNavClick = (view: string) => {
     setCurrentView(view);
-    setMenuOpen(false);
 
     // Reset unread count when opening inbox
     if (view === "inbox") {
@@ -208,17 +207,30 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
   return (
     <>
       <nav className="bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-lg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="max-w-7xl mx-auto px-2 py-4">
           {/* Top Header Row */}
           <div className="flex flex-row justify-between items-center">
             {/* Left: Logo */}
-            <button
-              onClick={() => handleNavClick("home")}
-              className="flex items-center gap-2 hover:opacity-90 transition"
-            >
-              <Image src="/logo.png" alt="Logo" width={40} height={40} className="rounded-lg" />
-              <span className="text-2xl font-bold tracking-wide">Doop</span>
-            </button>
+            <div className="flex items-center gap-3 ml-0">
+              {/* Burger Menu Icon */}
+              {onToggleSidebar && (
+                <button
+                  onClick={onToggleSidebar}
+                  className="p-2 rounded-lg hover:bg-green-600/30 transition-colors duration-200"
+                  aria-label="Open sidebar"
+                  title="Open Menu"
+                >
+                  <Menu size={24} className="text-white" />
+                </button>
+              )}
+              <button
+                onClick={() => handleNavClick("home")}
+                className="flex items-center gap-2 hover:opacity-90 transition"
+              >
+                <Image src="/logo.png" alt="Logo" width={40} height={40} className="rounded-lg" />
+                <span className="text-2xl font-bold tracking-wide">Doop</span>
+              </button>
+            </div>
 
             {/* Desktop Center Menu */}
             <div className="hidden md:flex flex-1 justify-center items-center gap-2">
@@ -251,23 +263,10 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 )}
               </button>
 
-              {/* Added: Contact and Feedback links in navbar (desktop) */}
-              <button
-                onClick={() => handleNavClick("contact")}
-                className={currentView === "contact" ? activeLink : inactiveLink}
-              >
-                Contact Us
-              </button>
-              <button
-                onClick={() => handleNavClick("feedback")}
-                className={currentView === "feedback" ? activeLink : inactiveLink}
-              >
-                Feedback
-              </button>
             </div>
 
             {/* Right: Desktop - Profile + AI Chat */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3 mr-12">
               {/* AI Chatbox Button - Professional styling */}
               <button
                 onClick={() => setAiOpen(true)}
@@ -409,94 +408,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 </button>
               )}
 
-              {/* Burger menu button */}
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="p-2 rounded-lg bg-green-800 hover:bg-green-600 transition"
-                aria-label="Toggle menu"
-              >
-                {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
             </div>
-          </div>
-
-          {/* Mobile Navigation Menu */}
-          <div className="md:hidden mt-3">
-            {menuOpen && (
-              <div className="bg-gradient-to-b from-green-800 to-emerald-700 text-white flex flex-col gap-2 px-4 py-4 rounded-lg border border-green-600">
-                <button
-                  onClick={() => handleNavClick("home")}
-                  className={`w-full text-center py-3 rounded-lg ${currentView === "home" ? activeLink : inactiveLink}`}
-                >
-                  Home
-                </button>
-                {isProvider && (
-                  <button
-                    onClick={() => {
-                      handleNavClick("post");
-                      setMenuOpen(false);
-                    }}
-                    className={`w-full text-center py-3 rounded-lg ${currentView === "post" ? activeLink : inactiveLink}`}
-                  >
-                    Post a Service
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    handleNavClick("inbox");
-                    setMenuOpen(false);
-                  }}
-                  className={`w-full text-center flex items-center justify-center gap-2 py-3 rounded-lg relative ${currentView === "inbox" ? activeLink : inactiveLink}`}
-                  aria-label="Inbox"
-                >
-                  <Mail size={20} /> Inbox
-                  {unreadCount > 0 && (
-                    <span className="absolute right-4 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* Added mobile items: Contact & Feedback */}
-                <button
-                  onClick={() => { handleNavClick("contact"); setMenuOpen(false); }}
-                  className={`w-full text-center py-3 rounded-lg ${currentView === "contact" ? activeLink : inactiveLink}`}
-                >
-                  Contact Us
-                </button>
-
-                <button
-                  onClick={() => { handleNavClick("feedback"); setMenuOpen(false); }}
-                  className={`w-full text-center py-3 rounded-lg ${currentView === "feedback" ? activeLink : inactiveLink}`}
-                >
-                  Feedback
-                </button>
-
-                {/* Additional Auth options in mobile menu for consistency */}
-                {!user && (
-                  <div className="flex flex-col gap-2 mt-2">
-                    <button
-                      onClick={() => {
-                        handleNavClick("signin");
-                        setMenuOpen(false);
-                      }}
-                      className={`w-full px-4 py-3 rounded-lg font-semibold text-center transition-all border ${currentView === "signin" ? "bg-white text-green-700" : "bg-white text-green-800 hover:bg-green-50 hover:text-green-900"}`}
-                    >
-                      Sign In
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleNavClick("register");
-                        setMenuOpen(false);
-                      }}
-                      className={`w-full px-4 py-3 rounded-lg border-2 font-semibold text-center transition-all ${currentView === "register" ? "bg-white text-green-700 border-white" : "text-white border-white hover:bg-white hover:text-green-700"}`}
-                    >
-                      Register
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </nav>

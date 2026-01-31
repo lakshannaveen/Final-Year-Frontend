@@ -7,6 +7,7 @@ interface InboxProps {
   setCurrentView: (view: string) => void;
   onOpenChat: (recipientId: string, recipientUsername: string, recipientProfilePic?: string) => void;
   currentView: string; // For Navbar
+  onToggleSidebar?: () => void;
 }
 
 interface ChatSummary {
@@ -85,7 +86,7 @@ function ProfilePicCircle({
   );
 }
 
-export default function Inbox({ setCurrentView, onOpenChat, currentView }: InboxProps) {
+export default function Inbox({ setCurrentView, onOpenChat, currentView, onToggleSidebar }: InboxProps) {
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -165,7 +166,7 @@ export default function Inbox({ setCurrentView, onOpenChat, currentView }: Inbox
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar first */}
-      <Navbar currentView={currentView} setCurrentView={setCurrentView} />
+      <Navbar currentView={currentView} setCurrentView={setCurrentView} onToggleSidebar={onToggleSidebar} />
 
       {/* Chats */}
       <div className="max-w-2xl mx-auto py-4 px-2">
