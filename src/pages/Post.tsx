@@ -269,7 +269,7 @@ if (video) {
   };
 
   // Consistent placeholder text color for all inputs, including file fields, and textarea
-  const placeholderColorClass = "placeholder:text-black";
+  const placeholderColorClass = "placeholder:text-gray-700";
 
   return (
     <>
@@ -448,11 +448,11 @@ if (video) {
                   accept="image/*"
                   onChange={handlePhotoChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                  style={{ color: "black" }}
+                  style={{ color: "#6B7280" }}
                   title="Select photo (max 5MB)"
                 />
                 {photo && (
-                  <span className="text-green-700 text-sm mt-1 block">
+                  <span className="text-gray-700 text-sm mt-1 block">
                     Selected: {photo.name}
                   </span>
                 )}
@@ -468,11 +468,11 @@ if (video) {
                   accept="video/*"
                   onChange={handleVideoChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                  style={{ color: "black" }}
+                  style={{ color: "#6B7280" }}
                   title="Select video (min 2s, max 20MB)"
                 />
                 {video && (
-                  <span className="text-green-700 text-sm mt-1 block">
+                  <span className="text-gray-700 text-sm mt-1 block">
                     Selected: {video.name}
                   </span>
                 )}
