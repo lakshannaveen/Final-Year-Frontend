@@ -35,6 +35,24 @@ function AppContent() {
   const [currentView, setCurrentView] = useState("home");
   const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
 
+  // Load currentView from URL hash on mount
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+      setCurrentView(hash);
+    }
+  }, []);
+
+  // Update URL hash when currentView changes
+  useEffect(() => {
+    window.location.hash = currentView;
+  }, [currentView]);
+
+  // Save currentView to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("currentView", currentView);
+  }, [currentView]);
+
   // FIX: Remove 'any'
   interface ChatRecipient {
     recipientId: string;
@@ -209,10 +227,6 @@ function AppContent() {
         setCurrentView("home");
         return null;
       case "inbox":
-        if (!user) {
-          setCurrentView("signin");
-          return null;
-        }
         return (
           <Inbox
             setCurrentView={setCurrentView}
