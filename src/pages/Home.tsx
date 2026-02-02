@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import Search from "../components/Search";
-import { Star } from "lucide-react";
+import { Star, CheckCircle } from "lucide-react";
 
 interface HomeProps {
   setCurrentView: (view: string) => void;
@@ -18,6 +18,7 @@ interface FeedUser {
   username: string;
   profilePic?: string;
   status?: string;
+  isVerified?: boolean;
 }
 
 interface ReviewStats {
@@ -122,6 +123,9 @@ export default function Home({
   // Review stats cache: userId -> stats
   const [reviewStatsMap, setReviewStatsMap] = useState<Record<string, ReviewStats>>({});
 
+  // Verification status cache: userId -> isVerified
+  const [verificationMap, setVerificationMap] = useState<Record<string, boolean>>({});
+
   // Fetch review stats for users in current feeds
   useEffect(() => {
     const usersToFetch = new Set<string>();
@@ -142,6 +146,32 @@ export default function Home({
           totalReviews: typeof data.totalReviews === "number" ? data.totalReviews : 0,
         }
       }));
+    });
+  }, [feeds, searchResults, searchTerm]);
+
+  // Fetch verification status for users in current feeds
+  useEffect(() => {
+    const usersToFetch = new Set<string>();
+    const displayFeeds = searchTerm ? (searchResults || []) : feeds;
+    displayFeeds.forEach(feed => {
+      if (feed.user && feed.user._id && !(feed.user._id in verificationMap)) {
+        usersToFetch.add(feed.user._id);
+      }
+    });
+    if (usersToFetch.size === 0) return;
+    usersToFetch.forEach(async userId => {
+      try {
+        const res = await fetch(`${API_URL}/api/profile/public/${userId}`);
+        const data = await res.json();
+        if (data.user && typeof data.user.isVerified === 'boolean') {
+          setVerificationMap(prev => ({
+            ...prev,
+            [userId]: data.user.isVerified
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch verification status for user", userId, err);
+      }
     });
   }, [feeds, searchResults, searchTerm]);
 
@@ -310,6 +340,7 @@ export default function Home({
             displayFeeds.map((feed) => {
               const ringClass = getRingClass(feed.user.status);
               const stats = feed.user && feed.user._id ? reviewStatsMap[feed.user._id] : undefined;
+              const isVerified = feed.user && feed.user._id ? verificationMap[feed.user._id] : false;
               return (
                 <div
                   key={feed._id}
@@ -349,7 +380,18 @@ export default function Home({
                           </div>
                         )}
                       </div>
-                      <div className="text-green-700 font-semibold text-sm text-center">{feed.user.username}</div>
+                      <div className="text-green-700 font-semibold text-sm text-center inline-flex items-center justify-center">
+                        <span>{feed.user.username}</span>
+                        {isVerified && (
+                          <span
+                            className="ml-1 inline-flex items-center justify-center h-4 w-4 rounded-full bg-blue-500 text-white"
+                            title="Verified account"
+                            aria-label="Verified account"
+                          >
+                            <CheckCircle size={10} className="text-white" />
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
                       {/* --- Overall Review Stats --- */}
                       <div className="mt-2 flex flex-col items-center">
