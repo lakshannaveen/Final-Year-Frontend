@@ -68,7 +68,10 @@ function AppContent() {
 
   // --- SCROLL TO TOP ON VIEW CHANGE ---
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    // Don't scroll to top for home, profile, and public profile pages on mobile
+    if (currentView !== "home" && currentView !== "profile" && currentView !== "publicprofile") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
   }, [currentView]);
 
   // Sidebar state
