@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { AuthProvider } from "../components/AuthContext";
+import { AuthProvider, useAuth } from "../components/AuthContext";
 import Sidebar from "../components/Sidebar";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
@@ -30,7 +30,8 @@ import AdminIDVerifications from "../admin/AdminIDVerifications";
 
 // FIX: Remove onShowMessage from Home props if not used in Home.tsx
 
-export default function Page() {
+function AppContent() {
+  const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState("home");
   const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
 
@@ -78,6 +79,29 @@ export default function Page() {
       setSidebarOpen(true);
     }
   };
+
+  // Only navigate IF user manually types the hidden URL
+  useEffect(() => {
+    try {
+    
+      const PUBLIC_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY ?? "";
+      const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME ?? "";
+
+      // Require the exact query string to match one of the two canonical orders:
+      // ?admin=<PUBLIC_KEY>&user=<ADMIN_USERNAME>
+      // or ?user=<ADMIN_USERNAME>&admin=<PUBLIC_KEY>
+      const exactA = `?admin=${encodeURIComponent(PUBLIC_KEY)}&user=${encodeURIComponent(ADMIN_USERNAME)}`;
+      const exactB = `?user=${encodeURIComponent(ADMIN_USERNAME)}&admin=${encodeURIComponent(PUBLIC_KEY)}`;
+
+      if (window.location.search === exactA || window.location.search === exactB) {
+        // Only set admin view when both params exactly match the env values.
+        setCurrentView("adminlogin");
+      }
+    } catch {
+      // ignore URL parsing errors
+    }
+  }, []); // run only once on mount
+
 
   // Only navigate IF user manually types the hidden URL
   useEffect(() => {
@@ -185,6 +209,10 @@ export default function Page() {
         setCurrentView("home");
         return null;
       case "inbox":
+        if (!user) {
+          setCurrentView("signin");
+          return null;
+        }
         return (
           <Inbox
             setCurrentView={setCurrentView}
@@ -219,21 +247,27 @@ export default function Page() {
   };
 
   return (
+    <div 
+      className="min-h-screen"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {renderContent()}
+      
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        setCurrentView={setCurrentView}
+      />
+    </div>
+  );
+}
+
+export default function Page() {
+  return (
     <AuthProvider>
-      <div 
-        className="min-h-screen"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {renderContent()}
-        
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          setCurrentView={setCurrentView}
-        />
-      </div>
+      <AppContent />
     </AuthProvider>
   );
 }

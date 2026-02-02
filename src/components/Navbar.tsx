@@ -248,20 +248,22 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                   Post a Service
                 </button>
               )}
-              <button
-                onClick={() => handleNavClick("inbox")}
-                className={`flex items-center gap-2 relative ${currentView === "inbox" ? activeLink : inactiveLink}`}
-                aria-label="Inbox"
-                style={{ justifyContent: "center" }}
-              >
-                <Mail size={20} />
-                <span className="hidden sm:inline">Inbox</span>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </button>
+              {user && (
+                <button
+                  onClick={() => handleNavClick("inbox")}
+                  className={`flex items-center gap-2 relative ${currentView === "inbox" ? activeLink : inactiveLink}`}
+                  aria-label="Inbox"
+                  style={{ justifyContent: "center" }}
+                >
+                  <Mail size={20} />
+                  <span className="hidden sm:inline">Inbox</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
 
             </div>
 
