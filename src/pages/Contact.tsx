@@ -276,7 +276,7 @@ export default function Contact({ setCurrentView }: ContactProps) {
 
       {/* Success Modal (similar to Feedback component) */}
       {submitted && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-blue-900 bg-opacity-40 flex justify-center items-center z-50">
           <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-lg text-center relative">
             <h3 className="font-bold text-lg mb-2 text-green-600">Success</h3>
             <p className="text-black mb-4">Your message has been sent successfully! We will get back to you shortly.</p>

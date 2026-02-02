@@ -343,7 +343,7 @@ export default function ReviewSection({ userId }: ReviewProps) {
 
   // Modal content for all reviews
   const AllReviewsModal = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70" onClick={() => setShowAllModal(false)}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900 bg-opacity-70" onClick={() => setShowAllModal(false)}>
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-2xl p-6 shadow-2xl border border-green-200"
         onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">

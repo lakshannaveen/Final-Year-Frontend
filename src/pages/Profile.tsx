@@ -18,6 +18,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useAuth } from "../components/AuthContext";
+import { toast } from 'react-toastify';
 import ProfileFeed from "./ProfileFeed";
 
 interface UserProfile {
@@ -541,8 +542,12 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
           <button
             onClick={async () => {
-              await logout();
-              setCurrentView("home");
+              const confirmed = window.confirm("Are you sure?");
+              if (confirmed) {
+                await logout();
+                toast.success("Logout successfully!");
+                setCurrentView("home");
+              }
             }}
             className="px-4 py-2 bg-white text-green-700 rounded-lg font-semibold hover:bg-green-100 border border-green-200 shadow transition flex items-center"
             disabled={loading || uploading}

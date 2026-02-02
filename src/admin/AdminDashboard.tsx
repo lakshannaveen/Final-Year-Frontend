@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { toast } from 'react-toastify';
 import {
   UserGroupIcon,
   WrenchScrewdriverIcon,
@@ -28,6 +29,7 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
 
   const handleLogout = () => {
     sessionStorage.removeItem("isAdmin");
+    toast.success("Logged out successfully!");
     setCurrentView("home");
   };
 
@@ -58,7 +60,12 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
           </h1>
 
           <button
-            onClick={handleLogout}
+            onClick={() => {
+              const confirmed = window.confirm("Are you sure?");
+              if (confirmed) {
+                handleLogout();
+              }
+            }}
             className="px-4 py-2 bg-red-600 text-white rounded-md border border-red-700 hover:bg-red-700"
           >
             Logout

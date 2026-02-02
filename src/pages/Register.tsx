@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useAuth } from "../components/AuthContext";
+import { toast } from 'react-toastify';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -23,7 +24,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
     phone: "",
   });
   const [loading, setLoading] = useState(false);
-  const [modal, setModal] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +84,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
     if (!validate()) return;
 
     setLoading(true);
-    setModal(null);
 
     try {
       const res = await fetch(`${API_URL}/api/auth/register`, {
@@ -97,23 +96,23 @@ export default function Register({ setCurrentView }: RegisterProps) {
       const data = await res.json();
 
       if (res.ok) {
-        setModal({ type: "success", message: "Registration successful!" });
+        toast.success("Registration successful!");
         setFormData({ username: "", email: "", password: "", phone: "" });
         login(data.user);
         setTimeout(() => {
           setCurrentView("home");
-        }, 1500);
+        }, 3000);
       } else {
         const errorMsg = data.errors
           ? Object.values(data.errors).join("\n")
           : "Registration failed";
-        setModal({ type: "error", message: errorMsg });
+        toast.error(errorMsg);
         if (data.errors) {
           setErrors({ ...errors, ...data.errors });
         }
       }
     } catch (err) {
-      setModal({ type: "error", message: `Error connecting to server: ${err instanceof Error ? err.message : 'Unknown error'}` });
+      toast.error(`Error connecting to server: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
 
     setLoading(false);
@@ -126,27 +125,6 @@ export default function Register({ setCurrentView }: RegisterProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
-      {/* Modal */}
-      {modal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-lg text-center relative">
-            <h3
-              className={`font-bold text-lg mb-2 ${
-                modal.type === "success" ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {modal.type === "success" ? "Success" : "Error"}
-            </h3>
-            <p className="text-black mb-4 whitespace-pre-line">{modal.message}</p>
-            <button
-              className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 font-semibold"
-              onClick={() => setModal(null)}
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md z-10">
         <h2 className="text-2xl font-bold text-green-700 mb-6 text-center">

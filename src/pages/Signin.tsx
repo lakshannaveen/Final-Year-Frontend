@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useAuth } from "../components/AuthContext";
+import { toast } from 'react-toastify';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -20,7 +21,6 @@ export default function SignIn({ setCurrentView }: SignInProps) {
     serviceType: "",
   });
   const [loading, setLoading] = useState(false);
-  const [modal, setModal] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,7 +57,6 @@ export default function SignIn({ setCurrentView }: SignInProps) {
     if (!validate()) return;
 
     setLoading(true);
-    setModal(null);
 
     try {
       const res = await fetch(`${API_URL}/api/auth/login`, {
@@ -70,23 +69,23 @@ export default function SignIn({ setCurrentView }: SignInProps) {
       const data = await res.json();
 
       if (res.ok) {
-        setModal({ type: "success", message: "Login successful!" });
+        toast.success("Login successful!");
         login(data.user);
         setTimeout(() => {
           setCurrentView("home");
-        }, 1500);
+        }, 3000);
       } else {
         const errorMsg = data.errors
           ? Object.values(data.errors).join("\n")
           : "Login failed";
-        setModal({ type: "error", message: errorMsg });
+        toast.error(errorMsg);
         if (data.errors) {
           setErrors({ ...errors, ...data.errors });
         }
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setModal({ type: "error", message: `Error connecting to server: ${errorMessage}` });
+      toast.error(`Error connecting to server: ${errorMessage}`);
     }
 
     setLoading(false);
@@ -96,7 +95,7 @@ export default function SignIn({ setCurrentView }: SignInProps) {
   const handleGoogleSignIn = () => {
     if (!serviceType) {
       setErrors((prev) => ({ ...prev, serviceType: "Please select account type" }));
-      setModal({ type: "error", message: "Please select account type above!" });
+      toast.error("Please select account type above!");
       return;
     }
     window.location.href = `${API_URL}/api/auth/google?serviceType=${serviceType}`;
@@ -104,27 +103,6 @@ export default function SignIn({ setCurrentView }: SignInProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
-      {/* Modal */}
-      {modal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-lg text-center relative">
-            <h3
-              className={`font-bold text-lg mb-2 ${
-                modal.type === "success" ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {modal.type === "success" ? "Success" : "Error"}
-            </h3>
-            <p className="text-black mb-4 whitespace-pre-line">{modal.message}</p>
-            <button
-              className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 font-semibold"
-              onClick={() => setModal(null)}
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md z-10">
         <h2 className="text-2xl font-bold text-green-700 mb-6 text-center">

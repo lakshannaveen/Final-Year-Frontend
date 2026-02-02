@@ -601,7 +601,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
 
         {/* Verification Details Modal */}
         {showModal && selectedVerification && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-blue-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] overflow-y-auto text-gray-900">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">

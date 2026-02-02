@@ -501,7 +501,7 @@ export default function ProfileFeed() {
               </div>
               {/* Edit Modal */}
               {editingId === feed._id && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900 bg-opacity-60">
                   <div className="bg-white rounded-2xl shadow-2xl border border-green-300 w-full max-w-md mx-auto relative flex flex-col"
                     style={{
                       maxHeight: "98vh",
@@ -611,7 +611,7 @@ export default function ProfileFeed() {
         )}
         {/* Success Modal */}
         {successModal.show && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900 bg-opacity-40">
             <div className="bg-white rounded-xl shadow-lg border border-green-400 px-8 py-6 flex flex-col items-center">
               <svg className="w-12 h-12 text-green-600 mb-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
@@ -625,7 +625,7 @@ export default function ProfileFeed() {
         {/* Photo Modal */}
         {showPhotoModal && modalPhotoUrl && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900 bg-opacity-70"
             onClick={closeModal}
           >
             <div className="relative">
