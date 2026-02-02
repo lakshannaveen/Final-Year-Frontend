@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { RefreshCw, Trash2, Star } from "lucide-react";
+import { RefreshCw, Trash2, Star, CheckCircle } from "lucide-react";
 
 type Props = {
   setCurrentView: (view: string) => void;
@@ -12,6 +12,7 @@ interface FeedUser {
   profilePic?: string;
   status?: string;
   serviceType?: string;
+  isVerified?: boolean;
 }
 
 interface FeedItem {
@@ -108,6 +109,10 @@ export default function AdminServices({ setCurrentView }: Props) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ show: boolean; message: string }>({ show: false, message: "" });
 
+  // Current user verification status
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserIsVerified, setCurrentUserIsVerified] = useState(false);
+
   // Review stats cache per user id (optional UI element shown next to avatar)
   const [reviewStatsMap, setReviewStatsMap] = useState<Record<string, ReviewStats>>({});
 
@@ -166,6 +171,26 @@ export default function AdminServices({ setCurrentView }: Props) {
       }
     });
   }, [feeds, reviewStatsMap]);
+
+  // Fetch current user verification status
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/profile`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (res.ok && data.user) {
+          setCurrentUserId(data.user._id || null);
+          setCurrentUserIsVerified(!!data.user.isVerified);
+        }
+      } catch (err) {
+        // ignore - not critical
+        console.error("Failed to fetch current profile for verification status", err);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   useEffect(() => {
     fetchServices(page);
@@ -310,6 +335,11 @@ export default function AdminServices({ setCurrentView }: Props) {
               const ringClass = getRingClass(feed.user?.status);
               const stats = feed.user && feed.user._id ? reviewStatsMap[feed.user._id] : undefined;
 
+              // Determine verified badge: prefer populated isVerified if present,
+              // otherwise if this feed belongs to the current user use currentUserIsVerified
+              const showVerified =
+                !!feed.user.isVerified || (currentUserId !== null && feed.user._id === currentUserId && currentUserIsVerified);
+
               return (
                 <div
                   key={feed._id}
@@ -336,7 +366,18 @@ export default function AdminServices({ setCurrentView }: Props) {
                       )}
                     </div>
 
-                    <div className="text-blue-800 font-bold text-base text-center">{feed.user?.username || "Unknown"}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-blue-800 font-bold text-base text-center">{feed.user?.username || "Unknown"}</div>
+                      {showVerified && (
+                        <span
+                          className="ml-1 inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-500 text-white shadow-sm"
+                          title="Verified account"
+                          aria-label="Verified account"
+                        >
+                          <CheckCircle size={12} className="text-white" />
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
 
                     <div className="mt-2 flex flex-col items-center">
