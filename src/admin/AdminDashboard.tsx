@@ -9,18 +9,29 @@ import {
   IdentificationIcon,
   ChartBarIcon,
 } from "@heroicons/react/24/solid";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 type AdminDashboardProps = {
   setCurrentView: (view: string) => void;
 };
 
+type UserStats = {
+  totalUsers: number;
+  serviceSeekerCount: number;
+  postingCount: number;
+  newUsersThisWeek: number;
+  newUsersThisMonth: number;
+};
+
 export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [stats, setStats] = useState<UserStats | null>(null);
 
   useEffect(() => {
     const isAdmin = sessionStorage.getItem("isAdmin");
     if (isAdmin === "1") {
       setAuthorized(true);
+      fetchStats(); // Fetch stats when authorized
     } else {
       setAuthorized(false);
       setTimeout(() => setCurrentView("home"), 600);
@@ -31,6 +42,24 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
     sessionStorage.removeItem("isAdmin");
     toast.success("Logged out successfully!");
     setCurrentView("home");
+  };
+
+  // API base URL
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  // Fetch statistics
+  const fetchStats = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/users/stats`);
+      if (response.ok) {
+        const data: UserStats = await response.json();
+        setStats(data);
+      } else {
+        console.error("Stats fetch failed with status:", response.status);
+      }
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
+    }
   };
 
   if (authorized === null) {
@@ -130,6 +159,40 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
           </button>
 
         </div>
+
+        {/* User Statistics Chart */}
+        <div className="mt-10 bg-white p-6 rounded-xl shadow">
+          <h2 className="text-xl font-semibold text-blue-900 mb-4">User Distribution</h2>
+          {stats ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Service Seekers', value: stats.serviceSeekerCount, color: '#3B82F6' },
+                    { name: 'Service Providers', value: stats.postingCount, color: '#10B981' }
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${percent ? (percent * 100).toFixed(0) : 0}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  <Cell fill="#3B82F6" />
+                  <Cell fill="#10B981" />
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-gray-500">Loading chart...</div>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
