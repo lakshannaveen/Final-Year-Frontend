@@ -285,7 +285,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                 {profile.profilePic ? (
                   <img src={profile.profilePic} alt="Profile" className="object-cover w-full h-full" />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-green-400 to-emerald-400 flex items-center justify-center text-6xl font-bold text-white">
+                  <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-6xl font-bold text-white">
                     {getInitial(profile.username)}
                   </div>
                 )}

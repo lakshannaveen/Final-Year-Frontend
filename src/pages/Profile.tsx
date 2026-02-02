@@ -613,7 +613,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 />
               ) : (
                 // Default green profile circle color to match Home's default
-                <div className="w-full h-full bg-green-100 flex items-center justify-center text-6xl font-bold text-green-700">
+                <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-6xl font-bold text-white">
                   {getInitial(username || profile.username)}
                 </div>
               )}

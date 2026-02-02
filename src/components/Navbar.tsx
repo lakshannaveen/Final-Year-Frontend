@@ -318,8 +318,8 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                       />
                     </span>
                   ) : avatarLetter ? (
-                    // Default profile circle color
-                    <span className="relative z-10 w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold shadow-inner">
+                    // Default profile circle color - gradient theme
+                    <span className="relative z-10 w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white flex items-center justify-center font-bold shadow-inner">
                       {avatarLetter}
                     </span>
                   ) : (
@@ -401,7 +401,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                     </span>
                   ) : avatarLetter ? (
                     // Default profile circle color
-                    <span className="relative z-10 w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold shadow-inner">
+                    <span className="relative z-10 w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white flex items-center justify-center font-bold shadow-inner">
                       {avatarLetter}
                     </span>
                   ) : (
