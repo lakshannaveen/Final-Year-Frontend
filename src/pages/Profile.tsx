@@ -549,7 +549,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 setCurrentView("home");
               }
             }}
-            className="px-4 py-2 bg-white text-green-700 rounded-lg font-semibold hover:bg-green-100 border border-green-200 shadow transition flex items-center"
+            className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 border border-red-300 shadow transition flex items-center"
             disabled={loading || uploading}
           >
             <LogOut size={16} className="mr-2" />
