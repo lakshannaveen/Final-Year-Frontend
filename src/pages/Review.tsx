@@ -29,7 +29,7 @@ const SHOW_LIMIT = 5;
 // --- Skeleton Components ---
 function ReviewSectionSkeleton() {
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-8 mb-10 animate-pulse">
+    <div className="w-full bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-8 mb-10 animate-pulse">
       <div className="flex justify-between items-center mb-6">
         <div className="w-24 h-8 bg-gray-200 rounded" />
         <div className="w-48 h-8 bg-gray-200 rounded" />
@@ -399,7 +399,7 @@ export default function ReviewSection({ userId }: ReviewProps) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-8 mb-10">
+    <div className="w-full bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-8 mb-10">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-bold text-green-700">Reviews</h3>
         {reviewStats.totalReviews > 0 && (

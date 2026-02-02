@@ -57,7 +57,7 @@ const PAGE_SIZE = 5;
 // --- Skeleton Components ---
 function ProfileSkeleton() {
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden mb-10">
+    <div className="w-full bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden mb-10">
       <div className="relative h-48 sm:h-56 bg-gradient-to-r from-green-200 to-emerald-200 animate-pulse" />
       <div className="flex flex-col items-center -mt-20 sm:-mt-24 pb-8 px-6 sm:px-8">
         <div className="relative mb-4">
@@ -72,7 +72,7 @@ function ProfileSkeleton() {
           </div>
           <div className="w-40 h-4 bg-gray-200 rounded mx-auto animate-pulse" />
         </div>
-        <div className="w-full max-w-lg mb-6">
+        <div className="w-full mb-6">
           <div className="w-24 h-6 bg-gray-200 rounded mb-3 animate-pulse" />
           <div className="w-full h-24 bg-gray-200 rounded-lg animate-pulse" />
         </div>
@@ -83,28 +83,34 @@ function ProfileSkeleton() {
 
 function FeedSkeleton() {
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col md:flex-row items-stretch p-6 min-h-[240px] animate-pulse mb-4">
-      <div className="flex flex-col items-center md:items-start mr-0 md:mr-8 min-w-[100px] mb-4 md:mb-0">
-        <div className="w-16 h-16 rounded-full bg-gray-200 mb-2" />
-        <div className="w-20 h-4 rounded bg-gray-200 mb-2" />
-        <div className="w-12 h-3 rounded bg-gray-200" />
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-row md:flex-row items-stretch p-4 md:p-6 min-h-[240px] animate-pulse mb-4">
+      {/* Left side: Profile and media skeleton */}
+      <div className="flex flex-col items-center md:items-start mr-4 md:mr-8 min-w-[120px] md:min-w-[120px]">
+        <div className="flex flex-col items-center mb-4 md:mb-0">
+          <div className="w-16 h-16 rounded-full bg-gray-200 mb-2" />
+          <div className="w-20 h-4 rounded bg-gray-200 mb-2" />
+          <div className="w-12 h-3 rounded bg-gray-200" />
+        </div>
+        {/* Media skeleton - mobile only */}
+        <div className="md:hidden w-full max-w-[120px]">
+          <div className="w-full h-[90px] bg-gray-200 rounded-xl" />
+        </div>
       </div>
-      <div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-8">
-        <div className="flex-1 flex flex-col justify-between py-2">
-          <div>
-            <div className="w-36 h-6 bg-gray-200 rounded mb-2" />
-            <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
-            <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
-            <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
-            <div className="w-32 h-4 bg-gray-200 rounded mb-2" />
-            <div className="w-40 h-4 bg-gray-200 rounded mb-2" />
-            <div className="w-52 h-4 bg-gray-200 rounded" />
-          </div>
+      {/* Right side: Content skeleton */}
+      <div className="flex-1 flex flex-col justify-between py-2">
+        <div>
+          <div className="w-36 h-6 bg-gray-200 rounded mb-2" />
+          <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
+          <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
+          <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
+          <div className="w-32 h-4 bg-gray-200 rounded mb-2" />
+          <div className="w-40 h-4 bg-gray-200 rounded mb-2" />
+          <div className="w-52 h-4 bg-gray-200 rounded" />
         </div>
-        <div className="flex flex-col gap-2 items-center justify-center md:justify-start md:items-start min-w-[220px] max-w-[220px]">
-          <div className="w-[220px] h-[160px] bg-gray-200 rounded-xl" />
-          <div className="w-[220px] h-[20px] bg-gray-200 rounded-xl" />
-        </div>
+      </div>
+      {/* Media skeleton - desktop only */}
+      <div className="hidden md:flex flex-col gap-2 items-center justify-start min-w-[220px] max-w-[220px] ml-8">
+        <div className="w-[220px] h-[160px] bg-gray-200 rounded-xl" />
       </div>
     </div>
   );
@@ -227,9 +233,9 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
   // NOTE: Verification badge is now rendered inline next to the username in the heading (see below).
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-2">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
       {/* Back Button */}
-      <div className="max-w-2xl mx-auto mb-6 flex justify-between items-center">
+      <div className="w-full mx-auto mb-6 flex justify-between items-center">
         <button
           onClick={() => setCurrentView("home")}
           className="flex items-center text-green-700 font-semibold hover:text-green-800 transition-colors px-4 py-2 rounded-lg hover:bg-green-100"
@@ -243,7 +249,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
       {profileLoading ? (
         <ProfileSkeleton />
       ) : profileError || !profile ? (
-        <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden mb-10 p-10 text-center">
+        <div className="w-full bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden mb-10 p-10 text-center">
           <p className="text-lg text-red-700 font-semibold mb-4">{profileError || "No profile data found."}</p>
           <button
             onClick={() => setCurrentView("home")}
@@ -253,7 +259,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
           </button>
         </div>
       ) : (
-        <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden mb-10">
+        <div className="w-full bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden mb-10">
           {/* Cover Image - Only for posting accounts */}
           {profile.serviceType === "posting" && (
             <div className="relative h-48 sm:h-56 bg-gradient-to-r from-green-200 to-emerald-200">
@@ -428,7 +434,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
       <ReviewSection userId={userId} />
 
       {/* FEEDS LIST */}
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-8">
+      <div className="w-full bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-8">
         <h3 className="text-2xl font-bold text-green-700 mb-6 text-center">
           {profile?.username ? `Posts by ${profile.username}` : "Posts"}
         </h3>
@@ -442,100 +448,54 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
             return (
               <div
                 key={feed._id}
-                className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col md:flex-row items-stretch p-6 transition hover:shadow-xl mb-6"
+                className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-row md:flex-row items-stretch p-4 md:p-6 transition hover:shadow-xl mb-6"
                 style={{ minHeight: "240px" }}
               >
-                {/* Profile pic and username, top left */}
-                <div
-                  className="flex flex-col items-center md:items-start mr-0 md:mr-8 min-w-[120px] mb-4 md:mb-0 cursor-pointer hover:bg-gray-100 rounded-xl transition"
-                  title={`View ${feed.user.username}'s profile`}
-                >
-                  <div className="relative w-16 h-16 mb-2 flex items-center justify-center">
-                    {/* Blinking ring - OUTSIDE profile pic */}
-                    {ringClass && (
-                      <span
-                        className={`absolute -inset-1 rounded-full pointer-events-none z-0 ${ringClass}`}
-                        aria-hidden
-                      ></span>
-                    )}
-                    {feed.user.profilePic ? (
-                      <img
-                        src={feed.user.profilePic}
-                        alt={feed.user.username}
-                        className="w-16 h-16 rounded-full object-cover border border-gray-300 z-10 bg-white"
-                      />
-                    ) : (
-                      <div
-                        className="w-16 h-16 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-2xl border border-gray-300 z-10"
-                        aria-label={feed.user.username}
-                      >
-                        {feed.user.username?.[0]?.toUpperCase() || "?"}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-green-700 font-bold text-base text-center">{feed.user.username}</div>
-                  <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
-                </div>
-                {/* Post details and media */}
-                <div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-8">
-                  {/* Details */}
-                  <div className="flex-1 flex flex-col justify-between py-2">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="text-xl font-bold text-gray-900">{feed.title}</div>
-                      </div>
-                      <div className="mb-2">
-                        <span className="inline-block font-semibold text-gray-700 w-20">Location:</span>
-                        <span className="text-gray-800">{feed.location}</span>
-                      </div>
-                      <div className="mb-2">
-                        <span className="inline-block font-semibold text-gray-700 w-20">Contact:</span>
-                        {feed.contactNumber ? (
-                          <a
-                            href={`tel:${feed.contactNumber}`}
-                            className="text-green-700 underline"
-                            title={`Call ${feed.contactNumber}`}
-                          >
-                            {feed.contactNumber}
-                          </a>
-                        ) : (
-                          <span className="text-gray-800">{feed.contactNumber}</span>
-                        )}
-                      </div>
-                      <div className="mb-2">
-                        <span className="inline-block font-semibold text-gray-700 w-20">Price:</span>
-                        <span className="text-gray-800">{feed.price} {feed.priceCurrency} ({feed.priceType})</span>
-                      </div>
-                      {feed.websiteLink && (
-                        <div className="mb-2">
-                          <span className="inline-block font-semibold text-gray-700 w-20">Website:</span>
-                          <a
-                            href={feed.websiteLink}
-                            className="text-green-700 underline"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {feed.websiteLink.replace(/^https?:\/\//, '')}
-                          </a>
-                        </div>
+                {/* Left side: Profile pic and media (stacked on mobile, profile only on desktop) */}
+                <div className="flex flex-col items-center md:items-start mr-4 md:mr-8 min-w-[120px] md:min-w-[120px]">
+                  {/* Profile pic and username */}
+                  <div
+                    className="flex flex-col items-center mb-4 md:mb-0 cursor-pointer hover:bg-gray-100 rounded-xl transition"
+                    title={`View ${feed.user.username}'s profile`}
+                  >
+                    <div className="relative w-16 h-16 mb-2 flex items-center justify-center">
+                      {/* Blinking ring - OUTSIDE profile pic */}
+                      {ringClass && (
+                        <span
+                          className={`absolute -inset-1 rounded-full pointer-events-none z-0 ${ringClass}`}
+                          aria-hidden
+                        ></span>
                       )}
-                      {feed.description && (
-                        <div className="mb-2">
-                          <span className="inline-block font-semibold text-gray-700 w-20">About:</span>
-                          <span className="text-gray-700">{feed.description}</span>
+                      {feed.user.profilePic ? (
+                        <img
+                          src={feed.user.profilePic}
+                          alt={feed.user.username}
+                          className="w-16 h-16 rounded-full object-cover border border-gray-300 z-10 bg-white"
+                        />
+                      ) : (
+                        <div
+                          className="w-16 h-16 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-2xl border border-gray-300 z-10"
+                          aria-label={feed.user.username}
+                        >
+                          {feed.user.username?.[0]?.toUpperCase() || "?"}
                         </div>
                       )}
                     </div>
+
+                    <div className="text-green-700 font-bold text-base text-center">{feed.user.username}</div>
+                    <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
                   </div>
-                  {/* Media */}
+                  {/* Media section - only show on mobile */}
                   {(feed.photo || feed.video) && (
-                    <div className="flex flex-col gap-2 items-center justify-center md:justify-start md:items-start min-w-[220px] max-w-[220px]">
+                    <div className="flex flex-col gap-2 items-center justify-center md:hidden w-full max-w-[120px]">
                       {feed.photo && (
                         <img
                           src={feed.photo}
                           alt="Post Photo"
-                          className="rounded-xl border object-cover"
-                          style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
+                          width={120}
+                          height={90}
+                          className="rounded-xl border object-cover w-full h-auto"
+                          style={{ background: "#f3f4f6" }}
                           onMouseDown={() => handlePhotoMouseDown(feed.photo!, feed.title)}
                           onMouseUp={handlePhotoMouseUp}
                           onMouseLeave={handlePhotoMouseUp}
@@ -547,13 +507,90 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                         <video
                           src={feed.video}
                           controls
-                          className="rounded-xl border object-cover"
-                          style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
+                          className="rounded-xl border object-cover w-full h-auto"
+                          style={{ background: "#f3f4f6" }}
                         />
                       )}
                     </div>
                   )}
                 </div>
+                {/* Right side: Post details */}
+                <div className="flex-1 flex flex-col justify-between py-2">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="text-lg md:text-xl font-bold text-gray-900">{feed.title}</div>
+                    </div>
+                    <div className="mb-2">
+                      <span className="inline-block font-semibold text-gray-700 w-20">Location:</span>
+                      <span className="text-gray-800">{feed.location}</span>
+                    </div>
+                    <div className="mb-2">
+                      <span className="inline-block font-semibold text-gray-700 w-20">Contact:</span>
+                      {feed.contactNumber ? (
+                        <a
+                          href={`tel:${feed.contactNumber}`}
+                          className="text-green-700 underline"
+                          title={`Call ${feed.contactNumber}`}
+                        >
+                          {feed.contactNumber}
+                        </a>
+                      ) : (
+                        <span className="text-gray-800">{feed.contactNumber}</span>
+                      )}
+                    </div>
+                    <div className="mb-2">
+                      <span className="inline-block font-semibold text-gray-700 w-20">Price:</span>
+                      <span className="text-gray-800">{feed.price} {feed.priceCurrency} ({feed.priceType})</span>
+                    </div>
+                    {feed.websiteLink && (
+                      <div className="mb-2">
+                        <span className="inline-block font-semibold text-gray-700 w-20">Website:</span>
+                        <a
+                          href={feed.websiteLink}
+                          className="text-green-700 underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {feed.websiteLink.replace(/^https?:\/\//, '')}
+                        </a>
+                      </div>
+                    )}
+                    {feed.description && (
+                      <div className="mb-2">
+                        <span className="inline-block font-semibold text-gray-700 w-20">About:</span>
+                        <span className="text-gray-700">{feed.description}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Media section - only show on desktop */}
+                {(feed.photo || feed.video) && (
+                  <div className="hidden md:flex flex-col gap-2 items-center justify-start min-w-[220px] max-w-[220px] ml-8">
+                    {feed.photo && (
+                      <img
+                        src={feed.photo}
+                        alt="Post Photo"
+                        width={220}
+                        height={160}
+                        className="rounded-xl border object-cover"
+                        style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
+                        onMouseDown={() => handlePhotoMouseDown(feed.photo!, feed.title)}
+                        onMouseUp={handlePhotoMouseUp}
+                        onMouseLeave={handlePhotoMouseUp}
+                        onTouchStart={() => handlePhotoTouchStart(feed.photo!, feed.title)}
+                        onTouchEnd={handlePhotoTouchEnd}
+                      />
+                    )}
+                    {feed.video && (
+                      <video
+                        src={feed.video}
+                        controls
+                        className="rounded-xl border object-cover"
+                        style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             );
           })

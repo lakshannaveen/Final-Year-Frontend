@@ -56,28 +56,34 @@ function timeAgo(dateString: string): string {
 
 function FeedSkeleton() {
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col md:flex-row items-stretch p-6 min-h-[240px] animate-pulse">
-      <div className="flex flex-col items-center md:items-start mr-0 md:mr-8 min-w-[100px] mb-4 md:mb-0">
-        <div className="w-16 h-16 rounded-full bg-gray-200 mb-2" />
-        <div className="w-20 h-4 rounded bg-gray-200 mb-2" />
-        <div className="w-12 h-3 rounded bg-gray-200" />
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-row md:flex-row items-stretch p-4 md:p-8 min-h-[240px] animate-pulse">
+      {/* Left side: Profile and media skeleton */}
+      <div className="flex flex-col items-center md:items-start mr-4 md:mr-8 min-w-[120px] md:min-w-[120px]">
+        <div className="flex flex-col items-center mb-4 md:mb-0">
+          <div className="w-16 h-16 rounded-full bg-gray-200 mb-2" />
+          <div className="w-20 h-4 rounded bg-gray-200 mb-2" />
+          <div className="w-12 h-3 rounded bg-gray-200" />
+        </div>
+        {/* Media skeleton - mobile only */}
+        <div className="md:hidden w-full max-w-[120px]">
+          <div className="w-full h-[90px] bg-gray-200 rounded-xl" />
+        </div>
       </div>
-      <div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-8">
-        <div className="flex-1 flex flex-col justify-between py-2">
-          <div>
-            <div className="w-36 h-6 bg-gray-200 rounded mb-2" />
-            <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
-            <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
-            <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
-            <div className="w-32 h-4 bg-gray-200 rounded mb-2" />
-            <div className="w-40 h-4 bg-gray-200 rounded mb-2" />
-            <div className="w-52 h-4 bg-gray-200 rounded" />
-          </div>
+      {/* Right side: Content skeleton */}
+      <div className="flex-1 flex flex-col justify-between py-2">
+        <div>
+          <div className="w-36 h-6 bg-gray-200 rounded mb-2" />
+          <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
+          <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
+          <div className="w-28 h-4 bg-gray-200 rounded mb-2" />
+          <div className="w-32 h-4 bg-gray-200 rounded mb-2" />
+          <div className="w-40 h-4 bg-gray-200 rounded mb-2" />
+          <div className="w-52 h-4 bg-gray-200 rounded" />
         </div>
-        <div className="flex flex-col gap-2 items-center justify-center md:justify-start md:items-start min-w-[220px] max-w-[220px]">
-          <div className="w-[220px] h-[160px] bg-gray-200 rounded-xl" />
-          <div className="w-[220px] h-[20px] bg-gray-200 rounded-xl" />
-        </div>
+      </div>
+      {/* Media skeleton - desktop only */}
+      <div className="hidden md:flex flex-col gap-2 items-center justify-start min-w-[220px] max-w-[220px] ml-8">
+        <div className="w-[220px] h-[160px] bg-gray-200 rounded-xl" />
       </div>
     </div>
   );
@@ -331,7 +337,7 @@ export default function ProfileFeed() {
 
   return (
     <div className="w-full min-h-screen bg-green-50">
-      <div className="w-full max-w-3xl mx-auto space-y-8 my-10">
+      <div className="w-full space-y-8 my-10">
         <h2 className="text-3xl font-bold text-green-800 mb-8 text-center">Your Posts</h2>
         {feeds.length === 0 && loading ? (
           <>

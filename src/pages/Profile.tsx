@@ -463,7 +463,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
-      <div className="max-w-2xl mx-auto mb-6 flex justify-between items-center">
+      <div className="w-full mx-auto mb-6 flex justify-between items-center">
         <button
           onClick={() => setCurrentView("home")}
           className="flex items-center text-green-700 font-semibold hover:text-green-800 transition-colors px-4 py-2 rounded-lg hover:bg-green-100"
@@ -553,7 +553,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
         </div>
       </div>
 
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden">
+      <div className="w-full bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden">
         {isPostingAccount && (
           <div className="relative h-48 sm:h-56 bg-gradient-to-r from-green-200 to-emerald-200">
             {previewCover || profile.coverImage ? (
