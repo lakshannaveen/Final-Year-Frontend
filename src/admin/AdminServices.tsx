@@ -431,7 +431,7 @@ export default function AdminServices({ setCurrentView }: Props) {
                           />
                         ) : (
                           <div
-                            className="w-14 h-14 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white font-bold text-xl border-2 border-gray-200 z-10"
+                            className="w-14 h-14 flex items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white font-bold text-xl border-2 border-gray-200 z-10"
                             aria-label={feed.user?.username}
                           >
                             {feed.user?.username?.[0]?.toUpperCase() || "?"}
