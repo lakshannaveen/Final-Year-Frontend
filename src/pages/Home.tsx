@@ -285,7 +285,7 @@ export default function Home({
         onToggleSidebar={onToggleSidebar}
       />
 
-      <div className="w-full max-w-3xl mx-auto mt-6 mb-4 px-2">
+      <div className="w-full mt-6 mb-4 px-2 md:px-4">
         <Search
           value={searchTerm}
           onChange={handleSearch}
@@ -295,7 +295,7 @@ export default function Home({
       </div>
 
       <section className="flex flex-col flex-grow items-center px-4 py-6">
-        <div className="w-full max-w-3xl space-y-8">
+        <div className="w-full space-y-8">
           {displayFeeds.length === 0 && displayLoading ? (
             [...Array(PAGE_SIZE)].map((_, i) => <FeedSkeleton key={i} />)
           ) : displayFeeds.length === 0 ? (
@@ -409,15 +409,15 @@ export default function Home({
                       </div>
                     </div>
                     {(feed.photo || feed.video) && (
-                      <div className="flex flex-col gap-2 items-center justify-center md:justify-start md:items-start min-w-[220px] max-w-[220px]">
+                      <div className="flex flex-col gap-2 items-center justify-center md:justify-start md:items-start w-full md:min-w-[220px] md:max-w-[220px]">
                         {feed.photo && (
                           <img
                             src={feed.photo}
                             alt="Post Photo"
                             width={220}
                             height={160}
-                            className="rounded-xl border object-cover"
-                            style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
+                            className="rounded-xl border object-cover w-full max-w-[220px] h-auto md:h-[160px]"
+                            style={{ background: "#f3f4f6" }}
                             onMouseDown={() => handlePhotoMouseDown(feed.photo!, feed.title)}
                             onMouseUp={handlePhotoMouseUp}
                             onMouseLeave={handlePhotoMouseUp}
@@ -429,8 +429,8 @@ export default function Home({
                           <video
                             src={feed.video}
                             controls
-                            className="rounded-xl border object-cover"
-                            style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
+                            className="rounded-xl border object-cover w-full max-w-[220px] h-auto md:h-[160px]"
+                            style={{ background: "#f3f4f6" }}
                           />
                         )}
                       </div>

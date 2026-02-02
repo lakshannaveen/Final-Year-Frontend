@@ -317,15 +317,15 @@ export default function Search({
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <form
-        className="flex items-center gap-2 bg-white border border-gray-300 rounded-xl shadow-lg px-4 py-3 hover:shadow-xl transition-shadow focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-200"
+        className="flex items-center gap-2 bg-white border border-gray-300 rounded-xl shadow-lg px-3 md:px-4 py-2 md:py-3 hover:shadow-xl transition-shadow focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-200"
         onSubmit={handleSubmit}
         autoComplete="off"
       >
-        <SearchIcon className="text-green-600 w-6 h-6 flex-shrink-0" />
+        <SearchIcon className="text-green-600 w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
         <input
           type="text"
           placeholder={aiStatus ? "AI powered search..." : "Search..."}
-          className="flex-1 bg-transparent outline-none text-lg text-gray-700 placeholder-gray-500 min-w-0"
+          className="flex-1 bg-transparent outline-none text-base md:text-lg text-gray-700 placeholder-gray-500 min-w-0"
           value={input}
           onChange={handleInput}
           disabled={loading}
@@ -343,11 +343,11 @@ export default function Search({
           </button>
         )}
         {aiStatus && (
-          <Sparkle className="text-green-500 w-5 h-5 ml-2" aria-label="AI powered" />
+          <Sparkle className="text-green-500 w-4 h-4 md:w-5 md:h-5 ml-2" aria-label="AI powered" />
         )}
         <button
           type="submit"
-          className="bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold px-6 py-2.5 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold px-4 md:px-6 py-2 md:py-2.5 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm md:text-base"
           disabled={loading || !input.trim()}
         >
           {loading ? (
