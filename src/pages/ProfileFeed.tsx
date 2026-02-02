@@ -358,254 +358,285 @@ export default function ProfileFeed() {
               !!feed.user.isVerified || (currentUserId !== null && feed.user._id === currentUserId && currentUserIsVerified);
 
             return (
-            <div
-              key={feed._id}
-              className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col md:flex-row items-stretch p-8 transition hover:shadow-xl"
-              style={{ minHeight: "240px" }}
-            >
-              {/* Profile pic and username, top left */}
               <div
-                className="flex flex-col items-center md:items-start mr-0 md:mr-8 min-w-[120px] mb-4 md:mb-0 cursor-pointer hover:bg-gray-100 rounded-xl transition"
-                title={`Your profile`}
+                key={feed._id}
+                className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] flex flex-col md:flex-row mb-6"
+                style={{ minHeight: "280px" }}
               >
-                <div className="relative w-16 h-16 mb-2 flex items-center justify-center">
-                  {/* Blinking ring - OUTSIDE profile pic */}
-                  {ringClass && (
-                    <span
-                      className={`absolute -inset-1 rounded-full pointer-events-none z-0 ${ringClass}`}
-                      aria-hidden
-                    ></span>
-                  )}
-                  {feed.user.profilePic ? (
-                    <img
-                      src={feed.user.profilePic}
-                      alt={feed.user.username}
-                      className="w-16 h-16 rounded-full object-cover border border-gray-300 z-10 bg-white"
-                    />
-                  ) : (
-                    <div
-                      className="w-16 h-16 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-2xl border border-gray-300 z-10"
-                      aria-label={feed.user.username}
-                    >
-                      {feed.user.username?.[0]?.toUpperCase() || "?"}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="text-green-700 font-bold text-base text-center">{feed.user.username}</div>
-                  {showVerified && (
-                    <span
-                      className="ml-1 inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-500 text-white shadow-sm"
-                      title="Verified account"
-                      aria-label="Verified account"
-                    >
-                      <CheckCircle size={12} className="text-white" />
-                    </span>
-                  )}
-                </div>
-
-                <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
-                {/* --- Overall Review Stats --- */}
-                <div className="mt-2 flex flex-col items-center">
-                  {stats && stats.totalReviews > 0 ? (
-                    <div className="flex items-center gap-1 text-yellow-500 text-sm font-semibold">
-                      <Star size={16} className="mr-1 text-yellow-400" fill="currentColor" />
-                      <span className="text-gray-800">{stats.averageRating.toFixed(1)}</span>
-                      <span className="text-gray-500">
-                        ({stats.totalReviews})
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="text-xs text-gray-300 italic">No reviews</div>
-                  )}
-                </div>
-                <div className="mt-4 flex gap-3">
-                  <button
-                    className="text-blue-600 hover:underline text-sm font-medium"
-                    onClick={() => startEditing(feed)}
-                  >Edit</button>
-                  <button
-                    className="text-red-600 hover:underline text-sm font-medium"
-                    onClick={() => handleDelete(feed._id)}
-                  >Delete</button>
-                </div>
-              </div>
-              {/* Post details and media */}
-              <div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-8">
-                {/* Details */}
-                <div className="flex-1 flex flex-col justify-between py-2">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="text-xl font-bold text-gray-900">{feed.title}</div>
-                    </div>
-                    <div className="mb-2">
-                      <span className="inline-block font-bold text-gray-700 w-28">Location:</span>
-                      <span className="text-gray-800">{feed.location}</span>
-                    </div>
-                    <div className="mb-2">
-                      <span className="inline-block font-bold text-gray-700 w-28">Contact:</span>
-                      <span className="text-gray-800">{feed.contactNumber}</span>
-                    </div>
-                    <div className="mb-2">
-                      <span className="inline-block font-bold text-gray-700 w-28">Price:</span>
-                      <span className="text-gray-800">{feed.price} {feed.priceCurrency} ({feed.priceType})</span>
-                    </div>
-                    {feed.websiteLink && (
-                      <div className="mb-2">
-                        <span className="inline-block font-bold text-gray-700 w-28">Website:</span>
-                        <a
-                          href={feed.websiteLink}
-                          className="text-green-700 underline"
-                          target="_blank"
-                          rel="noopener noreferrer"
+                {/* Header with profile and basic info */}
+                <div className="flex items-center p-4 md:p-6 border-b md:border-b-0 md:border-r border-gray-100">
+                  <div
+                    className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-xl p-2 transition-colors"
+                    title={`Your profile`}
+                  >
+                    <div className="relative">
+                      {/* Blinking ring - OUTSIDE profile pic */}
+                      {ringClass && (
+                        <span
+                          className={`absolute -inset-1 rounded-full pointer-events-none z-0 ${ringClass}`}
+                          aria-hidden
+                        ></span>
+        )}
+                      {feed.user.profilePic ? (
+                        <img
+                          src={feed.user.profilePic}
+                          alt={feed.user.username}
+                          width={56}
+                          height={56}
+                          className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 z-10 bg-white"
+                        />
+                      ) : (
+                        <div
+                          className="w-14 h-14 flex items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white font-bold text-xl border-2 border-gray-200 z-10"
+                          aria-label={feed.user.username}
                         >
-                          {feed.websiteLink.replace(/^https?:\/\//, '')}
-                        </a>
+                          {feed.user.username?.[0]?.toUpperCase() || "?"}
+                        </div>
+        )}
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold text-gray-900 text-base">{feed.user.username}</span>
+                        {showVerified && (
+                          <span
+                            className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-500 text-white"
+                            title="Verified account"
+                            aria-label="Verified account"
+                          >
+                            <CheckCircle size={12} className="text-white" />
+                          </span>
+        )}
                       </div>
-                    )}
-                    {feed.description && (
-                      <div className="mb-2">
-                        <span className="inline-block font-bold text-gray-700 w-28">About:</span>
-                        <span className="text-gray-700">{feed.description}</span>
+                      <div className="text-xs text-gray-500">{timeAgo(feed.createdAt)}</div>
+                      {/* Rating */}
+                      {stats && stats.totalReviews > 0 ? (
+                        <div className="flex items-center gap-1 text-yellow-500 text-sm">
+                          <Star size={14} className="text-yellow-400" fill="currentColor" />
+                          <span className="font-medium text-gray-800">{stats.averageRating.toFixed(1)}</span>
+                          <span className="text-gray-500 text-xs">
+                            ({stats.totalReviews})
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-400 italic">No reviews yet</div>
+        )}
+                      {/* Edit/Delete buttons */}
+                      <div className="flex gap-3 mt-2">
+                        <button
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                          onClick={() => startEditing(feed)}
+                        >Edit</button>
+                        <button
+                          className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
+                          onClick={() => handleDelete(feed._id)}
+                        >Delete</button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
-                {/* Media */}
-                {(feed.photo || feed.video) && (
-                  <div className="flex flex-col gap-2 items-center justify-center md:justify-start md:items-start min-w-[220px] max-w-[220px]">
-                    {feed.photo && (
-                      <img
-                        src={feed.photo}
-                        alt="Post Photo"
-                        className="rounded-xl border object-cover"
-                        style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
-                        onMouseDown={() => handlePhotoMouseDown(feed.photo!, feed.title)}
-                        onMouseUp={handlePhotoMouseUp}
-                        onMouseLeave={handlePhotoMouseUp}
-                        onTouchStart={() => handlePhotoTouchStart(feed.photo!, feed.title)}
-                        onTouchEnd={handlePhotoTouchEnd}
-                      />
-                    )}
-                    {feed.video && (
-                      <video
-                        src={feed.video}
-                        controls
-                        className="rounded-xl border object-cover"
-                        style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-              {/* Edit Modal */}
-              {editingId === feed._id && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900 bg-opacity-60">
-                  <div className="bg-white rounded-2xl shadow-2xl border border-green-300 w-full max-w-md mx-auto relative flex flex-col"
-                    style={{
-                      maxHeight: "98vh",
-                      minWidth: "320px",
-                      width: "100%",
-                      margin: "0 auto",
-                      top: "unset",
-                      left: "unset"
-                    }}>
-                    <button
-                      className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-2xl font-bold"
-                      onClick={cancelEditing}
-                      aria-label="Close"
-                    >&#10005;</button>
-                    <h3 className="text-2xl font-bold text-green-800 mb-3 text-center pt-8">Edit Your Post</h3>
-                    <div className="flex-1 overflow-y-auto px-8 pb-4">
-                      <div className="flex flex-col gap-4">
-                        <div className="flex flex-col">
-                          <label className="font-bold text-gray-900 mb-1">Service Name</label>
-                          <input
-                            type="text"
-                            className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
-                            value={editFeed[feed._id]?.title}
-                            onChange={e => handleEditChange(feed._id, "title", e.target.value)}
-                            placeholder="Service name"
-                          />
+
+                {/* Main content */}
+                <div className="flex-1 p-4 md:p-6">
+                  <div className="space-y-3">
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{feed.title}</h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600">
+                          📍
+                        </span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">Location</span>
+                          <p className="text-gray-900 font-medium">{feed.location}</p>
                         </div>
-                        <div className="flex flex-col">
-                          <label className="font-bold text-gray-900 mb-1">Location</label>
-                          <input
-                            type="text"
-                            className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
-                            value={editFeed[feed._id]?.location}
-                            onChange={e => handleEditChange(feed._id, "location", e.target.value)}
-                            placeholder="Location"
-                          />
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600">
+                          📞
+                        </span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">Contact</span>
+                          <p className="text-gray-900 font-medium">{feed.contactNumber}</p>
                         </div>
-                        <div className="flex flex-col">
-                          <label className="font-bold text-gray-900 mb-1">Price</label>
-                          <div className="flex gap-2 w-full flex-wrap">
-                            <input
-                              type="number"
-                              className="border border-gray-300 px-4 py-2 rounded w-full sm:w-1/3 text-black bg-white placeholder-gray-400"
-                              value={editFeed[feed._id]?.price}
-                              onChange={e => handleEditChange(feed._id, "price", Number(e.target.value))}
-                              placeholder="Amount"
-                            />
-                            <input
-                              type="text"
-                              className="border border-gray-300 px-4 py-2 rounded w-full sm:w-1/3 text-black bg-white placeholder-gray-400"
-                              value={editFeed[feed._id]?.priceCurrency}
-                              onChange={e => handleEditChange(feed._id, "priceCurrency", e.target.value)}
-                              placeholder="Currency"
-                            />
-                            <select
-                              className="border border-gray-300 px-3 py-2 rounded w-full sm:w-1/3 text-black bg-white"
-                              value={editFeed[feed._id]?.priceType}
-                              onChange={e => handleEditChange(feed._id, "priceType", e.target.value)}
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600">
+                          💰
+                        </span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">Price</span>
+                          <p className="text-gray-900 font-medium">{feed.price} {feed.priceCurrency} <span className="text-sm text-gray-600">({feed.priceType})</span></p>
+                        </div>
+                      </div>
+
+                      {feed.websiteLink && (
+                        <div className="flex items-center space-x-2">
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
+                            🌐
+                          </span>
+                          <div>
+                            <span className="text-sm font-medium text-gray-500">Website</span>
+                            <a
+                              href={feed.websiteLink}
+                              className="text-blue-600 font-medium hover:text-blue-800 transition-colors block truncate max-w-[200px]"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={feed.websiteLink}
                             >
-                              <option value="hourly">Hourly</option>
-                              <option value="specific task">Specific Task</option>
-                            </select>
+                              {feed.websiteLink.replace(/^https?:\/\//, '')}
+                            </a>
                           </div>
                         </div>
-                        <div className="flex flex-col">
-                          <label className="font-bold text-gray-900 mb-1">Website</label>
-                          <input
-                            type="text"
-                            className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
-                            value={editFeed[feed._id]?.websiteLink}
-                            onChange={e => handleEditChange(feed._id, "websiteLink", e.target.value)}
-                            placeholder="Website link (https://...)"
-                          />
-                        </div>
-                        <div className="flex flex-col">
-                          <label className="font-bold text-gray-900 mb-1">About</label>
-                          <textarea
-                            className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400 min-h-[80px]"
-                            value={editFeed[feed._id]?.description}
-                            onChange={e => handleEditChange(feed._id, "description", e.target.value)}
-                            placeholder="Describe your service"
-                          />
-                        </div>
+        )}
+                    </div>
+
+                    {feed.description && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <span className="text-sm font-medium text-gray-500 block mb-1">About</span>
+                        <p className="text-gray-700 leading-relaxed">{feed.description}</p>
                       </div>
-                    </div>
-                    <div className="sticky bottom-0 bg-white px-8 py-4 flex gap-4 justify-center border-t border-green-100">
-                      <button
-                        className="px-8 py-2 bg-green-700 text-white rounded font-bold hover:bg-green-800 transition"
-                        disabled={editLoading}
-                        onClick={() => saveEdit(feed._id)}
-                      >Save</button>
-                      <button
-                        className="px-8 py-2 bg-gray-300 text-black rounded font-bold hover:bg-gray-400 transition"
-                        disabled={editLoading}
-                        onClick={cancelEditing}
-                      >Cancel</button>
-                    </div>
+        )}
                   </div>
                 </div>
-              )}
-            </div>
-          )})
+
+                {/* Media section */}
+                {(feed.photo || feed.video) && (
+                  <div className="md:w-64 p-4 md:p-6 flex items-center justify-center border-t md:border-t-0 md:border-l border-gray-100">
+                    <div className="w-full max-w-[240px]">
+                      {feed.photo && (
+                        <img
+                          src={feed.photo}
+                          alt="Service photo"
+                          width={240}
+                          height={180}
+                          className="w-full h-40 md:h-48 object-cover rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                          onMouseDown={() => handlePhotoMouseDown(feed.photo!, feed.title)}
+                          onMouseUp={handlePhotoMouseUp}
+                          onMouseLeave={handlePhotoMouseUp}
+                          onTouchStart={() => handlePhotoTouchStart(feed.photo!, feed.title)}
+                          onTouchEnd={handlePhotoTouchEnd}
+                        />
         )}
-        {/* Skeleton loading for infinite scroll */}
+                      {feed.video && (
+                        <video
+                          src={feed.video}
+                          controls
+                          className="w-full h-40 md:h-48 object-cover rounded-xl border border-gray-200 shadow-sm"
+                        />
+        )}
+                    </div>
+                  </div>
+        )}
+              </div>
+            );
+          })
+        )}
+
+        {/* Edit Modal */}
+        {editingId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900 bg-opacity-60">
+            <div className="bg-white rounded-2xl shadow-2xl border border-green-300 w-full max-w-md mx-auto relative flex flex-col"
+              style={{
+                maxHeight: "98vh",
+                minWidth: "320px",
+                width: "100%",
+                margin: "0 auto",
+                top: "unset",
+                left: "unset"
+              }}>
+              <button
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-2xl font-bold"
+                onClick={cancelEditing}
+                aria-label="Close"
+              >&#10005;</button>
+              <h3 className="text-2xl font-bold text-green-800 mb-3 text-center pt-8">Edit Your Post</h3>
+              <div className="flex-1 overflow-y-auto px-8 pb-4">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col">
+                    <label className="font-bold text-gray-900 mb-1">Service Name</label>
+                    <input
+                      type="text"
+                      className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
+                      value={editFeed[editingId]?.title}
+                      onChange={e => handleEditChange(editingId, "title", e.target.value)}
+                      placeholder="Service name"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="font-bold text-gray-900 mb-1">Location</label>
+                    <input
+                      type="text"
+                      className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
+                      value={editFeed[editingId]?.location}
+                      onChange={e => handleEditChange(editingId, "location", e.target.value)}
+                      placeholder="Location"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="font-bold text-gray-900 mb-1">Price</label>
+                    <div className="flex gap-2 w-full flex-wrap">
+                      <input
+                        type="number"
+                        className="border border-gray-300 px-4 py-2 rounded w-full sm:w-1/3 text-black bg-white placeholder-gray-400"
+                        value={editFeed[editingId]?.price}
+                        onChange={e => handleEditChange(editingId, "price", Number(e.target.value))}
+                        placeholder="Amount"
+                      />
+                      <input
+                        type="text"
+                        className="border border-gray-300 px-4 py-2 rounded w-full sm:w-1/3 text-black bg-white placeholder-gray-400"
+                        value={editFeed[editingId]?.priceCurrency}
+                        onChange={e => handleEditChange(editingId, "priceCurrency", e.target.value)}
+                        placeholder="Currency"
+                      />
+                      <select
+                        className="border border-gray-300 px-3 py-2 rounded w-full sm:w-1/3 text-black bg-white"
+                        value={editFeed[editingId]?.priceType}
+                        onChange={e => handleEditChange(editingId, "priceType", e.target.value)}
+                      >
+                        <option value="hourly">Hourly</option>
+                        <option value="specific task">Specific Task</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="font-bold text-gray-900 mb-1">Website</label>
+                    <input
+                      type="text"
+                      className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400"
+                      value={editFeed[editingId]?.websiteLink}
+                      onChange={e => handleEditChange(editingId, "websiteLink", e.target.value)}
+                      placeholder="Website link (https://...)"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="font-bold text-gray-900 mb-1">About</label>
+                    <textarea
+                      className="border border-gray-300 px-4 py-2 rounded w-full text-black bg-white placeholder-gray-400 min-h-[80px]"
+                      value={editFeed[editingId]?.description}
+                      onChange={e => handleEditChange(editingId, "description", e.target.value)}
+                      placeholder="Describe your service"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="sticky bottom-0 bg-white px-8 py-4 flex gap-4 justify-center border-t border-green-100">
+                <button
+                  className="px-8 py-2 bg-green-700 text-white rounded font-bold hover:bg-green-800 transition"
+                  disabled={editLoading}
+                  onClick={() => saveEdit(editingId)}
+                >Save</button>
+                <button
+                  className="px-8 py-2 bg-gray-300 text-black rounded font-bold hover:bg-gray-400 transition"
+                  disabled={editLoading}
+                  onClick={cancelEditing}
+                >Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
         {loading && feeds.length > 0 && (
           [...Array(PAGE_SIZE)].map((_, i) => <FeedSkeleton key={`skel-${i}`} />)
         )}

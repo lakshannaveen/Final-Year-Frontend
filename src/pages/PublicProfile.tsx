@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Globe, Phone, Image as ImageIcon, MessageCircle, CheckCircle } from "lucide-react";
+import { ArrowLeft, Globe, Phone, Image as ImageIcon, MessageCircle, CheckCircle, Star } from "lucide-react";
 import ReviewSection from "./Review";
 
 interface NavigationData {
@@ -33,6 +33,7 @@ interface FeedUser {
   username: string;
   profilePic?: string;
   status?: string;
+  isVerified?: boolean;
 }
 
 interface FeedItem {
@@ -448,17 +449,17 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
             return (
               <div
                 key={feed._id}
-                className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-row md:flex-row items-stretch p-4 md:p-6 transition hover:shadow-xl mb-6"
-                style={{ minHeight: "240px" }}
+                className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] flex flex-col md:flex-row mb-6"
+                style={{ minHeight: "280px" }}
               >
-                {/* Left side: Profile pic and media (stacked on mobile, profile only on desktop) */}
-                <div className="flex flex-col items-center md:items-start mr-4 md:mr-8 min-w-[120px] md:min-w-[120px]">
-                  {/* Profile pic and username */}
+                {/* Header with profile and basic info */}
+                <div className="flex items-center p-4 md:p-6 border-b md:border-b-0 md:border-r border-gray-100">
                   <div
-                    className="flex flex-col items-center mb-4 md:mb-0 cursor-pointer hover:bg-gray-100 rounded-xl transition"
+                    className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-xl p-2 transition-colors"
+                    onClick={() => setCurrentView("publicProfile", { recipientId: feed.user._id, recipientUsername: feed.user.username, recipientProfilePic: feed.user.profilePic })}
                     title={`View ${feed.user.username}'s profile`}
                   >
-                    <div className="relative w-16 h-16 mb-2 flex items-center justify-center">
+                    <div className="relative">
                       {/* Blinking ring - OUTSIDE profile pic */}
                       {ringClass && (
                         <span
@@ -470,32 +471,124 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                         <img
                           src={feed.user.profilePic}
                           alt={feed.user.username}
-                          className="w-16 h-16 rounded-full object-cover border border-gray-300 z-10 bg-white"
+                          width={56}
+                          height={56}
+                          className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 z-10 bg-white"
                         />
                       ) : (
                         <div
-                          className="w-16 h-16 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-2xl border border-gray-300 z-10"
+                          className="w-14 h-14 flex items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white font-bold text-xl border-2 border-gray-200 z-10"
                           aria-label={feed.user.username}
                         >
                           {feed.user.username?.[0]?.toUpperCase() || "?"}
                         </div>
                       )}
                     </div>
-
-                    <div className="text-green-700 font-bold text-base text-center">{feed.user.username}</div>
-                    <div className="text-xs text-gray-400 mt-1">{timeAgo(feed.createdAt)}</div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold text-gray-900 text-base">{feed.user.username}</span>
+                        {feed.user.isVerified && (
+                          <span
+                            className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-500 text-white"
+                            title="Verified account"
+                            aria-label="Verified account"
+                          >
+                            <CheckCircle size={12} className="text-white" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500">{timeAgo(feed.createdAt)}</div>
+                    </div>
                   </div>
-                  {/* Media section - only show on mobile */}
-                  {(feed.photo || feed.video) && (
-                    <div className="flex flex-col gap-2 items-center justify-center md:hidden w-full max-w-[120px]">
+                </div>
+
+                {/* Main content */}
+                <div className="flex-1 p-4 md:p-6">
+                  <div className="space-y-3">
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{feed.title}</h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600">
+                          📍
+                        </span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">Location</span>
+                          <p className="text-gray-900 font-medium">{feed.location}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600">
+                          📞
+                        </span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">Contact</span>
+                          {feed.contactNumber ? (
+                            <a
+                              href={`tel:${feed.contactNumber}`}
+                              className="text-green-700 font-medium hover:text-green-800 transition-colors"
+                              title={`Call ${feed.contactNumber}`}
+                            >
+                              {feed.contactNumber}
+                            </a>
+                          ) : (
+                            <p className="text-gray-900 font-medium">Not provided</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600">
+                          💰
+                        </span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">Price</span>
+                          <p className="text-gray-900 font-medium">{feed.price} {feed.priceCurrency} <span className="text-sm text-gray-600">({feed.priceType})</span></p>
+                        </div>
+                      </div>
+
+                      {feed.websiteLink && (
+                        <div className="flex items-center space-x-2">
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
+                            🌐
+                          </span>
+                          <div>
+                            <span className="text-sm font-medium text-gray-500">Website</span>
+                            <a
+                              href={feed.websiteLink}
+                              className="text-blue-600 font-medium hover:text-blue-800 transition-colors block truncate max-w-[200px]"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={feed.websiteLink}
+                            >
+                              {feed.websiteLink.replace(/^https?:\/\//, '')}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {feed.description && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <span className="text-sm font-medium text-gray-500 block mb-1">About</span>
+                        <p className="text-gray-700 leading-relaxed">{feed.description}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Media section */}
+                {(feed.photo || feed.video) && (
+                  <div className="md:w-64 p-4 md:p-6 flex items-center justify-center border-t md:border-t-0 md:border-l border-gray-100">
+                    <div className="w-full max-w-[240px]">
                       {feed.photo && (
                         <img
                           src={feed.photo}
-                          alt="Post Photo"
-                          width={120}
-                          height={90}
-                          className="rounded-xl border object-cover w-full h-auto"
-                          style={{ background: "#f3f4f6" }}
+                          alt="Service photo"
+                          width={240}
+                          height={180}
+                          className="w-full h-40 md:h-48 object-cover rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                           onMouseDown={() => handlePhotoMouseDown(feed.photo!, feed.title)}
                           onMouseUp={handlePhotoMouseUp}
                           onMouseLeave={handlePhotoMouseUp}
@@ -507,88 +600,10 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                         <video
                           src={feed.video}
                           controls
-                          className="rounded-xl border object-cover w-full h-auto"
-                          style={{ background: "#f3f4f6" }}
+                          className="w-full h-40 md:h-48 object-cover rounded-xl border border-gray-200 shadow-sm"
                         />
                       )}
                     </div>
-                  )}
-                </div>
-                {/* Right side: Post details */}
-                <div className="flex-1 flex flex-col justify-between py-2">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="text-lg md:text-xl font-bold text-gray-900">{feed.title}</div>
-                    </div>
-                    <div className="mb-2">
-                      <span className="inline-block font-semibold text-gray-700 w-20">Location:</span>
-                      <span className="text-gray-800">{feed.location}</span>
-                    </div>
-                    <div className="mb-2">
-                      <span className="inline-block font-semibold text-gray-700 w-20">Contact:</span>
-                      {feed.contactNumber ? (
-                        <a
-                          href={`tel:${feed.contactNumber}`}
-                          className="text-green-700 underline"
-                          title={`Call ${feed.contactNumber}`}
-                        >
-                          {feed.contactNumber}
-                        </a>
-                      ) : (
-                        <span className="text-gray-800">{feed.contactNumber}</span>
-                      )}
-                    </div>
-                    <div className="mb-2">
-                      <span className="inline-block font-semibold text-gray-700 w-20">Price:</span>
-                      <span className="text-gray-800">{feed.price} {feed.priceCurrency} ({feed.priceType})</span>
-                    </div>
-                    {feed.websiteLink && (
-                      <div className="mb-2">
-                        <span className="inline-block font-semibold text-gray-700 w-20">Website:</span>
-                        <a
-                          href={feed.websiteLink}
-                          className="text-green-700 underline"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {feed.websiteLink.replace(/^https?:\/\//, '')}
-                        </a>
-                      </div>
-                    )}
-                    {feed.description && (
-                      <div className="mb-2">
-                        <span className="inline-block font-semibold text-gray-700 w-20">About:</span>
-                        <span className="text-gray-700">{feed.description}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {/* Media section - only show on desktop */}
-                {(feed.photo || feed.video) && (
-                  <div className="hidden md:flex flex-col gap-2 items-center justify-start min-w-[220px] max-w-[220px] ml-8">
-                    {feed.photo && (
-                      <img
-                        src={feed.photo}
-                        alt="Post Photo"
-                        width={220}
-                        height={160}
-                        className="rounded-xl border object-cover"
-                        style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
-                        onMouseDown={() => handlePhotoMouseDown(feed.photo!, feed.title)}
-                        onMouseUp={handlePhotoMouseUp}
-                        onMouseLeave={handlePhotoMouseUp}
-                        onTouchStart={() => handlePhotoTouchStart(feed.photo!, feed.title)}
-                        onTouchEnd={handlePhotoTouchEnd}
-                      />
-                    )}
-                    {feed.video && (
-                      <video
-                        src={feed.video}
-                        controls
-                        className="rounded-xl border object-cover"
-                        style={{ width: "220px", height: "160px", background: "#f3f4f6" }}
-                      />
-                    )}
                   </div>
                 )}
               </div>
