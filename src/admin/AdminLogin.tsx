@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { toast } from 'react-toastify';
 
 type AdminLoginProps = {
   setCurrentView: (view: string) => void;
@@ -11,7 +12,6 @@ export default function AdminLogin({ setCurrentView }: AdminLoginProps) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const PUBLIC_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY ?? "";
   const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME ?? "admin";
@@ -32,7 +32,6 @@ export default function AdminLogin({ setCurrentView }: AdminLoginProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
 
     if (!validateUsername(username)) {
       setError("Username must be at least 5 characters and letters only.");
@@ -58,7 +57,7 @@ export default function AdminLogin({ setCurrentView }: AdminLoginProps) {
       // Exact match required for both username and password (case-sensitive)
       if (username === ADMIN_USERNAME && password === PUBLIC_KEY) {
         sessionStorage.setItem("isAdmin", "1");
-        setSuccess("Login successful!");
+        toast.success("Login successful!");
 
         setTimeout(() => {
           setCurrentView("admindashboard");
@@ -136,11 +135,6 @@ export default function AdminLogin({ setCurrentView }: AdminLoginProps) {
           {error && (
             <div className="text-sm text-red-700 bg-red-50 px-3 py-2 rounded-md">
               {error}
-            </div>
-          )}
-          {success && (
-            <div className="text-sm text-blue-700 bg-blue-50 px-3 py-2 rounded-md">
-              {success}
             </div>
           )}
 
