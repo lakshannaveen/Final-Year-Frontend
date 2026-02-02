@@ -113,6 +113,10 @@ export default function AdminServices({ setCurrentView }: Props) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserIsVerified, setCurrentUserIsVerified] = useState(false);
 
+  // Analytics for verified vs non-verified posts
+  const [verifiedCount, setVerifiedCount] = useState(0);
+  const [nonVerifiedCount, setNonVerifiedCount] = useState(0);
+
   // Review stats cache per user id (optional UI element shown next to avatar)
   const [reviewStatsMap, setReviewStatsMap] = useState<Record<string, ReviewStats>>({});
 
@@ -209,6 +213,24 @@ export default function AdminServices({ setCurrentView }: Props) {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, [loading, hasMore]);
+
+  // Calculate verified vs non-verified post analytics
+  useEffect(() => {
+    let verified = 0;
+    let nonVerified = 0;
+
+    feeds.forEach(feed => {
+      const isVerified = !!feed.user.isVerified || (currentUserId !== null && feed.user._id === currentUserId && currentUserIsVerified);
+      if (isVerified) {
+        verified++;
+      } else {
+        nonVerified++;
+      }
+    });
+
+    setVerifiedCount(verified);
+    setNonVerifiedCount(nonVerified);
+  }, [feeds, currentUserId, currentUserIsVerified]);
 
   // Photo modal + long-press support (matching ProfileFeed)
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -320,6 +342,48 @@ export default function AdminServices({ setCurrentView }: Props) {
             )}
           </div>
         </header>
+
+        {/* Analytics Section */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Services Analytics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                  <CheckCircle size={20} className="text-white" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-blue-700">{verifiedCount}</div>
+                  <div className="text-sm text-blue-600">Verified Posts</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
+                  <div className="w-3 h-3 bg-white rounded-full"></div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-700">{nonVerifiedCount}</div>
+                  <div className="text-sm text-gray-600">Non-Verified Posts</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="text-white font-bold text-sm">{verifiedCount + nonVerifiedCount}</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-green-700">{verifiedCount + nonVerifiedCount}</div>
+                  <div className="text-sm text-green-600">Total Posts</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="space-y-6">
           {feeds.length === 0 && loading ? (
