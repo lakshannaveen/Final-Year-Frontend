@@ -209,6 +209,15 @@ export default function SignIn({ setCurrentView }: SignInProps) {
               >
                 {loading ? "Signing In..." : "Sign In"}
               </button>
+
+              {/* Continue as Guest */}
+              <button
+                type="button"
+                onClick={() => setCurrentView("home")}
+                className="w-full py-2 mt-3 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 shadow-md transition"
+              >
+                Continue as Guest
+              </button>
             </form>
 
             {/* Or divider */}

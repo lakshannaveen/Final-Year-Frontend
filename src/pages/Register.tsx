@@ -146,7 +146,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
               onClick={() => setServiceType("posting")}
               className="w-full px-4 py-3 rounded-lg font-semibold bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-md hover:from-green-800 hover:to-emerald-800 transition-all"
             >
-              Posting a Service
+              Service Provider
             </button>
           </div>
         ) : (
@@ -172,7 +172,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
                     : "bg-white text-green-700 border border-green-700 hover:bg-green-50"
                 }`}
               >
-                Posting a Service
+                Service Provider
               </button>
             </div>
 
@@ -278,6 +278,15 @@ export default function Register({ setCurrentView }: RegisterProps) {
                 className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition disabled:opacity-70"
               >
                 {loading ? "Registering..." : "Register"}
+              </button>
+
+              {/* Continue as Guest */}
+              <button
+                type="button"
+                onClick={() => setCurrentView("home")}
+                className="w-full py-2 mt-3 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 shadow-md transition"
+              >
+                Continue as Guest
               </button>
             </form>
 
