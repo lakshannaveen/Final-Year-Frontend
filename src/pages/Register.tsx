@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "../components/AuthContext";
 import { toast } from 'react-toastify';
 
@@ -125,7 +126,15 @@ export default function Register({ setCurrentView }: RegisterProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
-
+      
+      <button
+        type="button"
+        onClick={() => setCurrentView("home")}
+        className="fixed top-4 left-4 z-20 inline-flex items-center gap-2 px-3 py-2 bg-white rounded-md shadow hover:bg-gray-100"
+        aria-label="Go back"
+      >
+        <ArrowLeft size={24} className="text-green-700" />
+      </button>
       <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md z-10">
         <h2 className="text-2xl font-bold text-green-700 mb-6 text-center">
           Register
