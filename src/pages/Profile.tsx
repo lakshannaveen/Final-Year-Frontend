@@ -691,7 +691,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
               {isPostingAccount && profile.phone && (
                 <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold text-sm flex items-center">
                   <Phone size={14} className="mr-1" />
-                  {profile.phone}
+                  {' '}{profile.phone}
                 </span>
               )}
               {isPostingAccount && profile.website && (
@@ -822,7 +822,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 {profile.phone && (
                   <div className="flex items-center">
                     <Phone size={16} className="text-green-700 mr-2" />
-                    <span className="text-gray-700">{profile.phone}</span>
+                    <span className="text-gray-700">{' '}{profile.phone}</span>
                   </div>
                 )}
                 {profile.website && (

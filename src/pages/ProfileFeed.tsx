@@ -457,7 +457,7 @@ export default function ProfileFeed() {
                         </span>
                         <div>
                           <span className="text-sm font-medium text-gray-500">Contact</span>
-                          <p className="text-gray-900 font-medium">{feed.contactNumber}</p>
+                          <p className="text-gray-900 font-medium">{' '}{feed.contactNumber}</p>
                         </div>
                       </div>
 
