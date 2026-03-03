@@ -1,22 +1,14 @@
 "use client";
 import React from "react";
-import { X, Phone, Shield, FileText, MessageSquare, Moon, Sun } from "lucide-react";
+import { X, Phone, Shield, FileText, MessageSquare } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   setCurrentView: (view: string) => void;
-  isDarkMode: boolean;
-  onToggleDarkMode: () => void;
 }
 
-export default function Sidebar({
-  isOpen,
-  onClose,
-  setCurrentView,
-  isDarkMode,
-  onToggleDarkMode
-}: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, setCurrentView }: SidebarProps) {
   if (!isOpen) return null;
 
   const menuItems = [
@@ -51,15 +43,10 @@ export default function Sidebar({
       />
       
       {/* Sidebar */}
-      <div
-        className={`fixed left-0 top-0 h-full w-80 shadow-xl transform transition-transform duration-300 ease-in-out border-r ${
-          // Use the same green gradient in dark mode for visual consistency
-          "bg-gradient-to-b from-green-800 to-emerald-700 border-green-600"
-        }`}
-      >
+      <div className="fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-green-800 to-emerald-700 shadow-xl transform transition-transform duration-300 ease-in-out border-r border-green-600">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className={`flex items-center justify-between p-4 border-b ${isDarkMode ? "border-slate-700/60" : "border-green-600/30"}`}>
+          <div className="flex items-center justify-between p-4 border-b border-green-600/30">
             <h2 className="text-lg font-semibold text-white">Menu</h2>
             <button
               onClick={onClose}
@@ -82,27 +69,11 @@ export default function Sidebar({
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/20"
                 >
-                  <item.icon size={20} className={isDarkMode ? "text-slate-200" : "text-green-200"} />
+                  <item.icon size={20} className="text-green-200" />
                   <span className="font-medium">{item.label}</span>
                 </button>
               ))}
             </nav>
-          </div>
-
-          <div className={`p-4 border-t ${isDarkMode ? "border-slate-700/60" : "border-green-600/30"}`}>
-            <button
-              onClick={onToggleDarkMode}
-              className="w-full flex items-center justify-between px-4 py-3 text-white rounded-lg border border-white/20 hover:bg-white/10 transition-colors"
-              aria-label="Toggle dark mode"
-            >
-              <span className="flex items-center gap-3 font-medium">
-                {isDarkMode ? <Sun size={20} className="text-yellow-300" /> : <Moon size={20} className="text-blue-200" />}
-                {isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              </span>
-              <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? "bg-slate-700 text-slate-100" : "bg-green-700 text-green-100"}`}>
-                {isDarkMode ? "Dark" : "Light"}
-              </span>
-            </button>
           </div>
         </div>
       </div>

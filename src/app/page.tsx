@@ -33,7 +33,6 @@ import AdminIDVerifications from "../admin/AdminIDVerifications";
 function AppContent() {
   const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState("home");
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
 
   // Load currentView from URL hash on mount
@@ -53,17 +52,6 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem("currentView", currentView);
   }, [currentView]);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("userTheme");
-    if (savedTheme === "dark") {
-      setIsDarkMode(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("userTheme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
 
   // FIX: Remove 'any'
   interface ChatRecipient {
@@ -182,20 +170,18 @@ function AppContent() {
     switch (currentView) {
       case "home":
         return (
-            <Home
-              setCurrentView={setCurrentView}
-              onShowPublicProfile={handleShowPublicProfile}
-              saveScrollPosition={saveScrollPosition}
-              getSavedScrollPosition={getSavedScrollPosition}
-              onToggleSidebar={() => setSidebarOpen(true)}
-              isDarkMode={isDarkMode}
-              onToggleDarkMode={() => setIsDarkMode((s) => !s)}
-            />
-          );
+          <Home
+            setCurrentView={setCurrentView}
+            onShowPublicProfile={handleShowPublicProfile}
+            saveScrollPosition={saveScrollPosition}
+            getSavedScrollPosition={getSavedScrollPosition}
+            onToggleSidebar={() => setSidebarOpen(true)}
+          />
+        );
       case "register":
-        return <Register setCurrentView={setCurrentView} isDarkMode={isDarkMode} />;
+        return <Register setCurrentView={setCurrentView} />;
       case "signin":
-        return <SignIn setCurrentView={setCurrentView} isDarkMode={isDarkMode} />;
+        return <SignIn setCurrentView={setCurrentView} />;
       case "privacy":
         return <Privacy setCurrentView={setCurrentView} />;
       case "terms":
@@ -277,12 +263,9 @@ function AppContent() {
     }
   };
 
-  const isAdminView = currentView.startsWith("admin");
-  const userThemeClass = !isAdminView && isDarkMode ? "user-dark" : "";
-
   return (
     <div 
-      className={`min-h-screen ${userThemeClass}`}
+      className="min-h-screen"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -293,8 +276,6 @@ function AppContent() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         setCurrentView={setCurrentView}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
       />
     </div>
   );

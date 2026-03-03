@@ -11,8 +11,6 @@ interface HomeProps {
   saveScrollPosition: (pos: number) => void;
   getSavedScrollPosition: () => number;
   onToggleSidebar?: () => void;
-  isDarkMode?: boolean;
-  onToggleDarkMode?: () => void;
 }
 
 interface FeedUser {
@@ -108,8 +106,6 @@ export default function Home({
   saveScrollPosition,
   getSavedScrollPosition,
   onToggleSidebar,
-  isDarkMode,
-  onToggleDarkMode,
 }: HomeProps) {
   const [feeds, setFeeds] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -317,14 +313,12 @@ export default function Home({
   const displayLoading = searchTerm ? searchLoading : loading;
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-[#0b1220] text-gray-100' : 'bg-gray-50'}`}>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar
         currentView="home"
         setCurrentView={setCurrentView}
         onShowPublicProfile={onShowPublicProfile}
         onToggleSidebar={onToggleSidebar}
-        isDarkMode={!!isDarkMode}
-        onToggleDarkMode={onToggleDarkMode}
       />
 
       <div className="w-full mt-6 mb-4 px-2 md:px-4">
