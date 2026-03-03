@@ -185,7 +185,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
   // Skeleton loading bar
   if (loading) {
     return (
-      <nav className="bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-lg sticky top-0 z-50">
+      <nav className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700 text-white shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 bg-green-600 rounded-lg animate-pulse"></div>
@@ -206,7 +206,7 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
 
   return (
     <>
-      <nav className="bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-lg sticky top-0 z-50">
+      <nav className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700 text-white shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-2 py-4">
           {/* Top Header Row */}
           <div className="flex flex-row justify-between items-center">
