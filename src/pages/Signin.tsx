@@ -11,7 +11,7 @@ interface SignInProps {
 }
 
 export default function SignIn({ setCurrentView }: SignInProps) {
-  const [serviceType, setServiceType] = useState<"" | "serviceSeeker" | "posting">("");
+  const [serviceType, setServiceType] = useState<"" | "serviceSeeker" | "posting">("serviceSeeker");
   const [formData, setFormData] = useState({
     username: "",
     password: "",
