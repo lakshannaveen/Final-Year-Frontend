@@ -318,7 +318,6 @@ if (video) {
                   onChange={e => setServiceName(e.target.value)}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                   required
-                  style={{ color: "black" }}
                 />
               </div>
 
@@ -335,7 +334,6 @@ if (video) {
                     onChange={e => setLocation(e.target.value)}
                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
                     required
-                    style={{ color: "black" }}
                   />
                   <button
                     type="button"
@@ -366,8 +364,7 @@ if (video) {
                   value={contactNumber}
                   onChange={e => setContactNumber(e.target.value)}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                  required
-                  style={{ color: "black" }}
+                    required
                   maxLength={16}
                 />
               </div>
@@ -386,7 +383,7 @@ if (video) {
                   step={0.01}
                   required
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                  style={{ color: "black" }}
+                  
                 />
               </div>
 
@@ -489,7 +486,7 @@ if (video) {
                   value={websiteLink}
                   onChange={e => setWebsiteLink(e.target.value)}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                  style={{ color: "black" }}
+                  
                 />
               </div>
 
@@ -503,7 +500,7 @@ if (video) {
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
-                  style={{ color: "black" }}
+                  
                   rows={4}
                   maxLength={200}
                 />

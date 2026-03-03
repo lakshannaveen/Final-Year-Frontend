@@ -8,9 +8,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 interface SignInProps {
   setCurrentView: (view: string) => void;
+  isDarkMode?: boolean;
 }
 
-export default function SignIn({ setCurrentView }: SignInProps) {
+export default function SignIn({ setCurrentView, isDarkMode }: SignInProps) {
   const [serviceType, setServiceType] = useState<"" | "serviceSeeker" | "posting">("serviceSeeker");
   const [formData, setFormData] = useState({
     username: "",
@@ -23,6 +24,10 @@ export default function SignIn({ setCurrentView }: SignInProps) {
   });
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+
+  // fallback: also check persisted theme in localStorage so component renders dark correctly
+  const isPersistedDark = typeof window !== "undefined" && localStorage.getItem("userTheme") === "dark";
+  const dark = !!isDarkMode || isPersistedDark;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -103,7 +108,7 @@ export default function SignIn({ setCurrentView }: SignInProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
+    <div className={`min-h-screen flex items-center justify-center p-6 ${isDarkMode ? 'bg-slate-900' : 'bg-gradient-to-r from-green-100 to-emerald-100'}`}>
       
       <button
         type="button"
@@ -113,7 +118,7 @@ export default function SignIn({ setCurrentView }: SignInProps) {
       >
         <ArrowLeft size={24} className="text-green-700" />
       </button>
-      <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md z-10">
+      <div className={`rounded-xl shadow-lg p-8 w-full max-w-md z-10 ${isDarkMode ? 'bg-slate-800 text-gray-100' : 'bg-white'}`}>
         <h2 className="text-2xl font-bold text-green-700 mb-6 text-center">
           Sign In
         </h2>
@@ -174,13 +179,13 @@ export default function SignIn({ setCurrentView }: SignInProps) {
                   name="username"
                   value={formData.username}
                   placeholder="Enter username"
-                  style={{ color: "black" }}
+                
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                    errors.username
-                      ? "border-red-500 focus:ring-red-300"
-                      : "border-green-300 focus:ring-green-300"
-                  }`}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.username
+                        ? "border-red-500 focus:ring-red-300"
+                        : "border-green-300 focus:ring-green-300"
+                      } ${dark ? 'bg-slate-700 text-gray-100 placeholder-gray-400 border-slate-600 focus:ring-slate-500' : ''}`}
                 />
                 {errors.username && (
                   <p className="text-red-500 text-sm mt-1">{errors.username}</p>
@@ -197,13 +202,13 @@ export default function SignIn({ setCurrentView }: SignInProps) {
                   name="password"
                   value={formData.password}
                   placeholder="Enter password"
-                  style={{ color: "black" }}
+                
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                    errors.password
-                      ? "border-red-500 focus:ring-red-300"
-                      : "border-green-300 focus:ring-green-300"
-                  }`}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.password
+                        ? "border-red-500 focus:ring-red-300"
+                        : "border-green-300 focus:ring-green-300"
+                      } ${dark ? 'bg-slate-700 text-gray-100 placeholder-gray-400 border-slate-600 focus:ring-slate-500' : ''}`}
                 />
                 {errors.password && (
                   <p className="text-red-500 text-sm mt-1">{errors.password}</p>
@@ -214,16 +219,20 @@ export default function SignIn({ setCurrentView }: SignInProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 text-white font-semibold hover:from-green-800 hover:to-emerald-800 shadow-md transition disabled:opacity-70"
+                className={`w-full py-2 rounded-lg font-semibold shadow-md transition disabled:opacity-70 ${
+                  isDarkMode
+                    ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-500 hover:to-green-500'
+                    : 'bg-gradient-to-r from-green-700 to-emerald-700 text-white hover:from-green-800 hover:to-emerald-800'
+                }`}
               >
-                {loading ? "Signing In..." : "Sign In"}
+                {loading ? 'Signing In...' : 'Sign In'}
               </button>
 
               {/* Continue as Guest */}
               <button
                 type="button"
                 onClick={() => setCurrentView("home")}
-                className="w-full py-2 mt-3 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 shadow-md transition"
+                className="w-full py-2 mt-3 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 shadow-md transition auth-continue-btn"
               >
                 Continue as Guest
               </button>
@@ -240,7 +249,7 @@ export default function SignIn({ setCurrentView }: SignInProps) {
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              className="w-full py-2 rounded-lg bg-gradient-to-r from-white to-white border-2 border-gray-200 flex items-center justify-center gap-2 text-gray-700 font-semibold hover:bg-gray-50 shadow transition"
+              className="w-full py-2 rounded-lg bg-gradient-to-r from-white to-white border-2 border-gray-200 flex items-center justify-center gap-2 text-gray-700 font-semibold hover:bg-gray-50 shadow transition auth-google-btn"
             >
               <svg
                 width="24"

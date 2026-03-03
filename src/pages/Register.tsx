@@ -8,9 +8,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 interface RegisterProps {
   setCurrentView: (view: string) => void;
+  isDarkMode?: boolean;
 }
 
-export default function Register({ setCurrentView }: RegisterProps) {
+export default function Register({ setCurrentView, isDarkMode }: RegisterProps) {
   const [serviceType, setServiceType] = useState<"" | "serviceSeeker" | "posting">("serviceSeeker");
   const [formData, setFormData] = useState({
     username: "",
@@ -26,6 +27,9 @@ export default function Register({ setCurrentView }: RegisterProps) {
   });
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+
+  const isPersistedDark = typeof window !== "undefined" && localStorage.getItem("userTheme") === "dark";
+  const dark = !!isDarkMode || isPersistedDark;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -125,7 +129,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
+    <div className={`min-h-screen flex items-center justify-center p-6 ${isDarkMode ? 'bg-slate-900' : 'bg-gradient-to-r from-green-100 to-emerald-100'}`}>
       
       <button
         type="button"
@@ -135,7 +139,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
       >
         <ArrowLeft size={24} className="text-green-700" />
       </button>
-      <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md z-10">
+      <div className={`rounded-xl shadow-lg p-8 w-full max-w-md z-10 ${dark ? 'bg-slate-800 text-gray-100' : 'bg-white'}`}>
         <h2 className="text-2xl font-bold text-green-700 mb-6 text-center">
           Register
         </h2>
@@ -196,13 +200,12 @@ export default function Register({ setCurrentView }: RegisterProps) {
                   name="username"
                   value={formData.username}
                   placeholder="Enter username"
-                  style={{ color: "black" }}
                   onChange={handleChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                     errors.username
                       ? "border-red-500 focus:ring-red-300"
                       : "border-green-300 focus:ring-green-300"
-                  }`}
+                  } ${dark ? 'bg-slate-700 text-gray-100 placeholder-gray-400 border-slate-600 focus:ring-slate-500' : ''}`}
                 />
                 {errors.username && (
                   <p className="text-red-500 text-sm mt-1">{errors.username}</p>
@@ -219,13 +222,12 @@ export default function Register({ setCurrentView }: RegisterProps) {
                   name="email"
                   value={formData.email}
                   placeholder="Enter email"
-                  style={{ color: "black" }}
                   onChange={handleChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                     errors.email
                       ? "border-red-500 focus:ring-red-300"
                       : "border-green-300 focus:ring-green-300"
-                  }`}
+                  } ${dark ? 'bg-slate-700 text-gray-100 placeholder-gray-400 border-slate-600 focus:ring-slate-500' : ''}`}
                 />
                 {errors.email && (
                   <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -242,13 +244,12 @@ export default function Register({ setCurrentView }: RegisterProps) {
                   name="password"
                   value={formData.password}
                   placeholder="Enter password"
-                  style={{ color: "black" }}
                   onChange={handleChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                     errors.password
                       ? "border-red-500 focus:ring-red-300"
                       : "border-green-300 focus:ring-green-300"
-                  }`}
+                  } ${dark ? 'bg-slate-700 text-gray-100 placeholder-gray-400 border-slate-600 focus:ring-slate-500' : ''}`}
                 />
                 {errors.password && (
                   <p className="text-red-500 text-sm mt-1">{errors.password}</p>
@@ -261,18 +262,17 @@ export default function Register({ setCurrentView }: RegisterProps) {
                   <label className="block text-green-700 font-semibold mb-1">
                     Phone Number
                   </label>
-                  <input
+                    <input
                     type="text"
                     name="phone"
                     value={formData.phone}
                     placeholder="0712345678"
-                    style={{ color: "black" }}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      onChange={handleChange}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                       errors.phone
                         ? "border-red-500 focus:ring-red-300"
                         : "border-green-300 focus:ring-green-300"
-                    }`}
+                    } ${dark ? 'bg-slate-700 text-gray-100 placeholder-gray-400 border-slate-600 focus:ring-slate-500' : ''}`}
                   />
                   {errors.phone && (
                     <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
@@ -293,7 +293,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
               <button
                 type="button"
                 onClick={() => setCurrentView("home")}
-                className="w-full py-2 mt-3 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 shadow-md transition"
+                className="w-full py-2 mt-3 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 shadow-md transition auth-continue-btn"
               >
                 Continue as Guest
               </button>
@@ -310,7 +310,7 @@ export default function Register({ setCurrentView }: RegisterProps) {
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              className="w-full py-2 rounded-lg bg-gradient-to-r from-white to-white border-2 border-gray-200 flex items-center justify-center gap-2 text-gray-700 font-semibold hover:bg-gray-50 shadow transition"
+              className="w-full py-2 rounded-lg bg-gradient-to-r from-white to-white border-2 border-gray-200 flex items-center justify-center gap-2 text-gray-700 font-semibold hover:bg-gray-50 shadow transition auth-google-btn"
             >
               <svg
                 width="24"

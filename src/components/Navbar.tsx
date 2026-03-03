@@ -11,6 +11,8 @@ interface NavbarProps {
   setCurrentView: (view: string) => void;
   onShowPublicProfile?: (userId: string) => void;
   onToggleSidebar?: () => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
 interface AppUser {
@@ -42,7 +44,7 @@ const activeLink =
 const inactiveLink =
   "font-medium text-white hover:text-green-100 hover:bg-emerald-800/30 transition duration-200 px-4 py-2 rounded-lg";
 
-export default function Navbar({ currentView, setCurrentView, onShowPublicProfile, onToggleSidebar }: NavbarProps) {
+export default function Navbar({ currentView, setCurrentView, onShowPublicProfile, onToggleSidebar, isDarkMode, onToggleDarkMode }: NavbarProps) {
   const { user, loading } = useAuth() as { user: AppUser | null; loading: boolean };
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -289,7 +291,10 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 )}
 
                 {/* Usage badge */}
-                <div className="absolute -top-2 -right-2 bg-white text-green-700 text-xs font-bold px-2 py-1 rounded-full border-2 border-green-600 shadow-sm z-10">
+                <div
+                  className="absolute -top-2 -right-2 ai-count-light bg-white text-green-700 text-xs font-bold px-2 py-1 rounded-full border-2 border-green-600 shadow-sm z-10"
+                  style={{ backgroundColor: "#ffffff", color: "#065f46", borderColor: "#16a34a" }}
+                >
                   {usage.max - usage.uses}
                 </div>
               </button>
@@ -330,13 +335,13 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 <>
                   <button
                     onClick={() => handleNavClick("signin")}
-                    className="px-4 py-2 rounded-lg bg-white text-green-800 font-semibold hover:bg-green-50 hover:text-green-900 hover:shadow-md transition-all border border-green-100"
+                    className="px-4 py-2 rounded-lg bg-white text-green-800 font-semibold hover:bg-green-50 hover:text-green-900 hover:shadow-md transition-all border border-green-100 navbar-auth-light"
                   >
                     Sign In
                   </button>
                   <button
                     onClick={() => handleNavClick("register")}
-                    className={`px-4 py-2 rounded-lg border-2 border-white font-semibold hover:bg-white hover:text-green-700 transition-all ${currentView === "register" ? "bg-white text-green-700" : "text-white"}`}
+                    className={`px-4 py-2 rounded-lg border-2 border-white font-semibold hover:bg-white hover:text-green-700 transition-all navbar-auth-light ${currentView === "register" ? "bg-white text-green-700" : "text-white"}`}
                   >
                     Register
                   </button>
@@ -353,7 +358,10 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 title="AI Assistant"
               >
                 <Bot size={20} className="text-white" />
-                <div className="absolute -top-1 -right-1 bg-white text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full border border-green-600 z-10">
+                <div
+                  className="absolute -top-1 -right-1 ai-count-light bg-white text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-full border border-green-600 z-10"
+                  style={{ backgroundColor: "#ffffff", color: "#065f46", borderColor: "#16a34a" }}
+                >
                   {usage.max - usage.uses}
                 </div>
               </button>
@@ -363,13 +371,13 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleNavClick("signin")}
-                    className="px-3 py-1.5 rounded-lg bg-white text-green-800 font-semibold hover:bg-green-50 text-sm transition-all border border-green-100"
+                    className="px-3 py-1.5 rounded-lg bg-white text-green-800 font-semibold hover:bg-green-50 text-sm transition-all border border-green-100 navbar-auth-light"
                   >
                     Sign In
                   </button>
                   <button
                     onClick={() => handleNavClick("register")}
-                    className="px-3 py-1.5 rounded-lg border border-white font-semibold hover:bg-white hover:text-green-700 text-sm transition-all"
+                    className="px-3 py-1.5 rounded-lg border border-white font-semibold hover:bg-white hover:text-green-700 text-sm transition-all navbar-auth-light"
                   >
                     Register
                   </button>
@@ -422,6 +430,8 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
         usage={usage}
         onUsageChange={setUsage}
         onShowPublicProfile={onShowPublicProfile}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={onToggleDarkMode}
       />
     </>
   );
