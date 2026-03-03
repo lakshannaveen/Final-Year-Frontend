@@ -83,7 +83,7 @@ export default function Feedback({ setCurrentView }: FeedbackProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header with Back Button */}
-      <div className="flex items-center p-4 bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow-md">
+      <div className="flex items-center p-4 bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700 text-white shadow-md">
         <button
           onClick={() => setCurrentView("home")}
           className="p-2 rounded hover:bg-green-800 transition-colors"
