@@ -530,7 +530,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                               className="text-green-700 font-medium hover:text-green-800 transition-colors"
                               title={`Call ${feed.contactNumber}`}
                             >
-                              {feed.contactNumber}
+                              {' '}{feed.contactNumber}
                             </a>
                           ) : (
                             <p className="text-gray-900 font-medium">Not provided</p>
