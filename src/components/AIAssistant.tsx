@@ -342,65 +342,64 @@ export default function AIAssistant({
           {/* Welcome and Quick Questions */}
           {chatHistory.length === 0 && !aiLoading && (
             <div className="text-center py-8 sm:py-12">
-              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border border-emerald-100 max-w-2xl mx-auto">
-                <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <MessageSquare size={28} className="text-white" />
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3">
-                  Welcome to Doop AI Assistant! 👋
-                </h3>
-                <p className="text-gray-600 text-sm sm:text-base mb-6 leading-relaxed">
-                  I&apos;m your intelligent assistant here to help with anything about
-                  the Doop platform. I can answer questions about services, bookings,
-                  becoming a provider, pricing, and more!
-                </p>
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-500 font-medium">
-                    Quick questions to get started:
-                  </p>
-                  {Object.entries(groupedQuestions).map(([category, questions]) => (
-                    <div key={category} className="space-y-2">
-                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
-                        {category}
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {questions.map((item, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleQuickQuestion(item.question)}
-                            className="w-full text-left p-3 bg-white hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-all duration-200 text-sm text-emerald-800 font-medium hover:shadow-md hover:border-emerald-300 active:scale-95 flex items-center gap-2 group"
-                          >
-                            <span className="text-base group-hover:scale-110 transition-transform">
-                              {item.icon}
-                            </span>
-                            <span className="flex-1 text-left">{item.question}</span>
-                          </button>
-                        ))}
+              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border border-emerald-100 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                  <div className="flex flex-col items-start gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-3 rounded-full w-16 h-16 flex items-center justify-center shadow">
+                        <Bot size={28} className="text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg sm:text-2xl font-extrabold text-gray-900">
+                          Welcome to Doop AI Assistant
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">Your intelligent assistant for everything Doop.</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-                <div className="mt-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-                  <p className="text-sm text-emerald-800 font-medium mb-2">
-                    📊 Daily Usage:
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-emerald-700">
-                      Questions used today:
-                    </span>
-                    <span className="text-sm font-bold text-emerald-800">
-                      {usage.uses}/{usage.max}
-                    </span>
+
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      I can help with services, bookings, becoming a provider, pricing, and more. Ask quick questions or describe what you need and I&apos;ll try to find providers and steps to help.
+                    </p>
+
+                    <div className="w-full bg-gradient-to-r from-emerald-50 to-white p-3 rounded-lg border border-emerald-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-gray-500">Questions used today</p>
+                          <p className="text-sm font-semibold text-emerald-700">{usage.uses}/{usage.max}</p>
+                        </div>
+                        <div className="w-40 bg-emerald-100 rounded-full h-2 overflow-hidden">
+                          <div className="bg-emerald-600 h-2 transition-all" style={{ width: `${(usage.uses / usage.max) * 100}%` }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 text-xs text-yellow-700 bg-yellow-50 rounded px-3 py-2 border border-yellow-100">
+                      ⚠️ This AI assistant can make mistakes. Please review responses and double-check important information.
+                    </div>
                   </div>
-                  <div className="w-full bg-emerald-200 rounded-full h-2 mt-2">
-                    <div
-                      className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${(usage.uses / usage.max) * 100}%` }}
-                    ></div>
+
+                  <div className="flex flex-col gap-4">
+                    <p className="text-sm text-gray-500 font-medium">Quick questions to get started</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {quickQuestions.map((item, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleQuickQuestion(item.question)}
+                          className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:shadow-md transition bg-white text-left"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-lg">
+                            {item.icon}
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-800">{item.question}</div>
+                            <div className="text-xs text-gray-400">{item.category}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-2 text-xs text-gray-500">Questions used are counted per day. If you hit the limit, try again tomorrow.</div>
                   </div>
-                </div>
-                <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-yellow-700 text-sm font-medium">
-                  ⚠️ This AI assistant can make mistakes. Please review responses and double-check important information.
                 </div>
               </div>
             </div>
