@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Trash, Eye } from "lucide-react";
+import { Trash, Eye, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 
 type Report = {
   _id: string;
@@ -104,7 +104,8 @@ export default function AdminReport({ setCurrentView }: Props) {
                 setPage(1);
                 setStatusFilter(e.target.value);
               }}
-              className="px-3 py-2 border rounded"
+              className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-800"
+              aria-label="Filter by status"
             >
               <option value="">All statuses</option>
               <option value="pending">Pending</option>
@@ -126,13 +127,13 @@ export default function AdminReport({ setCurrentView }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="p-2">Post</th>
-                  <th className="p-2">Reporter</th>
-                  <th className="p-2">Reason</th>
-                  <th className="p-2">Status</th>
-                  <th className="p-2">Submitted</th>
-                  <th className="p-2">Actions</th>
+                <tr className="border-b bg-gray-50">
+                  <th className="p-2 text-sm text-gray-700 font-medium uppercase tracking-wide">Post</th>
+                  <th className="p-2 text-sm text-gray-700 font-medium uppercase tracking-wide">Reporter</th>
+                  <th className="p-2 text-sm text-gray-700 font-medium uppercase tracking-wide">Reason</th>
+                  <th className="p-2 text-sm text-gray-700 font-medium uppercase tracking-wide">Status</th>
+                  <th className="p-2 text-sm text-gray-700 font-medium uppercase tracking-wide">Submitted</th>
+                  <th className="p-2 text-sm text-gray-700 font-medium uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -155,16 +156,23 @@ export default function AdminReport({ setCurrentView }: Props) {
                       <td className="p-2 align-top text-gray-800">{r.reporter?.username || r.reporter?.email || "Anonymous"}</td>
                       <td className="p-2 align-top text-gray-800">{r.reason}</td>
                       <td className="p-2 align-top">
-                        <select
-                          value={r.status}
-                          onChange={e => updateStatus(r._id, e.target.value)}
-                          className="px-2 py-1 border rounded"
-                          disabled={Boolean(actionLoading)}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="reviewed">Reviewed</option>
-                          <option value="dismissed">Dismissed</option>
-                        </select>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            r.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : r.status === 'reviewed' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
+                          }`}>{r.status}</span>
+
+                          <select
+                            value={r.status}
+                            onChange={e => updateStatus(r._id, e.target.value)}
+                            className="px-2 py-1 border border-gray-300 rounded text-sm bg-white text-gray-800"
+                            disabled={Boolean(actionLoading)}
+                            aria-label={`Change status for report ${r._id}`}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="reviewed">Reviewed</option>
+                            <option value="dismissed">Dismissed</option>
+                          </select>
+                        </div>
                       </td>
                       <td className="p-2 align-top text-gray-800">{new Date(r.createdAt).toLocaleString()}</td>
                       <td className="p-2 align-top">
@@ -195,21 +203,25 @@ export default function AdminReport({ setCurrentView }: Props) {
           </div>
 
           <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-gray-600">Page {page} of {totalPages}</div>
+            <div className="text-sm text-gray-700 font-medium">Page {page} of {totalPages}</div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                aria-label="Previous page"
+                className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 text-gray-800 rounded hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Prev
+                <ChevronLeft size={16} />
+                <span>Prev</span>
               </button>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="px-3 py-1 border rounded disabled:opacity-50"
+                aria-label="Next page"
+                className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 text-gray-800 rounded hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next
+                <span>Next</span>
+                <ChevronRight size={16} />
               </button>
             </div>
           </div>
@@ -220,18 +232,42 @@ export default function AdminReport({ setCurrentView }: Props) {
             <div className="bg-white rounded-lg max-w-2xl w-full p-6">
               <div className="flex items-start justify-between">
                 <h3 className="text-lg font-semibold">Report Details</h3>
-                <button onClick={() => setSelected(null)} className="text-gray-600">Close</button>
+                <button onClick={() => setSelected(null)} className="text-gray-800 font-medium">Close</button>
               </div>
-              <div className="mt-4 space-y-2 text-sm text-gray-800">
-                <div><strong>Post ID:</strong> {selected.postId}</div>
-                <div><strong>Reporter:</strong> {selected.reporter?.username || selected.reporter?.email || 'Anonymous'}</div>
-                <div><strong>Reason:</strong></div>
-                <div className="p-3 bg-gray-50 rounded">{selected.reason}</div>
-                <div><strong>Status:</strong> {selected.status}</div>
-                <div><strong>Submitted:</strong> {new Date(selected.createdAt).toLocaleString()}</div>
-              </div>
-              <div className="mt-4 flex justify-end gap-2">
-                <button onClick={() => setSelected(null)} className="px-3 py-1 border rounded">Close</button>
+              <div className="mt-4">
+                <div className="p-6 bg-gray-50 rounded-lg text-gray-800">
+                  <div className="mb-3">
+                    <strong className="block text-sm text-gray-700">Post ID</strong>
+                    <div className="text-sm">{selected.postId}</div>
+                  </div>
+
+                  <div className="mb-3">
+                    <strong className="block text-sm text-gray-700">Reporter</strong>
+                    <div className="text-sm">{selected.reporter?.username || selected.reporter?.email || 'Anonymous'}</div>
+                  </div>
+
+                  <div className="mb-3">
+                    <strong className="block text-sm text-gray-700">Reason</strong>
+                    <div className="mt-2 p-3 bg-white border rounded text-sm">{selected.reason}</div>
+                  </div>
+
+                  <div className="mb-3 flex items-center gap-3">
+                    <strong className="text-sm text-gray-700">Status</strong>
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                      selected.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : selected.status === 'reviewed' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
+                    }`}>{selected.status}</span>
+                  </div>
+
+                  <div>
+                    <strong className="block text-sm text-gray-700">Submitted</strong>
+                    <div className="text-sm">{new Date(selected.createdAt).toLocaleString()}</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex justify-between items-center">
+                  <button onClick={() => setCurrentView("admindashboard")} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Back to Dashboard</button>
+                  <button onClick={() => setSelected(null)} className="px-3 py-2 border rounded text-gray-800">Close</button>
+                </div>
               </div>
             </div>
           </div>
