@@ -157,7 +157,7 @@ export default function AdminLogin({ setCurrentView }: AdminLoginProps) {
 
             <button
               type="button"
-              onClick={() => router.push('/')}
+              onClick={() => { window.location.href = '/'; }}
               className="w-full py-3 rounded-md text-blue-600 font-semibold bg-white border border-blue-100 hover:bg-blue-50"
             >
               Back to Home
