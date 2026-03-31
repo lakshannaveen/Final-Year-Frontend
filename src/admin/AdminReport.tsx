@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Trash, Eye, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash, Eye, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 
 type Report = {
   _id: string;
@@ -27,6 +27,7 @@ export default function AdminReport({ setCurrentView }: Props) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Report | null>(null);
+  const [showBackText, setShowBackText] = useState(false);
 
   const fetchReports = async () => {
     setLoading(true);
@@ -55,6 +56,19 @@ export default function AdminReport({ setCurrentView }: Props) {
     fetchReports();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, statusFilter]);
+
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+      await fetchReports();
+      setShowBackText(true);
+      setTimeout(() => setShowBackText(false), 5000);
+    } catch (err) {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateStatus = async (reportId: string, status: string) => {
     setActionLoading(reportId + ":status");
@@ -98,6 +112,25 @@ export default function AdminReport({ setCurrentView }: Props) {
         <header className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Admin - Reports</h1>
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRefresh}
+                className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+                disabled={loading}
+              >
+                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                Refresh
+              </button>
+
+              {showBackText && (
+                <button
+                  onClick={() => setCurrentView("admindashboard")}
+                  className="text-green-700 hover:text-green-800 text-sm font-semibold bg-green-50 px-2 py-1 rounded transition"
+                >
+                  Back to Dashboard
+                </button>
+              )}
+            </div>
             <select
               value={statusFilter}
               onChange={e => {
