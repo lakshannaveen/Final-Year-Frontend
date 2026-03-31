@@ -229,9 +229,9 @@ export default function AdminReport({ setCurrentView }: Props) {
 
         {selected && (
           <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg max-w-2xl w-full p-6">
+            <div className="bg-white rounded-lg max-w-2xl w-full p-6 text-gray-900">
               <div className="flex items-start justify-between">
-                <h3 className="text-lg font-semibold">Report Details</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Report Details</h3>
                 <button onClick={() => setSelected(null)} className="text-gray-800 font-medium">Close</button>
               </div>
               <div className="mt-4">
@@ -264,10 +264,7 @@ export default function AdminReport({ setCurrentView }: Props) {
                   </div>
                 </div>
 
-                <div className="mt-4 flex justify-between items-center">
-                  <button onClick={() => setCurrentView("admindashboard")} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Back to Dashboard</button>
-                  <button onClick={() => setSelected(null)} className="px-3 py-2 border rounded text-gray-800">Close</button>
-                </div>
+                {/* bottom actions removed per design: only header close remains */}
               </div>
             </div>
           </div>
