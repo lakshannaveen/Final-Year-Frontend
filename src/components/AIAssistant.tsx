@@ -599,7 +599,12 @@ export default function AIAssistant({
             disabled={aiLoading || !prompt.trim() || usage.uses >= usage.max}
           >
             {aiLoading ? (
-              <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent"></div>
+              <div className="flex items-center gap-2" aria-live="polite" aria-busy="true">
+                <span className="sr-only">Generating answer</span>
+                <span className="w-2.5 h-2.5 bg-white rounded-full animate-bounce" style={{ animationDelay: "0s" }} />
+                <span className="w-2.5 h-2.5 bg-white rounded-full animate-bounce" style={{ animationDelay: "0.12s" }} />
+                <span className="w-2.5 h-2.5 bg-white rounded-full animate-bounce" style={{ animationDelay: "0.24s" }} />
+              </div>
             ) : (
               <Send size={18} className="sm:size-5" />
             )}
