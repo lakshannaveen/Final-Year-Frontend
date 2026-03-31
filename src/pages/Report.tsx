@@ -83,7 +83,7 @@ export default function Report({ setCurrentView, postId }: ReportProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-60"
+                className="px-4 py-2 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-800 transition disabled:opacity-60"
               >
                 {loading ? "Submitting..." : "Submit Report"}
               </button>
