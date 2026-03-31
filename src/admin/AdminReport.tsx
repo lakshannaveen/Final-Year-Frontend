@@ -27,7 +27,6 @@ export default function AdminReport({ setCurrentView }: Props) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Report | null>(null);
-  const [showBackText, setShowBackText] = useState(false);
 
   const fetchReports = async () => {
     setLoading(true);
@@ -61,8 +60,6 @@ export default function AdminReport({ setCurrentView }: Props) {
     try {
       setLoading(true);
       await fetchReports();
-      setShowBackText(true);
-      setTimeout(() => setShowBackText(false), 5000);
     } catch (err) {
       // ignore
     } finally {
@@ -131,14 +128,7 @@ export default function AdminReport({ setCurrentView }: Props) {
                 Refresh
               </button>
 
-              {showBackText && (
-                <button
-                  onClick={() => setCurrentView("admindashboard")}
-                  className="text-green-700 hover:text-green-800 text-sm font-semibold bg-green-50 px-2 py-1 rounded transition"
-                >
-                  Back to Dashboard
-                </button>
-              )}
+              {/* temporary 'Back to Dashboard' text removed */}
             </div>
             <select
               value={statusFilter}
