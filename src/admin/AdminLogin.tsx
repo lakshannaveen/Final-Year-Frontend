@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from 'react-toastify';
 
 type AdminLoginProps = {
@@ -7,6 +8,7 @@ type AdminLoginProps = {
 };
 
 export default function AdminLogin({ setCurrentView }: AdminLoginProps) {
+  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -151,12 +153,14 @@ export default function AdminLogin({ setCurrentView }: AdminLoginProps) {
               {loading ? "Logging in..." : "Login"}
             </button>
 
+            {/* Cancel button removed per request */}
+
             <button
               type="button"
-              onClick={() => setCurrentView("home")}
-              className="w-full py-3 rounded-md text-blue-600 font-semibold border border-blue-100 hover:bg-blue-50"
+              onClick={() => router.push('/')}
+              className="w-full py-3 rounded-md text-white font-semibold bg-sky-600 hover:bg-sky-700"
             >
-              Cancel
+              Back to Home
             </button>
           </div>
         </form>
