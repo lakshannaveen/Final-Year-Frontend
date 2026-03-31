@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { ArrowLeft } from "lucide-react";
 
 interface ReportProps {
@@ -34,19 +35,24 @@ export default function Report({ setCurrentView, postId }: ReportProps) {
         body: JSON.stringify({ postId, reason }),
       });
       if (res.status === 401) {
+        toast.error("Please sign in to report this post.");
         setMessageType("error");
         setMessage("Please sign in to report this post.");
         setTimeout(() => setCurrentView("signin"), 1200);
       } else if (res.ok) {
+        toast.success("Report submitted. Thank you.");
         setMessageType("success");
         setMessage("Report submitted. Thank you.");
         setTimeout(() => setCurrentView("home"), 1400);
       } else {
         const data = await res.json().catch(() => ({}));
+        const errMsg = data?.message || "Failed to submit report.";
+        toast.error(errMsg);
         setMessageType("error");
-        setMessage(data?.message || "Failed to submit report.");
+        setMessage(errMsg);
       }
     } catch (err) {
+      toast.error("Error connecting to server.");
       setMessageType("error");
       setMessage("Error connecting to server.");
     } finally {
