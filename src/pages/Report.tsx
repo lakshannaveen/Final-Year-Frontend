@@ -29,10 +29,15 @@ export default function Report({ setCurrentView, postId }: ReportProps) {
     try {
       const res = await fetch(`${API_URL}/api/report`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId, reason }),
       });
-      if (res.ok) {
+      if (res.status === 401) {
+        setMessageType("error");
+        setMessage("Please sign in to report this post.");
+        setTimeout(() => setCurrentView("signin"), 1200);
+      } else if (res.ok) {
         setMessageType("success");
         setMessage("Report submitted. Thank you.");
         setTimeout(() => setCurrentView("home"), 1400);

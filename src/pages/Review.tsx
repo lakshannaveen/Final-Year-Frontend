@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useAuth } from "../components/AuthContext";
 import { Star, Edit3, Trash2 } from "lucide-react";
 
 interface Review {
@@ -216,20 +217,39 @@ export default function ReviewSection({ userId }: ReviewProps) {
         setReviewsLoading(false);
       });
 
-    // Check if current user has reviewed
-    fetch(`${API_URL}/api/reviews/check/${userId}`, {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setUserHasReviewed(Boolean(data.hasReviewed));
-        if (data.review) {
-          setEditingReview(data.review);
-        } else {
+      // Check if current user has reviewed
+      // If user is not authenticated, skip the check to avoid 401 Unauthorized.
+      (async () => {
+        try {
+          // If auth state indicates unauthenticated, do not call protected endpoint
+          if (authLoading === false && !authUser) {
+            setUserHasReviewed(false);
+            setEditingReview(null);
+            return;
+          }
+
+          const res = await fetch(`${API_URL}/api/reviews/check/${userId}`, {
+            credentials: "include",
+          });
+
+          if (res.status === 401) {
+            // Not authenticated — treat as not reviewed and prompt login elsewhere
+            setUserHasReviewed(false);
+            setEditingReview(null);
+            return;
+          }
+
+          const data = await res.json();
+          setUserHasReviewed(Boolean(data.hasReviewed));
+          if (data.review) {
+            setEditingReview(data.review);
+          } else {
+            setEditingReview(null);
+          }
+        } catch (err) {
           setEditingReview(null);
         }
-      })
-      .catch(() => setEditingReview(null));
+      })();
   }, [userId]);
 
   const handleSubmitReview = async (rating: number, message: string) => {
