@@ -17,6 +17,7 @@ import Inbox from "../pages/Inbox";
 import AdminLogin from "../admin/AdminLogin"; // Admin login component you added
 import AdminDashboard from "../admin/AdminDashboard"; // Admin dashboard component
 import Verify from "../pages/Verify"; 
+import Report from "../pages/Report";
 
 // New admin pages
 import AdminReport from "../admin/AdminReport";
@@ -60,6 +61,7 @@ function AppContent() {
     recipientProfilePic?: string;
   }
   const [chatRecipient, setChatRecipient] = useState<ChatRecipient | null>(null);
+  const [reportPostId, setReportPostId] = useState<string | null>(null);
 
   // --- SCROLL RESTORATION ---
   const [feedScrollPos, setFeedScrollPos] = useState(0);
@@ -207,6 +209,9 @@ function AppContent() {
                     recipientProfilePic: navData.recipientProfilePic ?? undefined,
                   });
                   setCurrentView("message");
+                } else if (view === "report" && navData?.postId) {
+                  setReportPostId(navData.postId);
+                  setCurrentView("report");
                 } else if (view === "home") {
                   setCurrentView("home");
                 }
@@ -257,6 +262,8 @@ function AppContent() {
         return <AdminIDVerifications setCurrentView={setCurrentView} />;
       case "verify":
         return <Verify setCurrentView={setCurrentView} />;
+      case "report":
+        return <Report setCurrentView={setCurrentView} postId={reportPostId} />;
       default:
         setCurrentView("home");
         return null;

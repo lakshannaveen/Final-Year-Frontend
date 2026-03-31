@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Globe, Phone, Image as ImageIcon, MessageCircle, CheckCircle, Star } from "lucide-react";
+import { ArrowLeft, Globe, Phone, Image as ImageIcon, MessageCircle, CheckCircle, Star, Flag } from "lucide-react";
 import ReviewSection from "./Review";
 
 interface NavigationData {
@@ -11,7 +11,7 @@ interface NavigationData {
 
 interface PublicProfileProps {
   userId: string;
-  setCurrentView: (view: string, navData?: NavigationData) => void;
+  setCurrentView: (view: string, navData?: any) => void;
 }
 
 interface UserProfile {
@@ -499,6 +499,16 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                       </div>
                       <div className="text-xs text-gray-500">{timeAgo(feed.createdAt)}</div>
                     </div>
+                  </div>
+                  <div className="ml-auto">
+                    <button
+                      title="Report post"
+                      aria-label="Report post"
+                      className="p-2 rounded-md hover:bg-red-50 text-red-600 hover:text-red-800 transition"
+                      onClick={() => setCurrentView("report", { postId: feed._id, reportedUserId: feed.user._id })}
+                    >
+                      <Flag size={18} />
+                    </button>
                   </div>
                 </div>
 
