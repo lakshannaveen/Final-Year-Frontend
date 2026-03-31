@@ -154,12 +154,7 @@ export default function AdminReport({ setCurrentView }: Props) {
               <option value="reviewed">Reviewed</option>
               <option value="dismissed">Dismissed</option>
             </select>
-            <button
-              onClick={() => setCurrentView("admindashboard")}
-              className="px-3 py-2 bg-blue-600 text-white rounded"
-            >
-              Back to Dashboard
-            </button>
+            {/* Back to Dashboard text button removed (left-arrow icon kept) */}
           </div>
         </header>
 
