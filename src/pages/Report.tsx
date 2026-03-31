@@ -68,7 +68,6 @@ export default function Report({ setCurrentView, postId }: ReportProps) {
 
         <div className="bg-white rounded-xl shadow-lg p-8 border border-green-100">
           <h2 className="text-2xl font-bold mb-2 text-green-700">Report Post</h2>
-          <p className="text-sm text-gray-600 mb-4">Post ID: {postId ?? "(unknown)"}</p>
 
           <form onSubmit={handleSubmit}>
             <label className="block text-sm font-medium text-green-700 mb-2">Reason</label>
