@@ -110,7 +110,16 @@ export default function AdminReport({ setCurrentView }: Props) {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
         <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Admin - Reports</h1>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setCurrentView("admindashboard")}
+              aria-label="Back to dashboard"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h1 className="text-2xl font-semibold text-blue-900">Admin - Reports</h1>
+          </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3">
               <button
