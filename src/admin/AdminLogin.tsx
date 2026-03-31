@@ -158,7 +158,7 @@ export default function AdminLogin({ setCurrentView }: AdminLoginProps) {
             <button
               type="button"
               onClick={() => router.push('/')}
-              className="w-full py-3 rounded-md text-white font-semibold bg-sky-600 hover:bg-sky-700"
+              className="w-full py-3 rounded-md text-blue-600 font-semibold bg-white border border-blue-100 hover:bg-blue-50"
             >
               Back to Home
             </button>
