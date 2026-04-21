@@ -44,6 +44,17 @@ function AppContent() {
     }
   }, []);
 
+  // Keep app state in sync with browser back/forward navigation.
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace("#", "") || "home";
+      setCurrentView((prev) => (prev === hash ? prev : hash));
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
   // Update URL hash when currentView changes
   useEffect(() => {
     window.location.hash = currentView;
