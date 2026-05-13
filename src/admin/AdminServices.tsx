@@ -1,6 +1,15 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { RefreshCw, Trash2, Star, CheckCircle } from "lucide-react";
+import {
+  RefreshCw,
+  Trash2,
+  Star,
+  CheckCircle,
+  MapPin,
+  Phone,
+  BadgeDollarSign,
+  Globe,
+} from "lucide-react";
 
 type Props = {
   setCurrentView: (view: string) => void;
@@ -39,7 +48,6 @@ interface ReviewStats {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const PAGE_SIZE = 10;
 
-// --- Time Ago ---
 function timeAgo(dateString: string): string {
   const now = new Date();
   const date = new Date(dateString);
@@ -60,7 +68,6 @@ function timeAgo(dateString: string): string {
   return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
-// --- Feed skeleton (matching ProfileFeed style) ---
 function FeedSkeleton() {
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col md:flex-row items-stretch p-6 min-h-[240px] animate-pulse">
@@ -90,7 +97,6 @@ function FeedSkeleton() {
   );
 }
 
-// --- Helper: blinking ring class (same logic as ProfileFeed) ---
 const getRingClass = (status?: string) => {
   if (!status) return "";
   const lower = status.toLowerCase();
@@ -109,15 +115,12 @@ export default function AdminServices({ setCurrentView }: Props) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ show: boolean; message: string }>({ show: false, message: "" });
 
-  // Current user verification status
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserIsVerified, setCurrentUserIsVerified] = useState(false);
 
-  // Analytics for verified vs non-verified posts
   const [verifiedCount, setVerifiedCount] = useState(0);
   const [nonVerifiedCount, setNonVerifiedCount] = useState(0);
 
-  // Review stats cache per user id (optional UI element shown next to avatar)
   const [reviewStatsMap, setReviewStatsMap] = useState<Record<string, ReviewStats>>({});
 
   const mountedRef = useRef(true);
@@ -151,7 +154,6 @@ export default function AdminServices({ setCurrentView }: Props) {
     }
   }, []);
 
-  // fetch review stats for users in feeds (optional)
   useEffect(() => {
     const uniq = new Set<string>();
     feeds.forEach(f => {
@@ -176,7 +178,6 @@ export default function AdminServices({ setCurrentView }: Props) {
     });
   }, [feeds, reviewStatsMap]);
 
-  // Fetch current user verification status
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -214,7 +215,6 @@ export default function AdminServices({ setCurrentView }: Props) {
     return () => window.removeEventListener("scroll", onScroll);
   }, [loading, hasMore]);
 
-  // Calculate verified vs non-verified post analytics
   useEffect(() => {
     let verified = 0;
     let nonVerified = 0;
@@ -232,7 +232,7 @@ export default function AdminServices({ setCurrentView }: Props) {
     setNonVerifiedCount(nonVerified);
   }, [feeds, currentUserId, currentUserIsVerified]);
 
-  // Photo modal + long-press support (matching ProfileFeed)
+  // Photo modal + long-press support
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [modalPhotoUrl, setModalPhotoUrl] = useState<string | null>(null);
   const [modalPhotoAlt, setModalPhotoAlt] = useState<string>("");
@@ -333,8 +333,6 @@ export default function AdminServices({ setCurrentView }: Props) {
               <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
               Refresh
             </button>
-
-            {/* optional short success text shown after refresh */}
             {success.show && (
               <div className="mt-2 text-green-700 text-sm font-semibold bg-green-50 px-2 py-1 rounded">
                 {success.message}
@@ -358,7 +356,6 @@ export default function AdminServices({ setCurrentView }: Props) {
                 </div>
               </div>
             </div>
-
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
@@ -370,7 +367,6 @@ export default function AdminServices({ setCurrentView }: Props) {
                 </div>
               </div>
             </div>
-
             <div className="bg-green-50 rounded-lg p-4 border border-green-200">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
@@ -398,9 +394,6 @@ export default function AdminServices({ setCurrentView }: Props) {
             feeds.map(feed => {
               const ringClass = getRingClass(feed.user?.status);
               const stats = feed.user && feed.user._id ? reviewStatsMap[feed.user._id] : undefined;
-
-              // Determine verified badge: prefer populated isVerified if present,
-              // otherwise if this feed belongs to the current user use currentUserIsVerified
               const showVerified =
                 !!feed.user.isVerified || (currentUserId !== null && feed.user._id === currentUserId && currentUserIsVerified);
 
@@ -482,42 +475,42 @@ export default function AdminServices({ setCurrentView }: Props) {
                   <div className="flex-1 p-4 md:p-6">
                     <div className="space-y-3">
                       <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{feed.title}</h3>
-
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Location */}
                         <div className="flex items-center space-x-2">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600">
-                            📍
+                            <MapPin size={20} />
                           </span>
                           <div>
                             <span className="text-sm font-medium text-gray-500">Location</span>
                             <p className="text-gray-900 font-medium">{feed.location}</p>
                           </div>
                         </div>
-
+                        {/* Contact */}
                         <div className="flex items-center space-x-2">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600">
-                            📞
+                            <Phone size={20} />
                           </span>
                           <div>
                             <span className="text-sm font-medium text-gray-500">Contact</span>
                             <p className="text-gray-900 font-medium">{feed.contactNumber || "Not provided"}</p>
                           </div>
                         </div>
-
+                        {/* Price */}
                         <div className="flex items-center space-x-2">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600">
-                            💰
+                            <BadgeDollarSign size={20} />
                           </span>
                           <div>
                             <span className="text-sm font-medium text-gray-500">Price</span>
                             <p className="text-gray-900 font-medium">{feed.price ?? "Not set"} {feed.priceCurrency ?? ""} <span className="text-sm text-gray-600">({feed.priceType ?? ""})</span></p>
                           </div>
                         </div>
-
+                        {/* Website */}
                         {feed.websiteLink && (
                           <div className="flex items-center space-x-2">
                             <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
-                              🌐
+                              <Globe size={20} />
                             </span>
                             <div>
                               <span className="text-sm font-medium text-gray-500">Website</span>
@@ -534,7 +527,6 @@ export default function AdminServices({ setCurrentView }: Props) {
                           </div>
                         )}
                       </div>
-
                       {feed.description && (
                         <div className="pt-2 border-t border-gray-100">
                           <span className="text-sm font-medium text-gray-500 block mb-1">About</span>
@@ -586,7 +578,7 @@ export default function AdminServices({ setCurrentView }: Props) {
         {/* Photo Modal */}
         {showPhotoModal && modalPhotoUrl && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900 bg-opacity-70"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-transparent"
             onClick={closePhotoModal}
           >
             <div className="relative">
