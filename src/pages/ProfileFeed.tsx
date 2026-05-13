@@ -1,14 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Star, CheckCircle } from "lucide-react";
+import { Star, CheckCircle, MapPin, Phone, BadgeDollarSign, Globe } from "lucide-react"; // <-- Added icon imports
 
-// --- Interfaces ---
+// interface
 interface FeedUser {
   _id: string;
   username: string;
   profilePic?: string;
-  status?: string; // <-- Add status for blinking ring
-  isVerified?: boolean; // verification flag (may not be populated from backend)
+  status?: string; 
+  isVerified?: boolean; 
 }
 interface FeedItem {
   _id: string;
@@ -33,7 +33,7 @@ interface ReviewStats {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-// --- Time Ago ---
+
 function timeAgo(dateString: string): string {
   const now = new Date();
   const date = new Date(dateString);
@@ -104,7 +104,7 @@ type EditFeedState = {
 
 const PAGE_SIZE = 5;
 
-// --- Helper: blinking ring class
+// helper function
 const getRingClass = (status?: string) => {
   if (!status) return "";
   const lower = status.toLowerCase();
@@ -115,7 +115,7 @@ const getRingClass = (status?: string) => {
   return "";
 };
 
-// --- Main Component ---
+
 export default function ProfileFeed() {
   const [feeds, setFeeds] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -156,7 +156,7 @@ export default function ProfileFeed() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loading, hasMore]);
 
-  // Fetch current user profile to determine verification status (uses same API as profile.tsx)
+  // Fetch current user profile to determine verification status
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -376,7 +376,7 @@ export default function ProfileFeed() {
                           className={`absolute -inset-1 rounded-full pointer-events-none z-0 ${ringClass}`}
                           aria-hidden
                         ></span>
-        )}
+                      )}
                       {feed.user.profilePic ? (
                         <img
                           src={feed.user.profilePic}
@@ -392,7 +392,7 @@ export default function ProfileFeed() {
                         >
                           {feed.user.username?.[0]?.toUpperCase() || "?"}
                         </div>
-        )}
+                      )}
                     </div>
                     <div className="flex flex-col">
                       <div className="flex items-center space-x-2">
@@ -405,7 +405,7 @@ export default function ProfileFeed() {
                           >
                             <CheckCircle size={12} className="text-white" />
                           </span>
-        )}
+                        )}
                       </div>
                       <div className="text-xs text-gray-500">{timeAgo(feed.createdAt)}</div>
                       {/* Rating */}
@@ -419,7 +419,7 @@ export default function ProfileFeed() {
                         </div>
                       ) : (
                         <div className="text-xs text-gray-400 italic">No reviews yet</div>
-        )}
+                      )}
                       {/* Edit/Delete buttons */}
                       <div className="flex gap-3 mt-2">
                         <button
@@ -443,7 +443,7 @@ export default function ProfileFeed() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="flex items-center space-x-2">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600">
-                          📍
+                          <MapPin size={20} />
                         </span>
                         <div>
                           <span className="text-sm font-medium text-gray-500">Location</span>
@@ -453,7 +453,7 @@ export default function ProfileFeed() {
 
                       <div className="flex items-center space-x-2">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600">
-                          📞
+                          <Phone size={20} />
                         </span>
                         <div>
                           <span className="text-sm font-medium text-gray-500">Contact</span>
@@ -463,7 +463,7 @@ export default function ProfileFeed() {
 
                       <div className="flex items-center space-x-2">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600">
-                          💰
+                          <BadgeDollarSign size={20} />
                         </span>
                         <div>
                           <span className="text-sm font-medium text-gray-500">Price</span>
@@ -474,7 +474,7 @@ export default function ProfileFeed() {
                       {feed.websiteLink && (
                         <div className="flex items-center space-x-2">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
-                            🌐
+                            <Globe size={20} />
                           </span>
                           <div>
                             <span className="text-sm font-medium text-gray-500">Website</span>
@@ -489,7 +489,7 @@ export default function ProfileFeed() {
                             </a>
                           </div>
                         </div>
-        )}
+                      )}
                     </div>
 
                     {feed.description && (
@@ -497,7 +497,7 @@ export default function ProfileFeed() {
                         <span className="text-sm font-medium text-gray-500 block mb-1">About</span>
                         <p className="text-gray-700 leading-relaxed">{feed.description}</p>
                       </div>
-        )}
+                    )}
                   </div>
                 </div>
 
@@ -518,17 +518,17 @@ export default function ProfileFeed() {
                           onTouchStart={() => handlePhotoTouchStart(feed.photo!, feed.title)}
                           onTouchEnd={handlePhotoTouchEnd}
                         />
-        )}
+                      )}
                       {feed.video && (
                         <video
                           src={feed.video}
                           controls
                           className="w-full h-40 md:h-48 object-cover rounded-xl border border-gray-200 shadow-sm"
                         />
-        )}
+                      )}
                     </div>
                   </div>
-        )}
+                )}
               </div>
             );
           })
