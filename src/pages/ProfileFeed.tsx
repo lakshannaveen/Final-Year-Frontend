@@ -656,7 +656,7 @@ export default function ProfileFeed() {
         {/* Photo Modal */}
         {showPhotoModal && modalPhotoUrl && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900 bg-opacity-70"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-transparent"
             onClick={closeModal}
           >
             <div className="relative">
