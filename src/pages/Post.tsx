@@ -501,7 +501,7 @@ if (video) {
                   Description (optional, max 20 words)
                 </label>
                 <textarea
-                  placeholder="Describe your service in max 20 words"
+                  placeholder="Describe your service "
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-green-300 focus:ring-green-300 ${placeholderColorClass}`}
