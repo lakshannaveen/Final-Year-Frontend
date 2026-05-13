@@ -81,7 +81,9 @@ function AppContent() {
 
   // --- SCROLL TO TOP ON VIEW CHANGE ---
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    if (currentView !== "home") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
   }, [currentView]);
 
   // Sidebar state
