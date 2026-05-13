@@ -495,20 +495,20 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
-      <div className="w-full mx-auto mb-6 flex justify-between items-center">
+      <div className="w-full mx-auto mb-6 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
         <button
           onClick={() => setCurrentView("home")}
-          className="flex items-center text-green-700 font-semibold hover:text-green-800 transition-colors px-4 py-2 rounded-lg hover:bg-green-100"
+          className="flex items-center text-green-700 font-semibold hover:text-green-800 transition-colors px-4 py-2 rounded-lg hover:bg-green-100 w-fit"
         >
           <ArrowLeft size={20} className="mr-2" />
           Back
         </button>
 
-        <div className="relative flex items-center gap-3">
+        <div className="relative flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {editMode ? (
             <>
               <button
-                className="px-4 py-2 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition disabled:opacity-70 flex items-center"
+                className="px-4 py-2 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-lg font-semibold hover:from-green-800 hover:to-emerald-800 shadow transition disabled:opacity-70 flex items-center w-full sm:w-auto justify-center"
                 onClick={handleSave}
                 disabled={
                   loading ||
@@ -527,7 +527,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 )}
               </button>
               <button
-                className="px-4 py-2 bg-gray-100 text-green-700 rounded-lg font-semibold hover:bg-gray-200 shadow transition flex items-center"
+                className="px-4 py-2 bg-gray-100 text-green-700 rounded-lg font-semibold hover:bg-gray-200 shadow transition flex items-center w-full sm:w-auto justify-center"
                 onClick={handleCancel}
                 disabled={loading || uploading}
               >
@@ -539,7 +539,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
             <>
               <button
                 onClick={() => setShowShareOptions(!showShareOptions)}
-                className="flex items-center bg-green-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-800 transition"
+                className="flex items-center bg-green-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-800 transition w-full sm:w-auto justify-center"
               >
                 <Share size={18} className="mr-2" />
                 Share
@@ -580,7 +580,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
                 setCurrentView("home");
               }
             }}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 border border-red-300 shadow transition flex items-center"
+            className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 border border-red-300 shadow transition flex items-center w-full sm:w-auto justify-center"
             disabled={loading || uploading}
           >
             <LogOut size={16} className="mr-2" />
@@ -589,7 +589,7 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="px-4 py-2 bg-red-50 text-red-700 rounded-lg font-semibold hover:bg-red-100 border border-red-200 shadow transition flex items-center"
+            className="px-4 py-2 bg-red-50 text-red-700 rounded-lg font-semibold hover:bg-red-100 border border-red-200 shadow transition flex items-center w-full sm:w-auto justify-center"
             disabled={loading || uploading}
           >
             <Trash2 size={16} className="mr-2" />
