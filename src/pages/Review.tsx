@@ -183,6 +183,7 @@ function ReviewForm({
 }
 
 export default function ReviewSection({ userId }: ReviewProps) {
+  const { user: authUser, loading: authLoading } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewStats, setReviewStats] = useState<ReviewStats>({ averageRating: 0, totalReviews: 0 });
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -250,7 +251,7 @@ export default function ReviewSection({ userId }: ReviewProps) {
           setEditingReview(null);
         }
       })();
-  }, [userId]);
+  }, [userId, authUser, authLoading]);
 
   const handleSubmitReview = async (rating: number, message: string) => {
     try {
