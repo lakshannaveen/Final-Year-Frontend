@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "./AuthContext";
-import { X, User, Mail, Bot, Menu } from "lucide-react";
+import { X, User, Mail, Bot, Menu, LogOut } from "lucide-react";
 import Image from "next/image";
 import AIAssistant from "./AIAssistant";
 import io, { Socket } from "socket.io-client";
@@ -43,7 +43,7 @@ const inactiveLink =
   "font-medium text-white hover:text-green-100 hover:bg-emerald-800/30 transition duration-200 px-4 py-2 rounded-lg";
 
 export default function Navbar({ currentView, setCurrentView, onShowPublicProfile, onToggleSidebar }: NavbarProps) {
-  const { user, loading } = useAuth() as { user: AppUser | null; loading: boolean };
+  const { user, loading, logout } = useAuth() as { user: AppUser | null; loading: boolean; logout: () => Promise<void> };
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
@@ -137,6 +137,15 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
         fetchUnreadCount(); // Refresh count after marking all as read
       }).catch(console.error);
     }
+  };
+
+  const handleLogout = async () => {
+    if (typeof window !== "undefined") {
+      const confirmed = window.confirm("Are you sure you want to log out?");
+      if (!confirmed) return;
+    }
+    await logout();
+    setCurrentView("home");
   };
 
   useEffect(() => {
@@ -296,36 +305,46 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
 
               {/* User Profile */}
               {user ? (
-                <button
-                  onClick={() => handleNavClick("profile")}
-                  aria-label="Profile"
-                  className={`relative flex items-center justify-center rounded-full p-[2px] transition-all ${currentView === "profile" ? "shadow-lg" : ""}`}
-                >
-                  {/* Render ring behind avatar (animated) when status exists */}
-                  {isOpenToWork && <div className={ringGreen} aria-hidden />}
-                  {isNotAvailable && <div className={ringRed} aria-hidden />}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleLogout}
+                    aria-label="Log out"
+                    title="Log out"
+                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                  >
+                    <LogOut size={20} className="text-white" />
+                  </button>
+                  <button
+                    onClick={() => handleNavClick("profile")}
+                    aria-label="Profile"
+                    className={`relative flex items-center justify-center rounded-full p-[2px] transition-all ${currentView === "profile" ? "shadow-lg" : ""}`}
+                  >
+                    {/* Render ring behind avatar (animated) when status exists */}
+                    {isOpenToWork && <div className={ringGreen} aria-hidden />}
+                    {isNotAvailable && <div className={ringRed} aria-hidden />}
 
-                  {avatarUrl ? (
-                    <span className="relative z-10 block w-8 h-8 rounded-full overflow-hidden bg-white shadow-inner">
-                      <img
-                        src={avatarUrl}
-                        alt="Profile avatar"
-                        width={32}
-                        height={32}
-                        loading="lazy"
-                        className="w-8 h-8 object-cover rounded-full"
-                        referrerPolicy="no-referrer"
-                      />
-                    </span>
-                  ) : avatarLetter ? (
-                    // Default profile circle color - gradient theme
-                    <span className="relative z-10 w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white flex items-center justify-center font-bold shadow-inner">
-                      {avatarLetter}
-                    </span>
-                  ) : (
-                    <User size={24} />
-                  )}
-                </button>
+                    {avatarUrl ? (
+                      <span className="relative z-10 block w-8 h-8 rounded-full overflow-hidden bg-white shadow-inner">
+                        <img
+                          src={avatarUrl}
+                          alt="Profile avatar"
+                          width={32}
+                          height={32}
+                          loading="lazy"
+                          className="w-8 h-8 object-cover rounded-full"
+                          referrerPolicy="no-referrer"
+                        />
+                      </span>
+                    ) : avatarLetter ? (
+                      // Default profile circle color - gradient theme
+                      <span className="relative z-10 w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white flex items-center justify-center font-bold shadow-inner">
+                        {avatarLetter}
+                      </span>
+                    ) : (
+                      <User size={24} />
+                    )}
+                  </button>
+                </div>
               ) : (
                 <>
                   <button
@@ -378,36 +397,46 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
 
               {/* Mobile User Profile */}
               {user && (
-                <button
-                  onClick={() => handleNavClick("profile")}
-                  aria-label="Profile"
-                  className="relative flex items-center justify-center rounded-full p-[2px] transition-all"
-                >
-                  {/* ring for mobile avatar */}
-                  {isOpenToWork && <div className={ringGreen} aria-hidden />}
-                  {isNotAvailable && <div className={ringRed} aria-hidden />}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleLogout}
+                    aria-label="Log out"
+                    title="Log out"
+                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                  >
+                    <LogOut size={18} className="text-white" />
+                  </button>
+                  <button
+                    onClick={() => handleNavClick("profile")}
+                    aria-label="Profile"
+                    className="relative flex items-center justify-center rounded-full p-[2px] transition-all"
+                  >
+                    {/* ring for mobile avatar */}
+                    {isOpenToWork && <div className={ringGreen} aria-hidden />}
+                    {isNotAvailable && <div className={ringRed} aria-hidden />}
 
-                  {avatarUrl ? (
-                    <span className="relative z-10 block w-8 h-8 rounded-full overflow-hidden bg-white shadow-inner">
-                      <img
-                        src={avatarUrl}
-                        alt="Profile avatar"
-                        width={32}
-                        height={32}
-                        loading="lazy"
-                        className="w-8 h-8 object-cover rounded-full"
-                        referrerPolicy="no-referrer"
-                      />
-                    </span>
-                  ) : avatarLetter ? (
-                    // Default profile circle color
-                    <span className="relative z-10 w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white flex items-center justify-center font-bold shadow-inner">
-                      {avatarLetter}
-                    </span>
-                  ) : (
-                    <User size={20} />
-                  )}
-                </button>
+                    {avatarUrl ? (
+                      <span className="relative z-10 block w-8 h-8 rounded-full overflow-hidden bg-white shadow-inner">
+                        <img
+                          src={avatarUrl}
+                          alt="Profile avatar"
+                          width={32}
+                          height={32}
+                          loading="lazy"
+                          className="w-8 h-8 object-cover rounded-full"
+                          referrerPolicy="no-referrer"
+                        />
+                      </span>
+                    ) : avatarLetter ? (
+                      // Default profile circle color
+                      <span className="relative z-10 w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white flex items-center justify-center font-bold shadow-inner">
+                        {avatarLetter}
+                      </span>
+                    ) : (
+                      <User size={20} />
+                    )}
+                  </button>
+                </div>
               )}
 
             </div>
