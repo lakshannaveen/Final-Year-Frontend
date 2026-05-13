@@ -127,8 +127,6 @@ export default function AdminReport({ setCurrentView }: Props) {
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                 Refresh
               </button>
-
-              {/* temporary 'Back to Dashboard' text removed */}
             </div>
             <select
               value={statusFilter}

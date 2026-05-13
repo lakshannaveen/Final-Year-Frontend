@@ -48,9 +48,8 @@ export default function AdminFeedback({ setCurrentView }: Props) {
     page: 1
   });
 
-  // New state: shows the green "Back to Dashboard" text to the right under the Refresh button after a successful refresh
-  const [showBackText, setShowBackText] = useState(false);
 
+  const [showBackText, setShowBackText] = useState(false);
   const fetchFeedbacks = useCallback(async () => {
     try {
       setLoading(true);

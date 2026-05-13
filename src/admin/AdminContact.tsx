@@ -40,10 +40,8 @@ export default function AdminContact({ setCurrentView }: Props) {
     page: 1
   });
 
-  // New state: shows the green "Back to Dashboard" text to the right under the Refresh button after a successful refresh
-  const [showBackText, setShowBackText] = useState(false);
 
-  // Ref + state for modern status dropdown
+  const [showBackText, setShowBackText] = useState(false);
   const statusRef = useRef<HTMLDivElement | null>(null);
   const [statusOpen, setStatusOpen] = useState(false);
 

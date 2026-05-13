@@ -31,20 +31,18 @@ export default function AdminDashboard({ setCurrentView }: AdminDashboardProps) 
     const isAdmin = sessionStorage.getItem("isAdmin");
     if (isAdmin === "1") {
       setAuthorized(true);
-      fetchStats(); // Fetch stats when authorized
+      fetchStats(); 
     } else {
       setAuthorized(false);
       setTimeout(() => setCurrentView("home"), 600);
     }
-  }, [setCurrentView]); // ✅ ESLint fix
-
+  }, [setCurrentView]);
   const handleLogout = () => {
     sessionStorage.removeItem("isAdmin");
     toast.success("Logged out successfully!");
     setCurrentView("home");
   };
 
-  // API base URL
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   // Fetch statistics
