@@ -275,7 +275,7 @@ if (video) {
   return (
     <>
       <Navbar currentView={currentView} setCurrentView={handleNavChange} onToggleSidebar={onToggleSidebar} />
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-emerald-100 p-6">
+      <div className="min-h-screen flex items-start justify-center bg-gradient-to-r from-green-100 to-emerald-100 px-6 py-6">
         {/* Modal */}
         {modal && (
           <div className="fixed inset-0 bg-blue-900 bg-opacity-40 flex justify-center items-center z-50">
