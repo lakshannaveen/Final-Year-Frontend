@@ -299,9 +299,6 @@ if (video) {
         )}
 
         <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-5xl z-10">
-          <h2 className="text-2xl font-bold mb-6 text-green-700 text-center">
-            Post a Service
-          </h2>
 
           {/* Form: single card but two columns - left has the fields you listed, right has the rest */}
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
