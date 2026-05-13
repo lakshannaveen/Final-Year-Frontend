@@ -270,7 +270,7 @@ if (video) {
   };
 
   // Consistent placeholder text color for all inputs, including file fields, and textarea
-  const placeholderColorClass = "placeholder:text-gray-700";
+  const placeholderColorClass = "placeholder:text-gray-400";
 
   return (
     <>
