@@ -1,7 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
+
+
+//components
 import { AuthProvider, useAuth } from "../components/AuthContext";
 import Sidebar from "../components/Sidebar";
+
+//normal pages
 import Home from "../pages/Home";
 import Register from "../pages/Register";
 import SignIn from "../pages/Signin";
@@ -13,14 +18,14 @@ import Profile from "../pages/Profile";
 import PostService from "../pages/Post";
 import PublicProfile from "../pages/PublicProfile";
 import Message from "../pages/Message";
-import Inbox from "../pages/Inbox";
-import AdminLogin from "../admin/AdminLogin"; // Admin login component you added
-import AdminDashboard from "../admin/AdminDashboard"; // Admin dashboard component
+import Inbox from "../pages/Inbox";; 
 import Verify from "../pages/Verify"; 
 import Report from "../pages/Report";
 
-// New admin pages
+// admin pages
+import AdminLogin from "../admin/AdminLogin";
 import AdminReport from "../admin/AdminReport";
+import AdminDashboard from "../admin/AdminDashboard";
 import AdminFeedback from "../admin/AdminFeedback";
 import AdminUsers from "../admin/AdminUsers";
 import AdminServices from "../admin/AdminServices";
@@ -29,7 +34,7 @@ import AdminIDVerifications from "../admin/AdminIDVerifications";
 
 
 
-// FIX: Remove onShowMessage from Home props if not used in Home.tsx
+
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -65,7 +70,7 @@ function AppContent() {
     localStorage.setItem("currentView", currentView);
   }, [currentView]);
 
-  // FIX: Remove 'any'
+
   interface ChatRecipient {
     recipientId: string;
     recipientUsername: string;
@@ -74,12 +79,12 @@ function AppContent() {
   const [chatRecipient, setChatRecipient] = useState<ChatRecipient | null>(null);
   const [reportPostId, setReportPostId] = useState<string | null>(null);
 
-  // --- SCROLL RESTORATION ---
+  // SCROLL RESTORATION
   const [feedScrollPos, setFeedScrollPos] = useState(0);
   const saveScrollPosition = (pos: number) => setFeedScrollPos(pos);
   const getSavedScrollPosition = () => feedScrollPos;
 
-  // --- SCROLL TO TOP ON VIEW CHANGE ---
+  // SCROLL TO TOP ON VIEW CHANGE
   useEffect(() => {
     if (currentView !== "home") {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -119,10 +124,6 @@ function AppContent() {
     
       const PUBLIC_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY ?? "";
       const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME ?? "";
-
-      // Require the exact query string to match one of the two canonical orders:
-      // ?admin=<PUBLIC_KEY>&user=<ADMIN_USERNAME>
-      // or ?user=<ADMIN_USERNAME>&admin=<PUBLIC_KEY>
       const exactA = `?admin=${encodeURIComponent(PUBLIC_KEY)}&user=${encodeURIComponent(ADMIN_USERNAME)}`;
       const exactB = `?user=${encodeURIComponent(ADMIN_USERNAME)}&admin=${encodeURIComponent(PUBLIC_KEY)}`;
 
@@ -142,9 +143,6 @@ function AppContent() {
     
       const PUBLIC_KEY = process.env.NEXT_PUBLIC_ADMIN_KEY ?? "";
       const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME ?? "";
-
-      // Require the exact query string to match one of the two canonical orders:
-      // ?admin=<PUBLIC_KEY>&user=<ADMIN_USERNAME>
       // or ?user=<ADMIN_USERNAME>&admin=<PUBLIC_KEY>
       const exactA = `?admin=${encodeURIComponent(PUBLIC_KEY)}&user=${encodeURIComponent(ADMIN_USERNAME)}`;
       const exactB = `?user=${encodeURIComponent(ADMIN_USERNAME)}&admin=${encodeURIComponent(PUBLIC_KEY)}`;
