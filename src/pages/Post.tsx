@@ -278,7 +278,7 @@ if (video) {
       <div className="min-h-screen flex items-start justify-center bg-gradient-to-r from-green-100 to-emerald-100 px-6 py-6">
         {/* Modal */}
         {modal && (
-          <div className="fixed inset-0 bg-blue-900 bg-opacity-40 flex justify-center items-center z-50">
+          <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
             <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-lg text-center relative">
               <h3
                 className={`font-bold text-lg mb-2 ${
