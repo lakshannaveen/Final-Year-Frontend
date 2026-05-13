@@ -46,7 +46,6 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  // statusFilter now mirrors the "modern dropdown" pattern: '' means all
   const [statusFilter, setStatusFilter] = useState<
     "" | "pending" | "approved" | "rejected"
   >("");
@@ -61,7 +60,6 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
     {}
   );
 
-  // UI states similar to AdminContact
   const [showBackText, setShowBackText] = useState(false);
   const statusRef = useRef<HTMLDivElement | null>(null);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -70,7 +68,6 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
     fetchVerifications();
   }, []);
 
-  // Close status dropdown when clicking outside
   useEffect(() => {
     const handleOutside = (e: MouseEvent) => {
       if (statusRef.current && !statusRef.current.contains(e.target as Node)) {
@@ -116,7 +113,6 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
 
       const data = await res.json();
       if (res.ok) {
-        // Update local state
         setVerifications((prev) =>
           prev.map((v) =>
             v._id === verificationId
@@ -144,14 +140,12 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
 
   const openVerificationDetails = async (verification: Verification) => {
     try {
-      // Fetch full verification details with file URLs
       const res = await fetch(`${API_URL}/api/verify/${verification._id}`);
       const data = await res.json();
       if (res.ok) {
         setSelectedVerification(data.verification);
         setShowModal(true);
 
-        // Initialize zoom and rotation for all images
         const imageKeys = [
           "nicFront",
           "nicBack",
@@ -233,7 +227,6 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
     }
   };
 
-  // Filter verifications based on search and status
   const filteredVerifications = verifications.filter((verification) => {
     const matchesSearch =
       verification.user.username
@@ -285,7 +278,6 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
     });
   };
 
-  // Handler to refresh verifications and show the green "Back to Dashboard" text on success
   const handleRefresh = async () => {
     try {
       setLoading(true);
@@ -427,7 +419,6 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
               </div>
             </div>
 
-            {/* Modern dropdown replacing the <select>. Kept placement and behavior (sets statusFilter). */}
             <div ref={statusRef} className="relative">
               <button
                 type="button"
@@ -439,7 +430,6 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
                 <span className="truncate">{statusLabel}</span>
                 <span className="ml-2 text-gray-400 select-none">▾</span>
               </button>
-
               {statusOpen && (
                 <ul className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
                   <li
@@ -601,7 +591,7 @@ export default function AdminIDVerifications({ setCurrentView }: Props) {
 
         {/* Verification Details Modal */}
         {showModal && selectedVerification && (
-          <div className="fixed inset-0 bg-blue-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] overflow-y-auto text-gray-900">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
