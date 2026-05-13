@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import Search from "../components/Search";
-import { Star, CheckCircle, MapPin, Phone, BadgeDollarSign, Globe } from "lucide-react"; // <-- icons added
+import { Star, CheckCircle, MapPin, Phone, BadgeDollarSign, Globe } from "lucide-react";
 
 interface HomeProps {
   setCurrentView: (view: string) => void;
@@ -122,10 +122,43 @@ export default function Home({
 
   // Review stats cache: userId -> stats
   const [reviewStatsMap, setReviewStatsMap] = useState<Record<string, ReviewStats>>({});
-
   // Verification status cache: userId -> isVerified
   const [verificationMap, setVerificationMap] = useState<Record<string, boolean>>({});
 
+ 
+  const loadingRef = useRef(loading);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
+
+  const hasMoreRef = useRef(hasMore);
+  useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+
+  useEffect(() => {
+    if (searchTerm) return;
+    let debounce: NodeJS.Timeout;
+    const handleScroll = () => {
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => {
+        if (
+          loadingRef.current ||
+          !hasMoreRef.current ||
+          searchTerm // Don't load more during search
+        ) return;
+        const scrollHeight = document.documentElement.scrollHeight;
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const clientHeight = window.innerHeight || document.documentElement.clientHeight;
+        if (scrollTop + clientHeight >= scrollHeight - 120) {
+          setPage((p) => p + 1);
+        }
+      }, 100); // Debounce by 100ms
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (debounce) clearTimeout(debounce);
+    };
+  }, [searchTerm]);
+  
   // Fetch review stats for users in current feeds
   useEffect(() => {
     const usersToFetch = new Set<string>();
@@ -176,41 +209,24 @@ export default function Home({
   }, [feeds, searchResults, searchTerm]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (loading || !hasMore) return;
-      const scrollHeight = document.documentElement.scrollHeight;
-      const scrollTop = document.documentElement.scrollTop;
-      const clientHeight = document.documentElement.clientHeight;
-      if (scrollTop + clientHeight >= scrollHeight - 120) {
-        setPage((p) => p + 1);
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [loading, hasMore]);
-
-  useEffect(() => {
     if (searchTerm) return;
-    const fetchFeeds = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `${API_URL}/api/feed/paginated?page=${page}&limit=${PAGE_SIZE}`
-        );
-        const data = await res.json();
+    setLoading(true);
+    fetch(`${API_URL}/api/feed/paginated?page=${page}&limit=${PAGE_SIZE}`)
+      .then(res => res.json())
+      .then(data => {
         if (Array.isArray(data.feeds)) {
-          setFeeds((prev) => {
-            const ids = new Set(prev.map((f) => f._id));
+          setFeeds(prev => {
+            const ids = new Set(prev.map(f => f._id));
             return [...prev, ...data.feeds.filter((f: FeedItem) => !ids.has(f._id))];
           });
           setHasMore(page < data.totalPages);
         }
-      } catch {
+      })
+      .catch(() => {
         setHasMore(false);
-      }
-      setLoading(false);
-    };
-    fetchFeeds();
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line
   }, [page, searchTerm]);
 
   useEffect(() => {
