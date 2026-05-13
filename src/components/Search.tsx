@@ -9,6 +9,7 @@ interface FeedUser {
   location?: string;
   serviceType?: string;
   status?: string; 
+  }
 
 interface FeedItem {
   _id: string;
