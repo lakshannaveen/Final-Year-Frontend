@@ -12,6 +12,7 @@ import {
   Phone,
   Link as LinkIcon,
   LogOut,
+  Trash2,
   ChevronDown,
   CheckCircle,
   Clock,
@@ -76,6 +77,8 @@ export default function Profile({ setCurrentView }: ProfileProps) {
   const [success, setSuccess] = useState("");
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
 
@@ -318,6 +321,34 @@ export default function Profile({ setCurrentView }: ProfileProps) {
     setShowShareOptions(false);
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteLoading) return;
+    setDeleteLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch(`${API_URL}/api/profile`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        toast.success("Account deleted successfully.");
+        await logout();
+        setCurrentView("signin");
+      } else {
+        setError(data.errors?.server || "Failed to delete account.");
+      }
+    } catch {
+      setError("Error connecting to server.");
+    }
+
+    setDeleteLoading(false);
+    setShowDeleteModal(false);
+  };
+
   const shareProfile = async () => {
     if (navigator.share) {
       try {
@@ -554,6 +585,15 @@ export default function Profile({ setCurrentView }: ProfileProps) {
           >
             <LogOut size={16} className="mr-2" />
             Logout
+          </button>
+
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="px-4 py-2 bg-red-50 text-red-700 rounded-lg font-semibold hover:bg-red-100 border border-red-200 shadow transition flex items-center"
+            disabled={loading || uploading}
+          >
+            <Trash2 size={16} className="mr-2" />
+            Delete Account
           </button>
         </div>
       </div>
@@ -998,6 +1038,45 @@ export default function Profile({ setCurrentView }: ProfileProps) {
 
       {/* Show your posts after profile card */}
       <ProfileFeed />
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-red-100 p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-red-700">Delete account?</h3>
+                <p className="text-sm text-gray-600 mt-2">
+                  This will permanently remove your profile, posts, messages, and related data.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200"
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700"
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
