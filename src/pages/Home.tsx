@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import Search from "../components/Search";
-import { Star, CheckCircle } from "lucide-react";
+import { Star, CheckCircle, MapPin, Phone, BadgeDollarSign, Globe } from "lucide-react"; // <-- icons added
 
 interface HomeProps {
   setCurrentView: (view: string) => void;
@@ -417,7 +417,7 @@ export default function Home({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="flex items-center space-x-2">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600">
-                            📍
+                            <MapPin size={20} />
                           </span>
                           <div>
                             <span className="text-sm font-medium text-gray-500">Location</span>
@@ -427,7 +427,7 @@ export default function Home({
 
                         <div className="flex items-center space-x-2">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600">
-                            📞
+                            <Phone size={20} />
                           </span>
                           <div>
                             <span className="text-sm font-medium text-gray-500">Contact</span>
@@ -447,7 +447,7 @@ export default function Home({
 
                         <div className="flex items-center space-x-2">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600">
-                            💰
+                            <BadgeDollarSign size={20} />
                           </span>
                           <div>
                             <span className="text-sm font-medium text-gray-500">Price</span>
@@ -458,7 +458,7 @@ export default function Home({
                         {feed.websiteLink && (
                           <div className="flex items-center space-x-2">
                             <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
-                              🌐
+                              <Globe size={20} />
                             </span>
                             <div>
                               <span className="text-sm font-medium text-gray-500">Website</span>
