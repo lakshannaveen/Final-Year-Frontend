@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "../components/AuthContext";
 import { toast } from 'react-toastify';
@@ -23,6 +23,22 @@ export default function SignIn({ setCurrentView }: SignInProps) {
   });
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const oauthError = params.get("oauth_error");
+
+    if (oauthError) {
+      toast.error(oauthError);
+      if (oauthError.toLowerCase().includes("account type")) {
+        setErrors((prev) => ({ ...prev, serviceType: oauthError }));
+      }
+      params.delete("oauth_error");
+      const nextUrl = `${window.location.pathname}?${params.toString()}`.replace(/\?$/, "");
+      window.history.replaceState({}, "", nextUrl);
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
