@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { MapPin } from "lucide-react";
 import { useAuth } from "../components/AuthContext";
 import Navbar from "../components/Navbar";
 
@@ -342,6 +343,7 @@ if (video) {
                     className="px-3 py-2 bg-green-700 text-white rounded hover:bg-green-800 transition font-semibold flex items-center justify-center min-w-[44px] min-h-[44px]"
                     onClick={handleGetCurrentLocation}
                     title="Use current location"
+                    aria-label="Use current location"
                     disabled={locationLoading}
                     style={{ position: "relative" }}
                   >
@@ -349,7 +351,7 @@ if (video) {
                     {locationLoading ? (
                       <span className="inline-block w-5 h-5 border-2 border-green-200 border-t-green-700 rounded-full animate-spin"></span>
                     ) : (
-                      <span role="img" aria-label="location">📍</span>
+                      <MapPin className="w-5 h-5" aria-hidden="true" />
                     )}
                   </button>
                 </div>
