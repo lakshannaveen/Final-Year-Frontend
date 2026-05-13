@@ -642,7 +642,7 @@ export default function ProfileFeed() {
         )}
         {/* Success Modal */}
         {successModal.show && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900 bg-opacity-40">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
             <div className="bg-white rounded-xl shadow-lg border border-green-400 px-8 py-6 flex flex-col items-center">
               <svg className="w-12 h-12 text-green-600 mb-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />

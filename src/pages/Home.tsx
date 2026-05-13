@@ -219,7 +219,9 @@ export default function Home({
             const ids = new Set(prev.map(f => f._id));
             return [...prev, ...data.feeds.filter((f: FeedItem) => !ids.has(f._id))];
           });
-          setHasMore(page < data.totalPages);
+          const totalPages = typeof data.totalPages === "number" ? data.totalPages : null;
+          const nextHasMore = totalPages !== null ? page < totalPages : data.feeds.length === PAGE_SIZE;
+          setHasMore(nextHasMore);
         }
       })
       .catch(() => {
