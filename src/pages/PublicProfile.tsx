@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Globe, Phone, Image as ImageIcon, MessageCircle, CheckCircle, Star, Flag } from "lucide-react";
+import { ArrowLeft, Globe, Phone, Image as ImageIcon, MessageCircle, CheckCircle, Star, Flag, MapPin, BadgeDollarSign } from "lucide-react";
 import ReviewSection from "./Review";
 
 interface NavigationData {
@@ -51,11 +51,20 @@ interface FeedItem {
   description?: string;
   createdAt: string;
 }
-
+// Helper function for blinking ring class
+function getRingClass(status?: string) {
+  if (!status) return "";
+  const lower = status.toLowerCase();
+  if (lower.includes("open to work") || status.includes("✅"))
+    return "border-4 border-green-400 animate-pulse";
+  if (lower.includes("not available") || status.includes("🛑"))
+    return "border-4 border-red-400 animate-pulse";
+  return "";
+}
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const PAGE_SIZE = 5;
 
-// --- Skeleton Components ---
+// skelton loading 
 function ProfileSkeleton() {
   return (
     <div className="w-full bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden mb-10">
@@ -231,8 +240,6 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
   const greenRingClass = `${ringBaseClass} border-4 border-green-400 animate-pulse`;
   const redRingClass = `${ringBaseClass} border-4 border-red-400 animate-pulse`;
 
-  // NOTE: Verification badge is now rendered inline next to the username in the heading (see below).
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-6 px-4">
       {/* Back Button */}
@@ -290,10 +297,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                   </div>
                 )}
               </div>
-
-              {/* STATUS BADGE - removed circular dot for Not available as requested.
-                  (Open-to-work green badge kept; red visual ring remains around avatar when not available.)
-              */}
+              {/* Open to work/Not available status dot or ring */}
               {isOpenToWork && (
                 <div className="absolute right-12 bottom-0 transform translate-x-1/4 translate-y-1/4 z-20">
                   <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-500 ring-2 ring-white" title="Open to work">
@@ -520,7 +524,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="flex items-center space-x-2">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600">
-                          📍
+                          <MapPin size={20} />
                         </span>
                         <div>
                           <span className="text-sm font-medium text-gray-500">Location</span>
@@ -530,7 +534,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
 
                       <div className="flex items-center space-x-2">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600">
-                          📞
+                          <Phone size={20} />
                         </span>
                         <div>
                           <span className="text-sm font-medium text-gray-500">Contact</span>
@@ -550,7 +554,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
 
                       <div className="flex items-center space-x-2">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600">
-                          💰
+                          <BadgeDollarSign size={20} />
                         </span>
                         <div>
                           <span className="text-sm font-medium text-gray-500">Price</span>
@@ -561,7 +565,7 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
                       {feed.websiteLink && (
                         <div className="flex items-center space-x-2">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
-                            🌐
+                            <Globe size={20} />
                           </span>
                           <div>
                             <span className="text-sm font-medium text-gray-500">Website</span>
@@ -651,13 +655,3 @@ export default function PublicProfile({ userId, setCurrentView }: PublicProfileP
   );
 }
 
-// Helper function for blinking ring class
-function getRingClass(status?: string) {
-  if (!status) return "";
-  const lower = status.toLowerCase();
-  if (lower.includes("open to work") || status.includes("✅"))
-    return "border-4 border-green-400 animate-pulse";
-  if (lower.includes("not available") || status.includes("🛑"))
-    return "border-4 border-red-400 animate-pulse";
-  return "";
-}
