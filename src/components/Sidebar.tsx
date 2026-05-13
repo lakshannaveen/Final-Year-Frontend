@@ -36,7 +36,6 @@ export default function Sidebar({ isOpen, onClose, setCurrentView }: SidebarProp
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      {/* Overlay - removed dark background to keep page content visible */}
       <div
         className="fixed inset-0"
         onClick={onClose}

@@ -8,8 +8,7 @@ interface FeedUser {
   profilePic?: string;
   location?: string;
   serviceType?: string;
-  status?: string; // <-- To enable blinking ring
-}
+  status?: string; 
 
 interface FeedItem {
   _id: string;
@@ -45,7 +44,7 @@ const EXAMPLE_SEARCHES = [
   "Gardener Jaffna"
 ];
 
-// --- Helper: blinking ring class
+// Helper: blinking ring class
 const getRingClass = (status?: string) => {
   if (!status) return "";
   const lower = status.toLowerCase();
@@ -287,7 +286,7 @@ export default function Search({
     }
   }
 
-  // --- Helper for blinking ring in search dropdown ---
+  // Helper for blinking ring in search dropdown
   function renderProfilePicWithRing(user: FeedUser) {
     const ringClass = getRingClass(user.status);
     return (

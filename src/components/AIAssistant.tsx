@@ -36,7 +36,7 @@ interface ServiceSuggestion {
     profilePic?: string;
     location?: string;
     serviceType?: string;
-    status?: string; // <-- Add status for blinking ring
+    status?: string; 
   };
   title: string;
   location: string;
@@ -270,7 +270,7 @@ export default function AIAssistant({
     return acc;
   }, {} as Record<string, typeof quickQuestions>);
 
-  // --- Helper for blinking ring in suggestions ---
+  // Helper for blinking ring in suggestions
   function renderProfilePicWithRing(user: ServiceSuggestion["user"]) {
     const ringClass = getRingClass(user.status);
     return (

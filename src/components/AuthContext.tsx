@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 interface User {
   username: string;
   email: string;
-  serviceType?: string; // <-- added this to fix Post.tsx error
+  serviceType?: string; 
 }
 
 interface AuthContextProps {
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user); // <-- user can now include serviceType
+        setUser(data.user); 
       } else {
         setUser(null);
       }
