@@ -232,11 +232,17 @@ export default function Home({
   }, [page, searchTerm]);
 
   useEffect(() => {
+    // Only restore scroll position on initial mount, not on every render
     const pos = getSavedScrollPosition();
-    setTimeout(() => {
-      window.scrollTo(0, pos);
-    }, 0);
-  }, [getSavedScrollPosition]);
+    if (pos > 0) {
+      const restoreScroll = () => {
+        window.scrollTo({ top: pos, behavior: 'auto' });
+      };
+      // Use requestAnimationFrame for better timing with touch events
+      const frameId = requestAnimationFrame(restoreScroll);
+      return () => cancelAnimationFrame(frameId);
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   const handleNavigate = (navFn: () => void) => {
     saveScrollPosition(window.scrollY);
