@@ -54,6 +54,8 @@ interface AIAssistantProps {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const CHAT_STORAGE_KEY = "doop_ai_chat_history_v1";
+const FEEDBACK_STORAGE_KEY = "doop_ai_feedback_v1";
 
 // --- Helper: blinking ring class
 const getRingClass = (status?: string) => {
@@ -81,6 +83,60 @@ export default function AIAssistant({
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [thinkingText, setThinkingText] = useState<string>("Thinking...");
+
+  useEffect(() => {
+    try {
+      const savedChat = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (savedChat) {
+        const parsed = JSON.parse(savedChat) as Array<
+          Omit<ChatMessage, "timestamp"> & { timestamp: string }
+        >;
+        if (Array.isArray(parsed)) {
+          const restored = parsed.map((msg) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+          setChatHistory(restored);
+        }
+      }
+
+      const savedFeedback = localStorage.getItem(FEEDBACK_STORAGE_KEY);
+      if (savedFeedback) {
+        const parsedFeedback = JSON.parse(savedFeedback) as {
+          [key: string]: "helpful" | "not-helpful";
+        };
+        if (parsedFeedback && typeof parsedFeedback === "object") {
+          setFeedback(parsedFeedback);
+        }
+      }
+    } catch {
+      // Ignore malformed localStorage data
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (chatHistory.length > 0) {
+        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory));
+      } else {
+        localStorage.removeItem(CHAT_STORAGE_KEY);
+      }
+    } catch {
+      // Ignore storage write errors
+    }
+  }, [chatHistory]);
+
+  useEffect(() => {
+    try {
+      if (Object.keys(feedback).length > 0) {
+        localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(feedback));
+      } else {
+        localStorage.removeItem(FEEDBACK_STORAGE_KEY);
+      }
+    } catch {
+      // Ignore storage write errors
+    }
+  }, [feedback]);
 
   useEffect(() => {
     const fetchAIUsage = async () => {
@@ -207,6 +263,13 @@ export default function AIAssistant({
     setChatHistory([]);
     setAiError(null);
     setFeedback({});
+
+    try {
+      localStorage.removeItem(CHAT_STORAGE_KEY);
+      localStorage.removeItem(FEEDBACK_STORAGE_KEY);
+    } catch {
+      // Ignore storage write errors
+    }
   };
 
   const handleFeedback = (messageId: string, isHelpful: boolean) => {
