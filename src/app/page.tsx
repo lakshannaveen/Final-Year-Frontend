@@ -62,7 +62,9 @@ function AppContent() {
 
   // Update URL hash when currentView changes
   useEffect(() => {
-    window.location.hash = currentView;
+    const nextHash = currentView === "home" ? "" : `#${currentView}`;
+    const nextUrl = `${window.location.pathname}${window.location.search}${nextHash}`;
+    window.history.replaceState(null, "", nextUrl);
   }, [currentView]);
 
   // Save currentView to localStorage whenever it changes
@@ -83,6 +85,13 @@ function AppContent() {
   const [feedScrollPos, setFeedScrollPos] = useState(0);
   const saveScrollPosition = (pos: number) => setFeedScrollPos(pos);
   const getSavedScrollPosition = () => feedScrollPos;
+
+  const handleSetCurrentView = (view: string) => {
+    if (view === "home") {
+      saveScrollPosition(window.scrollY);
+    }
+    setCurrentView(view);
+  };
 
   // SCROLL TO TOP ON VIEW CHANGE
   useEffect(() => {
@@ -181,7 +190,7 @@ function AppContent() {
       case "home":
         return (
           <Home
-            setCurrentView={setCurrentView}
+            setCurrentView={handleSetCurrentView}
             onShowPublicProfile={handleShowPublicProfile}
             saveScrollPosition={saveScrollPosition}
             getSavedScrollPosition={getSavedScrollPosition}
@@ -189,21 +198,21 @@ function AppContent() {
           />
         );
       case "register":
-        return <Register setCurrentView={setCurrentView} />;
+        return <Register setCurrentView={handleSetCurrentView} />;
       case "signin":
-        return <SignIn setCurrentView={setCurrentView} />;
+        return <SignIn setCurrentView={handleSetCurrentView} />;
       case "privacy":
-        return <Privacy setCurrentView={setCurrentView} />;
+        return <Privacy setCurrentView={handleSetCurrentView} />;
       case "terms":
-        return <Terms setCurrentView={setCurrentView} />;
+        return <Terms setCurrentView={handleSetCurrentView} />;
       case "contact":
-        return <Contact setCurrentView={setCurrentView} />;
+        return <Contact setCurrentView={handleSetCurrentView} />;
       case "feedback":
-        return <Feedback setCurrentView={setCurrentView} />;
+        return <Feedback setCurrentView={handleSetCurrentView} />;
       case "profile":
-        return <Profile setCurrentView={setCurrentView} />;
+        return <Profile setCurrentView={handleSetCurrentView} />;
       case "post":
-        return <PostService setCurrentView={setCurrentView} onToggleSidebar={() => setSidebarOpen(true)} />;
+        return <PostService setCurrentView={handleSetCurrentView} onToggleSidebar={() => setSidebarOpen(true)} />;
       case "publicprofile":
         if (publicProfileId) {
           return (
@@ -216,64 +225,64 @@ function AppContent() {
                     recipientUsername: navData.recipientUsername ?? "",
                     recipientProfilePic: navData.recipientProfilePic ?? undefined,
                   });
-                  setCurrentView("message");
+                  handleSetCurrentView("message");
                 } else if (view === "report" && navData?.postId) {
                   setReportPostId(navData.postId);
-                  setCurrentView("report");
+                  handleSetCurrentView("report");
                 } else if (view === "home") {
-                  setCurrentView("home");
+                  handleSetCurrentView("home");
                 }
               }}
             />
           );
         }
-        setCurrentView("home");
+        handleSetCurrentView("home");
         return null;
       case "message":
         if (chatRecipient) {
           return (
             <Message
-              setCurrentView={setCurrentView}
+              setCurrentView={handleSetCurrentView}
               recipientId={chatRecipient.recipientId}
               recipientUsername={chatRecipient.recipientUsername}
               recipientProfilePic={chatRecipient.recipientProfilePic}
             />
           );
         }
-        setCurrentView("home");
+        handleSetCurrentView("home");
         return null;
       case "inbox":
         return (
           <Inbox
-            setCurrentView={setCurrentView}
+            setCurrentView={handleSetCurrentView}
             onOpenChat={handleShowMessage}
             currentView={currentView}
             onToggleSidebar={() => setSidebarOpen(true)}
           />
         );
       case "adminlogin":
-        return <AdminLogin setCurrentView={setCurrentView} />;
+        return <AdminLogin setCurrentView={handleSetCurrentView} />;
       case "admindashboard":
-        return <AdminDashboard setCurrentView={setCurrentView} />;
+        return <AdminDashboard setCurrentView={handleSetCurrentView} />;
       // new admin pages:
       case "adminreport":
-        return <AdminReport setCurrentView={setCurrentView} />;
+        return <AdminReport setCurrentView={handleSetCurrentView} />;
       case "adminfeedback":
-        return <AdminFeedback setCurrentView={setCurrentView} />;
+        return <AdminFeedback setCurrentView={handleSetCurrentView} />;
       case "adminusers":
-        return <AdminUsers setCurrentView={setCurrentView} />;
+        return <AdminUsers setCurrentView={handleSetCurrentView} />;
       case "adminservices":
-        return <AdminServices setCurrentView={setCurrentView} />;
+        return <AdminServices setCurrentView={handleSetCurrentView} />;
       case "admincontact":
-        return <AdminContact setCurrentView={setCurrentView} />;
+        return <AdminContact setCurrentView={handleSetCurrentView} />;
       case "adminidverifications":
-        return <AdminIDVerifications setCurrentView={setCurrentView} />;
+        return <AdminIDVerifications setCurrentView={handleSetCurrentView} />;
       case "verify":
-        return <Verify setCurrentView={setCurrentView} />;
+        return <Verify setCurrentView={handleSetCurrentView} />;
       case "report":
-        return <Report setCurrentView={setCurrentView} postId={reportPostId} />;
+        return <Report setCurrentView={handleSetCurrentView} postId={reportPostId} />;
       default:
-        setCurrentView("home");
+        handleSetCurrentView("home");
         return null;
     }
   };
