@@ -27,7 +27,7 @@ interface ReviewProps {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const SHOW_LIMIT = 5;
 
-// --- Skeleton Components ---
+//Skeleton Components
 function ReviewSectionSkeleton() {
   return (
     <div className="w-full bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden p-8 mb-10 animate-pulse">

@@ -17,7 +17,7 @@ interface ChatSummary {
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
-  recipientStatus?: string; // <-- add status for blinking
+  recipientStatus?: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";

@@ -89,7 +89,7 @@ function FeedSkeleton() {
   );
 }
 
-// --- Edit State ---
+// Edit state
 type EditFeedState = {
   [key: string]: {
     title: string;
