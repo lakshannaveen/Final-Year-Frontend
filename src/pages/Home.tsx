@@ -331,7 +331,7 @@ export default function Home({
   const displayLoading = searchTerm ? searchLoading : loading;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       <Navbar
         currentView="home"
         setCurrentView={setCurrentView}
@@ -348,7 +348,7 @@ export default function Home({
         />
       </div>
 
-      <section className="flex flex-col flex-grow items-center px-4 py-6">
+      <section className="flex flex-col flex-grow items-center px-4 py-6 overflow-x-hidden">
         <div className="w-full space-y-8">
           {displayFeeds.length === 0 && displayLoading ? (
             [...Array(PAGE_SIZE)].map((_, i) => <FeedSkeleton key={i} />)

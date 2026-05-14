@@ -218,9 +218,9 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
       <nav className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700 text-white shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-2 py-4">
           {/* Top Header Row */}
-          <div className="flex flex-row justify-between items-center">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             {/* Left: Logo */}
-            <div className="flex items-center gap-3 ml-0">
+            <div className="flex items-center gap-2 sm:gap-3 ml-0 min-w-0">
               {/* Burger Menu Icon */}
               {onToggleSidebar && (
                 <button
@@ -234,10 +234,10 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
               )}
               <button
                 onClick={() => handleNavClick("home")}
-                className="flex items-center gap-2 hover:opacity-90 transition"
+                className="flex items-center gap-2 hover:opacity-90 transition min-w-0"
               >
                 <Image src="/logo.png" alt="Logo" width={40} height={40} className="rounded-lg" />
-                <span className="text-2xl font-bold tracking-wide">Doop</span>
+                <span className="text-xl sm:text-2xl font-bold tracking-wide whitespace-nowrap">Doop</span>
               </button>
             </div>
 
@@ -364,11 +364,11 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
             </div>
 
             {/* Mobile: Hamburger Menu */}
-            <div className="md:hidden flex items-center gap-3">
+            <div className="md:hidden flex flex-wrap items-center justify-end gap-2 max-w-full ml-auto">
               {/* AI Assistant Button for Mobile */}
               <button
                 onClick={() => setAiOpen(true)}
-                className="relative bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-lg hover:from-emerald-400 hover:to-green-500 transition-all duration-200 shadow-lg"
+                className="relative shrink-0 bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-lg hover:from-emerald-400 hover:to-green-500 transition-all duration-200 shadow-lg"
                 title="AI Assistant"
               >
                 <Bot size={20} className="text-white" />
@@ -379,16 +379,16 @@ export default function Navbar({ currentView, setCurrentView, onShowPublicProfil
 
               {/* Mobile Auth Buttons */}
               {!user && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
                   <button
                     onClick={() => handleNavClick("signin")}
-                    className="px-3 py-1.5 rounded-lg bg-white text-green-800 font-semibold hover:bg-green-50 text-sm transition-all border border-green-100"
+                    className="shrink-0 whitespace-nowrap px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-white text-green-800 font-semibold hover:bg-green-50 text-xs sm:text-sm transition-all border border-green-100"
                   >
                     Sign In
                   </button>
                   <button
                     onClick={() => handleNavClick("register")}
-                    className="px-3 py-1.5 rounded-lg border border-white font-semibold hover:bg-white hover:text-green-700 text-sm transition-all"
+                    className="shrink-0 whitespace-nowrap px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg border border-white font-semibold hover:bg-white hover:text-green-700 text-xs sm:text-sm transition-all"
                   >
                     Register
                   </button>
